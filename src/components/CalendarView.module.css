@@ -1,0 +1,124 @@
+.wrap {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.navBtn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  width: 30px;
+  height: 30px;
+  font-size: 16px;
+}
+
+.monthLabel {
+  font-weight: 600;
+  font-size: 15px;
+  min-width: 140px;
+}
+
+.select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+}
+
+.totalPositive {
+  color: var(--green);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.totalNegative {
+  color: var(--red);
+  font-size: 13px;
+  margin-left: auto;
+}
+
+.weekHeader {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.weekday {
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.emptyCell {
+  min-height: 56px;
+}
+
+.cell {
+  min-height: 56px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 11px;
+}
+
+.cellPositive {
+  border-color: rgba(46, 204, 113, 0.4);
+  background: rgba(46, 204, 113, 0.1);
+}
+
+.cellNegative {
+  border-color: rgba(231, 76, 60, 0.4);
+  background: rgba(231, 76, 60, 0.1);
+}
+
+.dayNum {
+  color: var(--text-muted);
+}
+
+.dayPnl {
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.cellPositive .dayPnl {
+  color: var(--green);
+}
+
+.cellNegative .dayPnl {
+  color: var(--red);
+}
+
+@media (max-width: 600px) {
+  .cell {
+    min-height: 44px;
+    font-size: 9px;
+    padding: 4px;
+  }
+  .dayPnl {
+    font-size: 10px;
+  }
+}
