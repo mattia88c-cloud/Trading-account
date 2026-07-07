@@ -1,27 +1,45 @@
 import { useState } from 'react'
-import { BALANCE_PRESETS } from '../useTradingData'
+import { BALANCE_PRESETS, DRAWDOWN_BY_PRESET } from '../useTradingData'
 import styles from './AccountForm.module.css'
 
 export default function AccountForm({ onCreate }) {
+  const [open, setOpen] = useState(false)
   const [type, setType] = useState('personal')
   const [name, setName] = useState('')
   const [preset, setPreset] = useState(BALANCE_PRESETS[0])
   const [customBalance, setCustomBalance] = useState('')
   const [useCustom, setUseCustom] = useState(false)
+  const [customDrawdown, setCustomDrawdown] = useState('')
 
   function handleSubmit(e) {
     e.preventDefault()
     const initialBalance = useCustom ? customBalance : preset
     if (!name.trim() || !initialBalance || Number(initialBalance) <= 0) return
-    onCreate({ name: name.trim(), type, initialBalance })
+    const maxDrawdown = useCustom ? customDrawdown : DRAWDOWN_BY_PRESET[preset]
+    onCreate({ name: name.trim(), type, initialBalance, maxDrawdown })
     setName('')
     setCustomBalance('')
     setUseCustom(false)
+    setCustomDrawdown('')
+    setOpen(false)
+  }
+
+  if (!open) {
+    return (
+      <button type="button" className={styles.openButton} onClick={() => setOpen(true)}>
+        + Nuovo conto
+      </button>
+    )
   }
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <h3 className={styles.title}>Nuovo conto</h3>
+      <div className={styles.formHeader}>
+        <h3 className={styles.title}>Nuovo conto</h3>
+        <button type="button" className={styles.closeButton} onClick={() => setOpen(false)}>
+          ✕
+        </button>
+      </div>
 
       <div className={styles.toggleGroup}>
         <button
@@ -71,14 +89,28 @@ export default function AccountForm({ onCreate }) {
         </button>
       </div>
 
-      {useCustom && (
-        <input
-          className={styles.input}
-          type="number"
-          placeholder="Saldo iniziale ($)"
-          value={customBalance}
-          onChange={(e) => setCustomBalance(e.target.value)}
-        />
+      {useCustom ? (
+        <>
+          <input
+            className={styles.input}
+            type="number"
+            placeholder="Saldo iniziale ($)"
+            value={customBalance}
+            onChange={(e) => setCustomBalance(e.target.value)}
+          />
+          <input
+            className={styles.input}
+            type="number"
+            min="0"
+            placeholder="Drawdown massimo ($) - opzionale"
+            value={customDrawdown}
+            onChange={(e) => setCustomDrawdown(e.target.value)}
+          />
+        </>
+      ) : (
+        <div className={styles.drawdownInfo}>
+          Drawdown massimo: ${DRAWDOWN_BY_PRESET[preset].toLocaleString('it-IT')}
+        </div>
       )}
 
       <button type="submit" className={styles.submit}>

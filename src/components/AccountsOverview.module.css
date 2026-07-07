@@ -5,29 +5,169 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  cursor: pointer;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.card:hover {
+  border-color: #3a3f4d;
+}
+
+.cardSelected {
+  box-shadow: 0 0 0 2px var(--accent);
+  transform: translateY(-1px);
+}
+
+.cardBreached {
+  border-color: var(--red);
+  background: rgba(231, 76, 60, 0.08);
+}
+
+.cardInactive {
+  opacity: 0.55;
 }
 
 .cardHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+}
+
+.inactiveTag {
+  font-size: 10px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 6px;
+}
+
+.menuButton {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 16px;
+  padding: 2px 6px;
+  line-height: 1;
+}
+
+.menuButton:hover {
+  color: var(--text);
+}
+
+.menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 10;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  min-width: 110px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.menuItem {
+  background: none;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.menuItemDanger {
+  color: var(--red);
+}
+
+.thresholdInfo {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.thresholdBreached {
+  font-size: 11px;
+  color: var(--red);
+  font-weight: 700;
+}
+
+.thresholdDistance {
+  font-size: 11px;
+  color: var(--red);
+  font-weight: 600;
+}
+
+.distanceGreen {
+  font-size: 11px;
+  color: var(--green);
+  font-weight: 600;
+}
+
+.distanceNeutral {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.distanceOrange {
+  font-size: 11px;
+  color: #e67e22;
+  font-weight: 600;
+}
+
+.distanceRed {
+  font-size: 11px;
+  color: var(--red);
+  font-weight: 700;
+}
+
+.payoutInfo {
+  font-size: 11px;
+  color: #9b59b6;
+  font-weight: 600;
 }
 
 .name {
   font-weight: 600;
   font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .badge {
@@ -61,18 +201,3 @@
   font-size: 13px;
 }
 
-.delete {
-  align-self: flex-start;
-  background: none;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  border-radius: 6px;
-  padding: 5px 10px;
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.delete:hover {
-  border-color: var(--red);
-  color: var(--red);
-}

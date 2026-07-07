@@ -9,6 +9,11 @@
   --green: #2ecc71;
   --red: #e74c3c;
   --radius: 10px;
+  --card: var(--bg-card);
+  --card-border: var(--border);
+  --accent-border: rgba(79, 140, 255, 0.4);
+  --accent-dim: rgba(79, 140, 255, 0.12);
+  --text-dim: var(--text-muted);
   color-scheme: dark;
 }
 

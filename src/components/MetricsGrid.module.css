@@ -1,0 +1,43 @@
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 8px;
+}
+
+.tile {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.valuePositive {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.valueNegative {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--red);
+}
+
+.sub {
+  font-size: 10px;
+  color: var(--text-muted);
+}

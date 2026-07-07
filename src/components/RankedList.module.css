@@ -1,0 +1,80 @@
+.block {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.rank {
+  color: var(--text-muted);
+  width: 14px;
+  flex-shrink: 0;
+}
+
+.label {
+  color: var(--text);
+  font-weight: 600;
+  min-width: 90px;
+  flex-shrink: 0;
+}
+
+.meta {
+  color: var(--text-muted);
+  font-size: 11px;
+  flex-shrink: 0;
+  min-width: 80px;
+}
+
+.track {
+  flex: 1;
+  max-width: 80px;
+  height: 8px;
+  background: var(--bg-elevated);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.fillPositive {
+  height: 100%;
+  background: var(--green);
+}
+
+.fillNegative {
+  height: 100%;
+  background: var(--red);
+}
+
+.valuePositive {
+  color: var(--green);
+  font-weight: 700;
+  width: 60px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.valueNegative {
+  color: var(--red);
+  font-weight: 700;
+  width: 60px;
+  text-align: right;
+  flex-shrink: 0;
+}

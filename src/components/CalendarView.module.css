@@ -70,11 +70,11 @@
 }
 
 .emptyCell {
-  min-height: 56px;
+  min-height: 68px;
 }
 
 .cell {
-  min-height: 56px;
+  min-height: 68px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -102,6 +102,11 @@
 .dayPnl {
   font-weight: 700;
   font-size: 12px;
+}
+
+.dayTrades {
+  font-size: 9px;
+  color: var(--text-muted);
 }
 
 .cellPositive .dayPnl {

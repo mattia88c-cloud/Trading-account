@@ -64,6 +64,59 @@
   flex: 1;
 }
 
+.rangeInput {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.toggleGroup {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.toggleOption {
+  flex: 1;
+  min-width: 50px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 8px 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.toggleOptionActive {
+  border-color: var(--accent);
+  color: var(--text);
+  background: rgba(79, 140, 255, 0.12);
+}
+
+.gradeLegend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.gradeLegendRow {
+  display: flex;
+  gap: 8px;
+}
+
+.gradeLegendLetter {
+  font-weight: 700;
+  color: var(--accent);
+  flex-shrink: 0;
+  width: 14px;
+}
+
 .submit {
   background: var(--accent);
   border: none;

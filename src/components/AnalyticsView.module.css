@@ -3,15 +3,22 @@
   font-size: 14px;
 }
 
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
 }
 
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-left: 4px solid var(--border);
   border-radius: var(--radius);
   padding: 14px;
   display: flex;
@@ -23,6 +30,27 @@
   font-weight: 700;
   font-size: 15px;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.subHeader {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
 
 .statRow {
@@ -49,4 +77,139 @@
 .negative {
   color: var(--red);
   font-weight: 600;
+}
+
+.cardInactive {
+  background: rgba(231, 76, 60, 0.06);
+  opacity: 0.85;
+}
+
+.inactiveTag {
+  font-size: 10px;
+  color: var(--red);
+  border: 1px solid var(--red);
+  border-radius: 999px;
+  padding: 2px 6px;
+  margin-left: auto;
+}
+
+.notesIdealGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+  align-items: start;
+  margin-top: 10px;
+}
+
+.breakdownGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.winLoseGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.winBox {
+  background: rgba(46, 204, 113, 0.07);
+  border: 1px solid rgba(46, 204, 113, 0.25);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.loseBox {
+  background: rgba(231, 76, 60, 0.07);
+  border: 1px solid rgba(231, 76, 60, 0.25);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.winLoseTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.miniRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 2px 0;
+  color: var(--text);
+}
+
+.miniRow span:first-child {
+  color: var(--text-muted);
+}
+
+.payoutBlock {
+  background: rgba(155, 89, 182, 0.08);
+  border: 1px solid rgba(155, 89, 182, 0.3);
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+.payoutTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #9b59b6;
+  margin-bottom: 6px;
+}
+
+.payoutList {
+  margin-top: 6px;
+  border-top: 1px solid rgba(155, 89, 182, 0.2);
+  padding-top: 6px;
+}
+
+.payoutListRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
+
+.notesBlock {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.notesTitle {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.noteBlock {
+  font-size: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.noteDate {
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.noteLine {
+  color: var(--text);
+}
+
+.noteLabel {
+  color: var(--text-muted);
 }

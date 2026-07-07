@@ -18,11 +18,14 @@ export default function CalendarView({ accounts, entries }) {
   })
   const [accountFilter, setAccountFilter] = useState('all')
 
-  const pnlByDay = useMemo(() => {
+  const statsByDay = useMemo(() => {
     const filtered = accountFilter === 'all' ? entries : entries.filter((e) => e.accountId === accountFilter)
     const map = {}
     filtered.forEach((e) => {
-      map[e.date] = (map[e.date] || 0) + e.profit
+      if (!map[e.date]) map[e.date] = { pnl: 0, tradesOpened: 0, tradesEffective: 0 }
+      map[e.date].pnl += e.profit
+      map[e.date].tradesOpened += e.tradesOpened
+      map[e.date].tradesEffective += e.tradesEffective
     })
     return map
   }, [entries, accountFilter])
@@ -49,7 +52,7 @@ export default function CalendarView({ accounts, entries }) {
   const monthTotal = cells.reduce((sum, d) => {
     if (!d) return sum
     const key = toDateKey(year, month, d)
-    return sum + (pnlByDay[key] || 0)
+    return sum + (statsByDay[key]?.pnl || 0)
   }, 0)
 
   return (
@@ -83,13 +86,16 @@ export default function CalendarView({ accounts, entries }) {
         {cells.map((d, i) => {
           if (!d) return <div key={i} className={styles.emptyCell} />
           const key = toDateKey(year, month, d)
-          const pnl = pnlByDay[key]
-          const cellClass = pnl === undefined ? styles.cell : pnl >= 0 ? `${styles.cell} ${styles.cellPositive}` : `${styles.cell} ${styles.cellNegative}`
+          const stat = statsByDay[key]
+          const cellClass = !stat ? styles.cell : stat.pnl >= 0 ? `${styles.cell} ${styles.cellPositive}` : `${styles.cell} ${styles.cellNegative}`
           return (
             <div key={i} className={cellClass}>
               <span className={styles.dayNum}>{d}</span>
-              {pnl !== undefined && (
-                <span className={styles.dayPnl}>{pnl >= 0 ? '+' : ''}{pnl.toLocaleString('it-IT', { maximumFractionDigits: 0 })}</span>
+              {stat && (
+                <>
+                  <span className={styles.dayPnl}>{stat.pnl >= 0 ? '+' : ''}{stat.pnl.toLocaleString('it-IT', { maximumFractionDigits: 0 })}</span>
+                  <span className={styles.dayTrades}>{stat.tradesOpened} ap. / {stat.tradesEffective} eff.</span>
+                </>
               )}
             </div>
           )

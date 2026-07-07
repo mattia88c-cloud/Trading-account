@@ -1,7 +1,9 @@
 .app {
-  max-width: 1200px;
+  max-width: 2200px;
+  width: 100%;
   margin: 0 auto;
-  padding: 16px;
+  padding: 20px clamp(16px, 3vw, 56px);
+  box-sizing: border-box;
 }
 
 .header {
@@ -50,7 +52,7 @@
 
 .dashboardGrid {
   display: grid;
-  grid-template-columns: 320px 1fr;
+  grid-template-columns: minmax(280px, 340px) 1fr;
   gap: 16px;
   align-items: start;
 }
@@ -71,4 +73,21 @@
   .dashboardGrid {
     grid-template-columns: 1fr;
   }
+}
+
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.inactiveToggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+  width: fit-content;
 }
