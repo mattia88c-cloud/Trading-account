@@ -1,0 +1,112 @@
+.form {
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.empty {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.openButton {
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  border-radius: var(--radius);
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  width: 100%;
+}
+.openButton:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.formHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 2px 6px;
+}
+.closeButton:hover { color: var(--text); }
+
+.warning {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  line-height: 1.5;
+  margin: 0 0 4px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.input {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  width: 100%;
+}
+
+.accountList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.submit {
+  background: var(--accent);
+  border: none;
+  color: var(--on-accent);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 6px;
+}

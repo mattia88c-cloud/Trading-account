@@ -1,0 +1,97 @@
+.wrap { position: relative; flex-shrink: 0; }
+
+.gearBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.gearBtn:hover { color: var(--text); border-color: var(--border-strong); }
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px;
+  min-width: 220px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.userLine {
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 6px 10px 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.menuItem {
+  background: none;
+  border: none;
+  color: var(--text);
+  text-align: left;
+  padding: 9px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+}
+.menuItem:hover { background: rgba(255, 255, 255, 0.06); }
+.menuItemDanger { color: var(--red); }
+
+.futureItem {
+  padding: 9px 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.form { display: flex; flex-direction: column; gap: 6px; padding: 4px; }
+.hint { font-size: 11px; color: var(--text-muted); margin: 0 0 4px; line-height: 1.5; }
+.label { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+.input {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 13px;
+}
+.input:focus { outline: none; border-color: var(--accent-border); }
+
+.error { color: var(--red); font-size: 11px; margin: 2px 0 0; }
+.success { color: var(--green); font-size: 11px; margin: 2px 0 0; }
+
+.formActions { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 8px; }
+.backBtn { background: none; border: none; color: var(--text-muted); font-size: 12px; padding: 4px; }
+.backBtn:hover { color: var(--text); }
+.saveBtn {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.saveBtn:disabled { opacity: 0.6; }
+
+.deleteBtn {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.deleteBtn:disabled { opacity: 0.4; }

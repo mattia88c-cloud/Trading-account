@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { MARKETS, SESSIONS, CLOSE_TYPES, GRADES, GRADE_LEGEND, EMOTIONAL_STATES } from '../useTradingData'
+import { MARKETS, SESSIONS, CLOSE_TYPES, OUTCOMES, GRADES, GRADE_LEGEND, EMOTIONAL_STATES } from '../useTradingData'
 import styles from './DayEntryForm.module.css'
 
 function today() {
@@ -28,6 +28,7 @@ export default function DayEntryForm({ accounts, onSave }) {
   const [riskPoints, setRiskPoints] = useState('')
   const [resultPoints, setResultPoints] = useState('')
   const [riskReward, setRiskReward] = useState('')
+  const [outcome, setOutcome] = useState('')
   const [closeType, setCloseType] = useState('')
   const [grade, setGrade] = useState('')
   const [emotionalState, setEmotionalState] = useState('')
@@ -36,6 +37,7 @@ export default function DayEntryForm({ accounts, onSave }) {
   const [whatWentWell, setWhatWentWell] = useState('')
   const [lesson, setLesson] = useState('')
   const [tags, setTags] = useState('')
+  const [chartUrl, setChartUrl] = useState('')
 
   function toggleAccount(id) {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
@@ -66,6 +68,7 @@ export default function DayEntryForm({ accounts, onSave }) {
       reEntry,
       followedStrategy,
       riskReward,
+      outcome,
       closeType,
       grade,
       emotionalState,
@@ -74,6 +77,7 @@ export default function DayEntryForm({ accounts, onSave }) {
       whatWentWell,
       lesson,
       tags,
+      chartUrl,
     })
     setProfit('')
     setTradesOpened('')
@@ -90,6 +94,7 @@ export default function DayEntryForm({ accounts, onSave }) {
     setExitTime('')
     setFollowedStrategy(true)
     setRiskReward('')
+    setOutcome('')
     setCloseType('')
     setGrade('')
     setEmotionalState('')
@@ -98,6 +103,7 @@ export default function DayEntryForm({ accounts, onSave }) {
     setWhatWentWell('')
     setLesson('')
     setTags('')
+    setChartUrl('')
     setSelectedIds([])
   }
 
@@ -107,7 +113,7 @@ export default function DayEntryForm({ accounts, onSave }) {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <h3 className={styles.title}>Registra giornata</h3>
+      <h3 className={styles.title}>Journal trade</h3>
 
       <label className={styles.label}>Data</label>
       <input
@@ -307,6 +313,20 @@ export default function DayEntryForm({ accounts, onSave }) {
         onChange={(e) => setRiskReward(e.target.value)}
       />
 
+      <label className={styles.label}>Esito del trade</label>
+      <div className={styles.toggleGroup}>
+        {OUTCOMES.map((o) => (
+          <button
+            key={o}
+            type="button"
+            className={`${styles.toggleOption} ${outcome === o ? styles.toggleOptionActive : ''}`}
+            onClick={() => setOutcome(outcome === o ? '' : o)}
+          >
+            {o}
+          </button>
+        ))}
+      </div>
+
       <label className={styles.label}>Chiusura trade</label>
       <div className={styles.toggleGroup}>
         {CLOSE_TYPES.map((ct) => (
@@ -382,6 +402,15 @@ export default function DayEntryForm({ accounts, onSave }) {
         placeholder="es. fomo, breakout, revenge"
         value={tags}
         onChange={(e) => setTags(e.target.value)}
+      />
+
+      <label className={styles.label}>Link screenshot (TradingView)</label>
+      <input
+        className={styles.input}
+        type="url"
+        placeholder="incolla qui il link «Get chart image» di TradingView"
+        value={chartUrl}
+        onChange={(e) => setChartUrl(e.target.value)}
       />
 
       <label className={styles.label}>Errore principale</label>

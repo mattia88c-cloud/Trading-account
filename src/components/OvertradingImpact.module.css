@@ -1,0 +1,25 @@
+.card { border-left: 3px solid var(--red); margin-bottom: 16px; }
+.title { font-size: 15px; font-weight: 700; color: var(--red); margin-bottom: 12px; }
+
+.compareBlock { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--card-border); }
+.compareTitle { font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 10px; }
+.compareRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+.compareLabel { color: var(--text); }
+.pnlPositive { color: var(--green); font-weight: 700; }
+.pnlNegative { color: var(--red); font-weight: 700; }
+
+.triggerBlock { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--card-border); }
+.triggerRow { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.triggerLabel { font-size: 12px; color: var(--text); width: 140px; flex-shrink: 0; }
+.triggerTrack { flex: 1; height: 8px; background: rgba(255, 255, 255, 0.05); border-radius: 4px; overflow: hidden; }
+.triggerFill { height: 100%; background: var(--red); border-radius: inherit; }
+.triggerCount { font-size: 12px; color: var(--text-muted); width: 20px; text-align: right; }

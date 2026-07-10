@@ -1,0 +1,110 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+.title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; max-width: 760px; line-height: 1.6; }
+.empty { font-size: 13px; color: var(--text-muted); }
+
+.generateBtn {
+  background: var(--accent);
+  color: var(--on-accent);
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 18px;
+}
+.generateBtn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+.section { display: flex; flex-direction: column; gap: 10px; }
+.sectionTitle { font-size: 13px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+.missionCard {
+  position: relative;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 18px;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.missionCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, color-mix(in srgb, var(--type-color) 18%, transparent), transparent 60%);
+  pointer-events: none;
+}
+.missionCard:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+.status_active { border-color: color-mix(in srgb, var(--type-color) 50%, var(--card-border)); }
+.status_completed { border-color: rgba(61, 220, 116, 0.5); }
+.status_failed { border-color: rgba(255, 92, 92, 0.5); opacity: 0.85; }
+
+.statusRibbon {
+  position: absolute;
+  top: 12px;
+  right: -30px;
+  transform: rotate(40deg);
+  background: var(--type-color);
+  color: #0a0a08;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 3px 34px;
+}
+.status_completed .statusRibbon { background: var(--green); }
+.status_failed .statusRibbon { background: var(--red); }
+
+.cardTop { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; position: relative; }
+.cardHeadline { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.missionType { font-size: 15px; font-weight: 800; color: var(--text); }
+.goalChip {
+  display: inline-block;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  background: color-mix(in srgb, var(--type-color) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--type-color) 45%, transparent);
+  border-radius: 12px;
+  padding: 3px 10px;
+}
+
+.problem { font-size: 12px; color: var(--text-muted); margin: 0 0 8px; position: relative; }
+.rules { font-size: 12px; color: var(--text); margin: 0 0 10px; line-height: 1.5; position: relative; }
+
+.meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-bottom: 10px; position: relative; }
+
+.outcomeActions { display: flex; flex-wrap: wrap; gap: 8px; position: relative; }
+
+.dismissBtn, .undoBtn {
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 6px 14px;
+}
+.dismissBtn:hover, .undoBtn:hover { border-color: var(--accent-border); color: var(--accent); }
+
+.successBtn {
+  background: rgba(61, 220, 116, 0.14);
+  border: 1px solid rgba(61, 220, 116, 0.45);
+  border-radius: 20px;
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+}
+.successBtn:hover { background: rgba(61, 220, 116, 0.24); transform: scale(1.03); }
+
+.failBtn {
+  background: rgba(255, 92, 92, 0.14);
+  border: 1px solid rgba(255, 92, 92, 0.45);
+  border-radius: 20px;
+  color: var(--red);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 14px;
+}
+.failBtn:hover { background: rgba(255, 92, 92, 0.24); transform: scale(1.03); }

@@ -1,5 +1,7 @@
 .form {
   background: var(--bg-card);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
@@ -36,6 +38,8 @@
 
 .openButton {
   background: var(--bg-card);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
   border: 1px dashed var(--border);
   color: var(--text-muted);
   border-radius: var(--radius);
@@ -68,7 +72,7 @@
 .toggle.active {
   border-color: var(--accent);
   color: var(--text);
-  background: rgba(79, 140, 255, 0.12);
+  background: var(--accent-dim);
 }
 
 .input {
@@ -101,7 +105,7 @@
 .preset.active {
   border-color: var(--accent);
   color: var(--text);
-  background: rgba(79, 140, 255, 0.12);
+  background: var(--accent-dim);
 }
 
 .drawdownInfo {
@@ -116,7 +120,7 @@
 .submit {
   background: var(--accent);
   border: none;
-  color: #fff;
+  color: var(--on-accent);
   border-radius: 8px;
   padding: 12px;
   font-size: 14px;

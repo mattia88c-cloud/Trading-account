@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Sparkline from './Sparkline.jsx'
 import styles from './AccountsOverview.module.css'
 
 function distanceColorClass(distance, maxDrawdown, styles) {
@@ -13,6 +14,7 @@ function distanceColorClass(distance, maxDrawdown, styles) {
 export default function AccountsOverview({
   accounts,
   getAccountBalance,
+  getAccountSeries,
   getThreshold,
   payouts,
   onDelete,
@@ -21,6 +23,7 @@ export default function AccountsOverview({
   onSelect,
 }) {
   const [menuOpenId, setMenuOpenId] = useState(null)
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null)
 
   if (accounts.length === 0) {
     return <p className={styles.empty}>Nessun conto creato. Aggiungine uno per iniziare.</p>
@@ -35,6 +38,8 @@ export default function AccountsOverview({
         const isSelected = selectedId === account.id
         const threshold = getThreshold(account.id)
         const isMenuOpen = menuOpenId === account.id
+        const series = getAccountSeries ? getAccountSeries(account.id) : null
+        const sparklineColor = threshold?.breached ? 'var(--red)' : account.color
         const payoutTotal = payouts
           .filter((p) => p.accountId === account.id)
           .reduce((sum, p) => sum + p.amount, 0)
@@ -61,30 +66,56 @@ export default function AccountsOverview({
                   onClick={(e) => {
                     e.stopPropagation()
                     setMenuOpenId(isMenuOpen ? null : account.id)
+                    setConfirmDeleteId(null)
                   }}
                 >
                   ⋮
                 </button>
                 {isMenuOpen && (
                   <div className={styles.menu} onClick={(e) => e.stopPropagation()}>
-                    <button
-                      className={styles.menuItem}
-                      onClick={() => {
-                        onToggleActive(account.id)
-                        setMenuOpenId(null)
-                      }}
-                    >
-                      {account.active ? 'Disattiva' : 'Attiva'}
-                    </button>
-                    <button
-                      className={`${styles.menuItem} ${styles.menuItemDanger}`}
-                      onClick={() => {
-                        onDelete(account.id)
-                        setMenuOpenId(null)
-                      }}
-                    >
-                      Elimina
-                    </button>
+                    {confirmDeleteId === account.id ? (
+                      <div className={styles.confirmBox}>
+                        <div className={styles.confirmText}>
+                          Eliminare {account.name}? Rimuove anche tutte le entry e i payout collegati.
+                        </div>
+                        <div className={styles.confirmActions}>
+                          <button
+                            className={styles.menuItem}
+                            onClick={() => setConfirmDeleteId(null)}
+                          >
+                            Annulla
+                          </button>
+                          <button
+                            className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                            onClick={() => {
+                              onDelete(account.id)
+                              setConfirmDeleteId(null)
+                              setMenuOpenId(null)
+                            }}
+                          >
+                            Conferma
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <button
+                          className={styles.menuItem}
+                          onClick={() => {
+                            onToggleActive(account.id)
+                            setMenuOpenId(null)
+                          }}
+                        >
+                          {account.active ? 'Disattiva' : 'Attiva'}
+                        </button>
+                        <button
+                          className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                          onClick={() => setConfirmDeleteId(account.id)}
+                        >
+                          Elimina
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
               </div>
@@ -97,6 +128,11 @@ export default function AccountsOverview({
               {pnl.toLocaleString('it-IT', { maximumFractionDigits: 2 })} ({pnlPct >= 0 ? '+' : ''}
               {pnlPct.toFixed(2)}%)
             </div>
+            {series && series.length > 1 && (
+              <div className={styles.sparkline}>
+                <Sparkline series={series} color={sparklineColor} />
+              </div>
+            )}
             {threshold && (
               <>
                 <div className={threshold.breached ? styles.thresholdBreached : styles.thresholdInfo}>

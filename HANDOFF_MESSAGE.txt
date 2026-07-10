@@ -1,0 +1,11 @@
+Continuiamo il lavoro sul progetto "trading-accounts" (cartella C:\Users\pc\Desktop\Clode Code\trading-accounts). È un'app React + Vite per tracciare conti di trading (personali e prop firm), con dashboard, calendario, analytics, weekly review e un calcolatore di position size. Leggi NOTES.md nella root del progetto prima di fare qualsiasi modifica: contiene le decisioni architetturali chiave (modello dati giornaliero-aggregato e non per-singolo-trade, logica della soglia di drawdown trailing, come funzionano i payout, il formato CSV di import, e le cose esplicitamente scartate).
+
+Un paio di cose sul modo in cui lavoriamo, per allinearti:
+- Verifica sempre le modifiche nel browser con i tool di preview prima di dire che una cosa è fatta — screenshot, controllo console, test dei flussi principali.
+- Se propongo un design/layout e non piace, dimmelo diretto (l'ho già fatto con un "assolutamente no" su un grafico a colonne troppo vuoto) — nessun problema, si cambia rotta e si riprova.
+- Prima di grandi cambi di visualizzazione, preferisco vedere 2-3 opzioni mockup piuttosto che uno sviluppo diretto scelto a caso.
+- Il repo git ha la root dentro trading-accounts/, NON nella cartella utente — mai fare git add dalla home, rischi di committare file personali.
+- Il repo GitHub è mattia88c-cloud/Trading-account, deploy automatico su Netlify quando fai push su main.
+- C'è ancora dati demo/di test nel localStorage da tenere a mente quando testi (non sono dati reali dell'utente).
+
+Aspetto la tua prossima richiesta.

@@ -37,8 +37,8 @@ export default function ColumnChart({ title, entries, formatLabel }) {
       },
     },
     scales: {
-      x: { ticks: { color: '#8b8f9c', font: { size: 11 } }, grid: { display: false } },
-      y: { ticks: { color: '#8b8f9c', font: { size: 10 } }, grid: { color: '#2a2e3a' } },
+      x: { ticks: { color: '#8a8a80', font: { size: 11 } }, grid: { display: false } },
+      y: { ticks: { color: '#8a8a80', font: { size: 10 } }, grid: { display: true, color: 'rgba(245, 245, 240, 0.08)' } },
     },
   }
 

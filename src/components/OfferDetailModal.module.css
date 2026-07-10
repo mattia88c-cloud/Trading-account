@@ -1,0 +1,64 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 20px;
+}
+
+.panel {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 22px;
+  line-height: 1;
+  padding: 4px 8px;
+}
+.closeBtn:hover { color: var(--red); }
+
+.header { margin-bottom: 16px; padding-right: 30px; }
+.firmRow { display: flex; align-items: center; gap: 8px; }
+.logo { width: 22px; height: 22px; border-radius: 5px; object-fit: cover; }
+.firm { font-size: 13px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.03em; }
+.account { display: block; font-size: 20px; color: var(--text); font-weight: 700; margin-top: 2px; }
+
+.gauges { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; padding: 12px 14px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; }
+
+.columns { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px; }
+.section { min-width: 0; }
+.sectionTitle { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+.dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; }
+.dl dt { font-size: 12px; color: var(--text-muted); }
+.dl dd { font-size: 12px; color: var(--text); font-weight: 600; margin: 0; text-align: right; }
+.effective { color: var(--accent); }
+
+.notes {
+  border-top: 1px solid var(--card-border);
+  padding-top: 14px;
+}
+.notes p { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin: 0; }
+
+@media (max-width: 640px) {
+  .columns { grid-template-columns: 1fr; }
+  .dl dd { text-align: left; }
+}

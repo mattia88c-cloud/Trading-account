@@ -26,16 +26,17 @@ export default function DataBackup({ exportData, importData }) {
     if (!file) return
 
     const reader = new FileReader()
-    reader.onload = () => {
+    reader.onload = async () => {
       const confirmed = window.confirm(
-        'Importando questo file, tutti i conti e le giornate attuali verranno sovrascritti. Continuare?'
+        'I conti e le giornate di questo file verranno aggiunti al tuo account (non sovrascrivono quelli già presenti). Continuare?'
       )
       if (!confirmed) {
         e.target.value = ''
         return
       }
+      setMessage('Importazione in corso…')
       try {
-        importData(reader.result)
+        await importData(reader.result)
         setMessage('Import completato con successo.')
       } catch {
         setMessage('Errore: file di backup non valido.')

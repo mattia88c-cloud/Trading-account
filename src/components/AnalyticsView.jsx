@@ -4,6 +4,7 @@ import ColumnChart from './ColumnChart.jsx'
 import HeatmapTable from './HeatmapTable.jsx'
 import RankedList from './RankedList.jsx'
 import IdealTradeCard from './IdealTradeCard.jsx'
+import OvertradingImpact from './OvertradingImpact.jsx'
 import styles from './AnalyticsView.module.css'
 
 // In the compact (summary) view, pick the chart type best suited to each data shape:
@@ -167,7 +168,7 @@ function NotesList({ entries, accountId }) {
   )
 }
 
-export default function AnalyticsView({ accounts, entries, getAnalytics, getSummaryAnalytics }) {
+export default function AnalyticsView({ accounts, entries, getAnalytics, getSummaryAnalytics, getOvertradingAnalytics }) {
   if (accounts.length === 0) {
     return <p className={styles.empty}>Crea un conto per vedere le statistiche.</p>
   }
@@ -175,9 +176,12 @@ export default function AnalyticsView({ accounts, entries, getAnalytics, getSumm
   const summaryStats = getSummaryAnalytics(accounts.map((a) => a.id))
   const accountIds = accounts.map((a) => a.id)
   const relevantEntries = entries.filter((e) => accountIds.includes(e.accountId))
+  const overtradingData = getOvertradingAnalytics(accountIds)
 
   return (
     <div className={styles.wrap}>
+      <OvertradingImpact data={overtradingData} />
+
       <div className={styles.card} style={{ borderLeftColor: 'var(--accent)' }}>
         <div className={styles.header}>
           Riepilogo ({summaryStats.accountCount} cont{summaryStats.accountCount === 1 ? 'o' : 'i'})
@@ -196,7 +200,7 @@ export default function AnalyticsView({ accounts, entries, getAnalytics, getSumm
             <div
               key={account.id}
               className={`${styles.card} ${!account.active ? styles.cardInactive : ''}`}
-              style={{ borderLeftColor: !account.active ? '#e74c3c' : account.color }}
+              style={{ borderLeftColor: !account.active ? 'var(--red)' : account.color }}
             >
               <div className={styles.header}>
                 <span className={styles.dot} style={{ background: account.color }} />

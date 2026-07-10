@@ -14,6 +14,8 @@
 
 .form {
   background: var(--bg-card);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px;
@@ -74,7 +76,7 @@
 .fileButton {
   background: var(--accent);
   border: none;
-  color: #fff;
+  color: var(--on-accent);
   border-radius: 8px;
   padding: 10px;
   font-size: 14px;

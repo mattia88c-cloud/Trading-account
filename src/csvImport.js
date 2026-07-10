@@ -3,9 +3,9 @@
 // multiple trade rows on the same date into a single day entry, matching the
 // app's per-day data model. Unrecognized fields are simply left empty.
 
-const DATE_ALIASES = ['date', 'data', 'close time', 'closetime', 'open time', 'opentime', 'giorno', 'day']
-const PROFIT_ALIASES = ['profit', 'pnl', 'p&l', 'p/l', 'net profit', 'net p&l', 'result', 'risultato', 'profitto', 'guadagno', 'net']
-const MARKET_ALIASES = ['symbol', 'market', 'strumento', 'instrument', 'pair', 'ticker']
+const DATE_ALIASES = ['date', 'data', 'trade date', 'close time', 'closetime', 'open time', 'opentime', 'giorno', 'day']
+const PROFIT_ALIASES = ['profit', 'pnl', 'p&l', 'p/l', 'net profit', 'net p&l', 'result', 'risultato', 'profitto', 'guadagno', 'realized pnl', 'net']
+const MARKET_ALIASES = ['symbol', 'market', 'strumento', 'instrument', 'product', 'pair', 'ticker', 'contract']
 const SIDE_ALIASES = ['side', 'type', 'lato', 'direction', 'action']
 
 function splitCsvLine(line) {
@@ -39,8 +39,19 @@ function parseCsv(text) {
   })
 }
 
+// Tries an exact header match first (in alias priority order), then falls back to
+// a "contains" match so compound broker headers (e.g. "Trade Date", "Total Realized PNL")
+// are still recognized without short generic aliases (like "net") matching the wrong column.
 function findColumn(headers, aliases) {
-  return headers.find((h) => aliases.includes(h))
+  for (const alias of aliases) {
+    const exact = headers.find((h) => h === alias)
+    if (exact) return exact
+  }
+  for (const alias of aliases) {
+    const partial = headers.find((h) => h.includes(alias))
+    if (partial) return partial
+  }
+  return undefined
 }
 
 // Formats a Date using its local calendar fields (never toISOString, which shifts

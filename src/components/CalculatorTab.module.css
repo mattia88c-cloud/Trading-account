@@ -24,17 +24,17 @@
 }
 .fieldInput:focus {
   border-color: var(--accent-border);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  box-shadow: 0 0 0 3px var(--accent-dim);
 }
 .fieldInput::placeholder { color: var(--text-muted); font-weight: 400; font-size: 16px; }
-.fieldOutput { border-color: var(--accent-border); background: var(--accent-dim); color: #93c5fd; }
+.fieldOutput { border-color: var(--accent-border); background: var(--accent-dim); color: var(--accent); }
 .fieldUnit { font-size: 11px; color: var(--text-muted); }
 .fieldSep { font-size: 24px; color: var(--text-muted); padding-bottom: 20px; flex-shrink: 0; }
 .formula { padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 16px; }
 .formulaText { font-size: 12px; color: var(--text-muted); }
 .formulaText code { color: var(--accent); background: var(--accent-dim); padding: 2px 6px; border-radius: 4px; font-size: 12px; }
 .result { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: var(--accent-dim); border: 1px solid var(--accent-border); border-radius: 10px; }
-.resultLabel { font-size: 13px; color: #93c5fd; }
+.resultLabel { font-size: 13px; color: var(--accent); }
 .resultVal { font-size: 26px; font-weight: 700; color: var(--accent); }
 .tableTitle { font-size: 14px; font-weight: 600; color: var(--text-dim); margin-bottom: 14px; }
 .refTable { width: 50%; border-collapse: collapse; font-size: 13px; }
@@ -42,5 +42,5 @@
 .refRow { cursor: pointer; transition: background 0.12s; }
 .refRow td { padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.03); color: var(--text); }
 .refRow:hover td { background: rgba(255,255,255,0.04); }
-.refRowActive td { background: var(--accent-dim); color: #93c5fd; }
+.refRowActive td { background: var(--accent-dim); color: var(--accent); }
 .tableNote { font-size: 11px; color: var(--text-muted); margin-top: 10px; }

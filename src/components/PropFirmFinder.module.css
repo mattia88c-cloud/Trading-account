@@ -1,0 +1,136 @@
+.layout { display: flex; flex-direction: column; gap: 16px; }
+.title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; max-width: 760px; }
+
+.filters { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+.filterGroup { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.filterLabel { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.04em; margin-right: 4px; }
+.checkboxPill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.checkboxPill input { cursor: pointer; }
+
+.logo {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.firmCell { display: flex; align-items: center; gap: 8px; }
+
+.togglePill {
+  font-size: 12px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid var(--accent-border);
+  border-radius: 20px;
+  padding: 5px 12px;
+  white-space: nowrap;
+}
+.togglePill:hover { border-color: var(--accent); }
+
+.advancedPanel {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--card-border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.advancedGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.field { display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: var(--text-muted); font-weight: 500; }
+.field input {
+  padding: 7px 10px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--card-border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+.field input:focus { border-color: var(--accent-border); }
+.resetBtn {
+  align-self: flex-start;
+  background: none;
+  border: 1px solid var(--card-border);
+  border-radius: 20px;
+  color: var(--text-muted);
+  font-size: 12px;
+  padding: 6px 14px;
+}
+.resetBtn:hover { border-color: var(--accent-border); color: var(--accent); }
+
+.tableWrap { overflow-x: auto; background: var(--bg-elevated); border-radius: 8px; }
+.table { width: 100%; border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.table th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 11px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--card-border);
+  background: var(--bg-elevated);
+}
+.row { cursor: pointer; }
+.row td { padding: 8px 10px; border-bottom: 1px solid var(--card-border); color: var(--text); }
+/* Sfondi pieni (non semi-trasparenti): il bagliore ambientale animato dietro la pagina
+   altrimenti filtra attraverso lo sfondo semi-trasparente delle card, creando un banding
+   visibile ("scalino") dove il gradiente sfocato incontra i confini delle righe. */
+.rowGroupA td { background: var(--bg-elevated); }
+.rowGroupB td { background: color-mix(in srgb, var(--bg-elevated) 92%, var(--text) 8%); }
+.row:hover td { background: var(--accent-dim); }
+
+.feeDotNone, .feeDotYes, .feeDotUnknown {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-right: 7px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+.feeDotNone { background: var(--green); }
+.feeDotYes { background: var(--amber); }
+.feeDotUnknown { background: var(--text-muted); }
+
+.tableHint { font-size: 11px; color: var(--text-muted); margin-top: 12px; }
+
+.smallInput {
+  width: 64px;
+  padding: 5px 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  outline: none;
+}
+.smallInput:focus { border-color: var(--accent-border); }
+
+.priceListino { color: var(--text-dim); font-weight: 600; }
+.priceEffective { color: var(--accent); font-weight: 700; }
+.clearBtn {
+  margin-left: 6px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.clearBtn:hover { color: var(--red); }

@@ -6,12 +6,20 @@
 
 .card {
   background: var(--bg-card);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
   border: 1px solid var(--border);
   border-left: 4px solid var(--border);
   border-radius: var(--radius);
   padding: 12px;
   cursor: pointer;
-  transition: opacity 0.15s, box-shadow 0.15s;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 .cardSelected {
@@ -54,7 +62,7 @@
 }
 
 .payoutTag {
-  color: #9b59b6;
+  color: var(--purple);
   font-size: 10px;
   font-weight: 700;
   margin-left: auto;

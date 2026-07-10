@@ -1,0 +1,80 @@
+.wrap { display: flex; flex-direction: column; gap: 16px; }
+.title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+.sectionTitle { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 14px; }
+
+.scoreRow { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 16px; }
+
+.ring { display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; }
+.ringLabel { font-size: 11px; color: var(--text-muted); text-align: center; }
+
+.chipsGrid {
+  flex: 1;
+  min-width: 260px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.chipIcon { color: var(--accent); flex-shrink: 0; display: flex; }
+.chipValue { font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.2; }
+.chipLabel { font-size: 10px; color: var(--text-muted); }
+
+.stripWrap { margin-top: 18px; }
+.strip { display: flex; gap: 3px; }
+.stripBar { flex: 1; height: 24px; border-radius: 3px; }
+.bar_clean { background: var(--green); }
+.bar_violation { background: var(--red); }
+.bar_empty { background: rgba(255, 255, 255, 0.06); }
+
+.stripLegend { display: flex; gap: 14px; margin-top: 8px; }
+.stripLegend span { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-muted); }
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.dotClean { background: var(--green); }
+.dotViolation { background: var(--red); }
+.dotEmpty { background: rgba(255, 255, 255, 0.06); }
+
+.badges { display: flex; flex-wrap: wrap; gap: 8px; }
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+.badgeIcon { display: flex; }
+
+.compareGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.compareCol {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 12px 14px;
+}
+.compareLabel { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+.compareValues { display: flex; align-items: baseline; gap: 8px; font-size: 15px; color: var(--text-muted); }
+.arrow { color: var(--text-muted); font-size: 13px; }
+.compareNow { font-size: 18px; font-weight: 700; color: var(--accent); }
+.compareNote { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin: 4px 0 0; }
+
+.timeline { display: flex; flex-direction: column; gap: 10px; }
+.timelineItem { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text); }
+.timelineDot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+.summaryCard { border-left: 3px solid var(--accent); }
+.summaryText { font-size: 13px; color: var(--text); line-height: 1.7; margin: 0; }
