@@ -234,7 +234,10 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
       </div>
 
       <header className={styles.header}>
-        <h1 className={styles.title}>Stratton Account Manager</h1>
+        <h1 className={styles.title}>
+          <img src="/favicon.svg" alt="" className={styles.logo} />
+          Stratton Account Manager
+        </h1>
         <nav className={styles.tabs}>
           {TABS.map((t) => (
             <button
