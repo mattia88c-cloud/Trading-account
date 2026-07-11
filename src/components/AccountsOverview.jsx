@@ -47,7 +47,7 @@ export default function AccountsOverview({
         return (
           <div
             key={account.id}
-            className={`${styles.card} ${isSelected ? styles.cardSelected : ''} ${threshold?.breached ? styles.cardBreached : ''} ${!account.active ? styles.cardInactive : ''}`}
+            className={`${styles.card} ${pnl >= 0 ? styles.cardPositive : styles.cardNegative} ${isSelected ? styles.cardSelected : ''} ${threshold?.breached ? styles.cardBreached : ''} ${!account.active ? styles.cardInactive : ''}`}
             style={{ borderLeftColor: account.color }}
             onClick={() => onSelect(isSelected ? null : account.id)}
           >

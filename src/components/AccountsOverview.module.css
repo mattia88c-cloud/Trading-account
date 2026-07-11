@@ -21,18 +21,26 @@
   flex-direction: column;
   gap: 6px;
   cursor: pointer;
+  box-shadow: var(--card-shadow);
   transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
 }
 
 .card:hover {
   border-color: var(--border-strong);
   transform: translateY(-2px);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.22);
 }
 
 .cardSelected {
   box-shadow: 0 0 0 2px var(--accent);
   transform: translateY(-1px);
+}
+
+[data-theme="light"] .cardPositive {
+  background: linear-gradient(135deg, #eafaf0, #ffffff);
+}
+
+[data-theme="light"] .cardNegative {
+  background: linear-gradient(135deg, #fdecea, #ffffff);
 }
 
 .cardBreached {
