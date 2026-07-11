@@ -27,6 +27,7 @@ import BehaviorProgress from './components/BehaviorProgress.jsx'
 import AdminPanel from './components/AdminPanel.jsx'
 import SettingsMenu from './components/SettingsMenu.jsx'
 import FriendsView from './components/FriendsView.jsx'
+import ThemeToggle from './components/ThemeToggle.jsx'
 import { TAB_ICONS } from './components/TabIcons.jsx'
 import styles from './App.module.css'
 
@@ -253,20 +254,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
         <div className={styles.userBadge}>
           <span className={styles.userName}>{profile?.username}</span>
         </div>
-        <div className={styles.themeToggle}>
-          <button
-            className={`${styles.themeOption} ${theme === 'dark' ? styles.themeOptionActive : ''}`}
-            onClick={() => setTheme('dark')}
-          >
-            Notte
-          </button>
-          <button
-            className={`${styles.themeOption} ${theme === 'light' ? styles.themeOptionActive : ''}`}
-            onClick={() => setTheme('light')}
-          >
-            Giorno
-          </button>
-        </div>
+        <ThemeToggle theme={theme} onChange={setTheme} />
         <SettingsMenu
           profile={profile}
           isAdmin={isAdmin}

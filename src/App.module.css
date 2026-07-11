@@ -145,30 +145,6 @@
   color: var(--on-accent);
 }
 
-.themeToggle {
-  display: flex;
-  gap: 2px;
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 4px;
-  flex-shrink: 0;
-}
-
-.themeOption {
-  background: none;
-  border: none;
-  color: var(--text-muted);
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.themeOptionActive {
-  background: var(--accent);
-  color: var(--on-accent);
-}
 
 .logoutBtn {
   background: none;

@@ -1,0 +1,47 @@
+.switch {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.switch[data-theme="dark"] { background: #12121c; }
+.switch[data-theme="light"] { background: #bfe0f5; border-color: #9cc9e6; }
+
+.starA, .starB, .starC {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  border-radius: 50%;
+  background: #f5f5f0;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.switch[data-theme="dark"] .starA, .switch[data-theme="dark"] .starB, .switch[data-theme="dark"] .starC {
+  opacity: 0.8;
+}
+.starA { top: 6px; left: 10px; }
+.starB { top: 14px; left: 16px; width: 1.5px; height: 1.5px; }
+.starC { top: 9px; left: 20px; width: 1.5px; height: 1.5px; }
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.switch[data-theme="dark"] .thumb { background: #2b2b38; color: #d8d8e2; transform: translateX(0); }
+.switch[data-theme="light"] .thumb { background: #f5c344; color: #6b4a05; transform: translateX(24px); }
