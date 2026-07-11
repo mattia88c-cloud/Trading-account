@@ -26,6 +26,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  box-shadow: var(--card-shadow);
 }
 
 .header {
@@ -180,6 +181,12 @@
   color: var(--text-muted);
   padding: 2px 0;
 }
+
+[data-theme="light"] .cardInactive { background: rgba(231, 76, 60, 0.14); }
+[data-theme="light"] .winBox { background: rgba(46, 204, 113, 0.16); border-color: rgba(46, 204, 113, 0.4); }
+[data-theme="light"] .loseBox { background: rgba(231, 76, 60, 0.16); border-color: rgba(231, 76, 60, 0.4); }
+[data-theme="light"] .payoutBlock { background: rgba(155, 107, 214, 0.16); border-color: rgba(155, 107, 214, 0.4); }
+[data-theme="light"] .payoutList { border-top-color: rgba(155, 107, 214, 0.3); }
 
 .notesBlock {
   margin-top: 10px;

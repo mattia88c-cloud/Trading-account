@@ -23,6 +23,7 @@
   flex-direction: column;
   gap: 8px;
   max-width: 360px;
+  box-shadow: var(--card-shadow);
 }
 
 .header {
@@ -120,3 +121,6 @@
   border-radius: 8px;
   padding: 8px 10px;
 }
+
+[data-theme="light"] .messageSuccess { background: rgba(46, 204, 113, 0.2); border-color: rgba(46, 204, 113, 0.45); }
+[data-theme="light"] .messageError { background: rgba(231, 76, 60, 0.2); border-color: rgba(231, 76, 60, 0.45); }

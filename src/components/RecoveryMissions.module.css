@@ -25,6 +25,7 @@
   border-radius: 16px;
   padding: 18px;
   overflow: hidden;
+  box-shadow: var(--card-shadow);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .missionCard::before {

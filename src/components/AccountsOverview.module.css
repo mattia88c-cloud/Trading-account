@@ -244,3 +244,6 @@
   font-size: 13px;
 }
 
+[data-theme="light"] .cardBreached { background: rgba(231, 76, 60, 0.16); }
+[data-theme="light"] .badgeProp { background: rgba(46, 204, 113, 0.22); }
+

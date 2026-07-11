@@ -23,6 +23,7 @@
   flex-direction: column;
   gap: 8px;
   max-width: 320px;
+  box-shadow: var(--card-shadow);
 }
 
 .header {

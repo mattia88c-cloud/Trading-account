@@ -67,3 +67,6 @@
   font-weight: 700;
   margin-left: auto;
 }
+
+[data-theme="light"] .cardBreached { background: rgba(231, 76, 60, 0.15); }
+[data-theme="light"] .breachedTag { background: rgba(231, 76, 60, 0.22); }
