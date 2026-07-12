@@ -59,12 +59,12 @@
 .rowHeader,
 .row {
   display: grid;
-  grid-template-columns: 90px 1.2fr 0.9fr 0.9fr 0.6fr 1.4fr 100px 140px;
+  grid-template-columns: 90px 1.2fr 0.9fr 0.9fr 0.6fr 1.2fr 70px 100px 170px;
   gap: 8px;
   align-items: center;
   padding: 8px 6px;
   font-size: 12.5px;
-  min-width: 760px;
+  min-width: 850px;
 }
 
 .rowHeader {
@@ -109,6 +109,10 @@
   white-space: nowrap;
 }
 
+.linkCell {
+  color: var(--text-muted);
+}
+
 .alignRight {
   text-align: right;
   font-weight: 700;
@@ -139,6 +143,19 @@
 }
 
 .chartLink:hover {
+  border-color: var(--accent-border);
+}
+
+.editBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--accent);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+.editBtn:hover {
   border-color: var(--accent-border);
 }
 
@@ -180,4 +197,21 @@
   font-size: 14px;
   text-align: center;
   padding: 20px;
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.modalBox {
+  width: 100%;
+  max-width: 480px;
 }

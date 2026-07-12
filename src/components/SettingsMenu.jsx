@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styles from './SettingsMenu.module.css'
 
 const gearIcon = {
@@ -10,9 +10,10 @@ const DELETE_CONFIRM_WORD = 'ELIMINA'
 
 export default function SettingsMenu({
   profile, isAdmin, onUpdatePassword, onUpdateUsername, onReauthenticate, onOpenAdmin, onDeleteAllData, onSignOut,
+  sfxMuted, onToggleSfx, motionDisabled, onToggleMotion,
 }) {
   const [open, setOpen] = useState(false)
-  const [view, setView] = useState('menu') // 'menu' | 'password' | 'profile' | 'adminAuth' | 'deleteData'
+  const [view, setView] = useState('menu') // 'menu' | 'password' | 'profile' | 'adminAuth' | 'deleteData' | 'preferences'
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [username, setUsername] = useState(profile?.username || '')
@@ -21,6 +22,7 @@ export default function SettingsMenu({
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [busy, setBusy] = useState(false)
+  const wrapRef = useRef(null)
 
   function resetForms() {
     setView('menu')
@@ -37,6 +39,23 @@ export default function SettingsMenu({
     setOpen((v) => !v)
     resetForms()
   }
+
+  function close() {
+    setOpen(false)
+    resetForms()
+  }
+
+  // Il dropdown restava aperto all'infinito (anche cambiando sezione): si chiude solo cliccando
+  // di nuovo sulla rotellina. Chiudiamo anche cliccando fuori dal box, comportamento standard
+  // per un menu a tendina.
+  useEffect(() => {
+    if (!open) return
+    function handleOutsideClick(e) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target)) close()
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => document.removeEventListener('mousedown', handleOutsideClick)
+  }, [open])
 
   function goTo(nextView) {
     setView(nextView)
@@ -76,8 +95,7 @@ export default function SettingsMenu({
     const { error: err } = await onReauthenticate(adminPassword)
     setBusy(false)
     if (err) { setError('Password errata.'); return }
-    setOpen(false)
-    resetForms()
+    close()
     onOpenAdmin()
   }
 
@@ -95,7 +113,7 @@ export default function SettingsMenu({
   }
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.wrap} ref={wrapRef}>
       <button type="button" className={styles.gearBtn} onClick={toggle} title="Impostazioni" aria-label="Impostazioni">
         <svg {...gearIcon}>
           <circle cx="12" cy="12" r="3" />
@@ -114,6 +132,9 @@ export default function SettingsMenu({
               <button type="button" className={styles.menuItem} onClick={() => goTo('profile')}>
                 Modifica profilo
               </button>
+              <button type="button" className={styles.menuItem} onClick={() => goTo('preferences')}>
+                Suoni e animazioni
+              </button>
               {isAdmin && (
                 <button type="button" className={styles.menuItem} onClick={() => goTo('adminAuth')}>
                   Gestione Account
@@ -125,8 +146,31 @@ export default function SettingsMenu({
               <button type="button" className={`${styles.menuItem} ${styles.menuItemDanger}`} onClick={onSignOut}>
                 Logout
               </button>
-              <div className={styles.futureItem}>Impostazioni future</div>
             </>
+          )}
+
+          {view === 'preferences' && (
+            <div className={styles.form}>
+              <label className={styles.toggleRow}>
+                <input
+                  type="checkbox"
+                  checked={!sfxMuted}
+                  onChange={(e) => onToggleSfx(!e.target.checked)}
+                />
+                Suoni dell'interfaccia
+              </label>
+              <label className={styles.toggleRow}>
+                <input
+                  type="checkbox"
+                  checked={!motionDisabled}
+                  onChange={(e) => onToggleMotion(!e.target.checked)}
+                />
+                Animazioni ed effetti visivi
+              </label>
+              <div className={styles.formActions}>
+                <button type="button" className={styles.backBtn} onClick={() => goTo('menu')}>← Indietro</button>
+              </div>
+            </div>
           )}
 
           {view === 'password' && (

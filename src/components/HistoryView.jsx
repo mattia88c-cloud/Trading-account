@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
+import DayEntryForm from './DayEntryForm.jsx'
 import styles from './HistoryView.module.css'
 
-export default function HistoryView({ accounts, entries, onDeleteEntry }) {
+export default function HistoryView({ accounts, entries, onDeleteEntry, onUpdateEntry }) {
   const [accountFilter, setAccountFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [search, setSearch] = useState('')
   const [confirmId, setConfirmId] = useState(null)
+  const [editingEntry, setEditingEntry] = useState(null)
 
   const accountById = useMemo(() => {
     const map = {}
@@ -86,6 +88,7 @@ export default function HistoryView({ accounts, entries, onDeleteEntry }) {
           <span>Sessione</span>
           <span>Voto</span>
           <span>Tag</span>
+          <span>Link</span>
           <span className={styles.alignRight}>P/L</span>
           <span></span>
         </div>
@@ -102,11 +105,8 @@ export default function HistoryView({ accounts, entries, onDeleteEntry }) {
               <span>{e.openSession || '—'}</span>
               <span>{e.grade || '—'}</span>
               <span className={styles.tags}>{(e.tags || []).map((t) => `#${t}`).join(' ') || '—'}</span>
-              <span className={`${styles.alignRight} ${e.profit >= 0 ? styles.pnlPositive : styles.pnlNegative}`}>
-                {e.profit >= 0 ? '+' : ''}{e.profit.toLocaleString('it-IT', { maximumFractionDigits: 2 })}
-              </span>
-              <span className={styles.actions}>
-                {e.chartUrl && (
+              <span className={styles.linkCell}>
+                {e.chartUrl ? (
                   <a
                     className={styles.chartLink}
                     href={e.chartUrl}
@@ -116,7 +116,12 @@ export default function HistoryView({ accounts, entries, onDeleteEntry }) {
                   >
                     Chart
                   </a>
-                )}
+                ) : '—'}
+              </span>
+              <span className={`${styles.alignRight} ${e.profit >= 0 ? styles.pnlPositive : styles.pnlNegative}`}>
+                {e.profit >= 0 ? '+' : ''}{e.profit.toLocaleString('it-IT', { maximumFractionDigits: 2 })}
+              </span>
+              <span className={styles.actions}>
                 {confirmId === e.id ? (
                   <>
                     <button className={styles.cancelBtn} onClick={() => setConfirmId(null)}>Annulla</button>
@@ -131,7 +136,10 @@ export default function HistoryView({ accounts, entries, onDeleteEntry }) {
                     </button>
                   </>
                 ) : (
-                  <button className={styles.deleteBtn} onClick={() => setConfirmId(e.id)}>Elimina</button>
+                  <>
+                    <button className={styles.editBtn} onClick={() => setEditingEntry(e)}>Modifica</button>
+                    <button className={styles.deleteBtn} onClick={() => setConfirmId(e.id)}>Elimina</button>
+                  </>
                 )}
               </span>
             </div>
@@ -139,6 +147,20 @@ export default function HistoryView({ accounts, entries, onDeleteEntry }) {
         })}
         {filtered.length === 0 && <p className={styles.empty}>Nessuna entry trovata con questi filtri.</p>}
       </div>
+
+      {editingEntry && (
+        <div className={styles.modalOverlay} onClick={() => setEditingEntry(null)}>
+          <div className={styles.modalBox} onClick={(ev) => ev.stopPropagation()}>
+            <DayEntryForm
+              accounts={accounts}
+              initialEntry={editingEntry}
+              accountName={accountById[editingEntry.accountId]?.name}
+              onSave={(formData) => onUpdateEntry(editingEntry.id, formData)}
+              onClose={() => setEditingEntry(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

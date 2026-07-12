@@ -1,11 +1,33 @@
-Continuiamo il lavoro sul progetto "trading-accounts" (cartella C:\Users\pc\Desktop\Clode Code\trading-accounts). È un'app React + Vite per tracciare conti di trading (personali e prop firm), con dashboard, calendario, analytics, weekly review e un calcolatore di position size. Leggi NOTES.md nella root del progetto prima di fare qualsiasi modifica: contiene le decisioni architetturali chiave (modello dati giornaliero-aggregato e non per-singolo-trade, logica della soglia di drawdown trailing, come funzionano i payout, il formato CSV di import, e le cose esplicitamente scartate).
+Continuiamo il lavoro sul progetto "trading-accounts" (cartella C:\Users\pc\Desktop\Clode Code\trading-accounts) — "Stratton Account Manager", app React + Vite per tracciare conti di trading, con backend Supabase (Postgres + Auth + RLS) multi-utente. Leggi NOTES.md nella root del progetto prima di fare modifiche: contiene le decisioni architetturali chiave del journal.
 
-Un paio di cose sul modo in cui lavoriamo, per allinearti:
-- Verifica sempre le modifiche nel browser con i tool di preview prima di dire che una cosa è fatta — screenshot, controllo console, test dei flussi principali.
-- Se propongo un design/layout e non piace, dimmelo diretto (l'ho già fatto con un "assolutamente no" su un grafico a colonne troppo vuoto) — nessun problema, si cambia rotta e si riprova.
-- Prima di grandi cambi di visualizzazione, preferisco vedere 2-3 opzioni mockup piuttosto che uno sviluppo diretto scelto a caso.
-- Il repo git ha la root dentro trading-accounts/, NON nella cartella utente — mai fare git add dalla home, rischi di committare file personali.
-- Il repo GitHub è mattia88c-cloud/Trading-account, deploy automatico su Netlify quando fai push su main.
-- C'è ancora dati demo/di test nel localStorage da tenere a mente quando testi (non sono dati reali dell'utente).
+STATO ATTUALE — tutto quanto segue è già fatto, deployato e funzionante in produzione:
+
+- Sistema utenti completo: login, sessione persistente, primo accesso forza nome vero + password nuova, reset password via email, Impostazioni (cambia password / modifica profilo / elimina tutti i dati con conferma a digitazione) accessibile dalla rotellina in alto a destra.
+- Pannello Admin ("Gestione Account", dentro Impostazioni, dietro re-inserimento password): crea/disattiva/riattiva/elimina utenti, reset password, backend su 4 Supabase Edge Functions (supabase/functions/admin-*) già deployate.
+- Sezione "Friends": classifica settimanale a cubetti (% giornaliera lun-ven, saldo, numero conti) e classifica disciplina (score + missioni superate/fallite), su tabella condivisa leaderboard_stats (solo dati aggregati, mai trade/note — privacy per design).
+- 3 account amici reali già creati: Antonio (keitmoon1@gmail.com), Pietro (pietro.pignat@gmail.com), Daniele (claudiostore98@gmail.com) — password temporanee già consegnate, dovranno impostare nome+password al primo login.
+- Journal trade / Registro rapido: campo link screenshot TradingView, mostrato come link cliccabile in Cronologia.
+- Calculator: due calcolatori affiancati NAS100 (MNQ $2/punto, 4 tick/punto) e XAUUSD (MGC $10/punto, 10 tick/punto), ciascuno con logo mercato nell'angolo.
+- Switch giorno/notte singolo (sole/luna scorrevole) al posto dei vecchi due pulsanti.
+- Redesign completo modalità giorno: sfondo con bagliori pastello diffusi (oro/verde), TUTTI i box del sito con ombra profonda per effetto 3D fluttuante, colori rosso/verde/viola degli stati (calendario, winners/losers, payout, ecc.) accentuati per non risultare sbiaditi. Modalità notte invariata.
+- Logo/favicon del sito (monogramma "S" oro su nero).
+- Deploy: repo GitHub mattia88c-cloud/Trading-account → push su main → Netlify fa auto-deploy. Sito live: https://stratton-account-manager.netlify.app
+
+WORKFLOW DA SEGUIRE D'ORA IN AVANTI (importante, richiesto esplicitamente):
+Fai le modifiche in locale, verificale nel preview locale, e NON fare commit/push finché non te lo chiedo esplicitamente ("ok procedi" / "aggiorna il sito online" o simili). Un push su main è visibile subito a tutti (incluso i 3 amici), quindi va fatto solo su mia conferma.
+
+RIFERIMENTI TECNICI:
+- Supabase project: flvimfpdwxhzdfjuejra.supabase.co — Supabase CLI già installata e collegata (supabase login + link già fatti sul mio PC), le prossime `supabase functions deploy` funzionano dirette dal mio terminale.
+- .env.local locale già configurato (gitignored, non richiederlo di nuovo se il file c'è ancora).
+- Il tuo ambiente Bash/PowerShell (sandbox) è ISOLATO dal mio PC reale: se serve installare qualcosa o lanciare comandi che devono girare sul MIO terminale (non nel tuo sandbox), dammi i comandi esatti da eseguire io, non dare per scontato che le tue esecuzioni bash abbiano effetto sul mio PC.
+- Per verificare visivamente le modifiche nel browser di anteprima, se la sessione richiede login e non hai le mie credenziali, chiedimi di controllare io stesso o verifica che il codice compili senza errori.
+
+COSA NON RIPETERE:
+- Non rifare gli stage A-D (auth, migrazione dati, admin, impostazioni) — tutti completati.
+- Non toccare TabIcons.jsx in modo distruttivo (solo aggiunte, mai "correzioni" delle icone esistenti).
+- Non richiedere di nuovo se usare Supabase (già deciso e implementato da tempo).
+- Non reintrodurre localStorage per i dati del journal.
+- Non modificare la modalità notte a meno che non richiesto esplicitamente — il redesign di oggi ha toccato solo la modalità giorno.
+- usePropFirmOverrides.js resta volutamente su localStorage (dati non sensibili, per-dispositivo).
 
 Aspetto la tua prossima richiesta.

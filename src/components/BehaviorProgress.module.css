@@ -72,6 +72,22 @@
 .compareNow { font-size: 18px; font-weight: 700; color: var(--accent); }
 .compareNote { font-size: 11px; color: var(--text-muted); line-height: 1.5; margin: 4px 0 0; }
 
+/* Modalità giorno: lo sfondo rgba(255,255,255,x) sopra usato per .compareCol è pensato per lo
+   sfondo nero ed è invisibile su sfondo bianco (i dati sembrano scritti direttamente sulla
+   card). In modalità giorno diamo a ogni confronto un bordo di accento verde/rosso a seconda
+   che il valore sia migliorato o peggiorato — la modalità notte resta invariata. */
+[data-theme="light"] .compareCol {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border-strong);
+  border-radius: 0 8px 8px 0;
+  padding: 12px 14px 12px 12px;
+}
+[data-theme="light"] .compareCol.up { border-left-color: var(--green); }
+[data-theme="light"] .compareCol.down { border-left-color: var(--red); }
+[data-theme="light"] .compareCol.up .compareNow { color: var(--green); }
+[data-theme="light"] .compareCol.down .compareNow { color: var(--red); }
+
 .timeline { display: flex; flex-direction: column; gap: 10px; }
 .timelineItem { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text); }
 .timelineDot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0; }

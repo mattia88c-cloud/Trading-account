@@ -1,4 +1,5 @@
 import Card from './Card'
+import { MISSION_TYPES } from '../useMissions'
 import styles from './FriendsView.module.css'
 
 const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven']
@@ -24,6 +25,24 @@ function fmtPct(n) {
   return `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`
 }
 
+// Il "punto debole" è il tipo di missione fallita più frequente nello storico condiviso
+// dell'amico (a parità di conteggio vince la più recente). Usa solo missions_summary, già
+// aggregato e già pubblicato sulla classifica — nessun nuovo dato grezzo esposto tra amici.
+function getTopStruggle(missionsSummary) {
+  const failed = (missionsSummary || []).filter((m) => m.status === 'failed')
+  if (failed.length === 0) return null
+  const byType = {}
+  failed.forEach((m) => {
+    if (!byType[m.type]) byType[m.type] = { count: 0, lastDate: m.date }
+    byType[m.type].count += 1
+    if (m.date > byType[m.type].lastDate) byType[m.type].lastDate = m.date
+  })
+  const [topType] = Object.entries(byType).sort((a, b) => (
+    b[1].count - a[1].count || b[1].lastDate.localeCompare(a[1].lastDate)
+  ))[0]
+  return MISSION_TYPES[topType] || null
+}
+
 export default function FriendsView({ rows, currentUserId, loading }) {
   if (loading) return <p className={styles.empty}>Caricamento…</p>
   if (rows.length === 0) {
@@ -44,7 +63,9 @@ export default function FriendsView({ rows, currentUserId, loading }) {
         <div className={styles.title}>Classifica settimanale</div>
         <p className={styles.subtitle}>% di profitto giornaliera, lunedì-venerdì (settimana corrente)</p>
         <div className={styles.grid}>
-          {rankedByWeek.map((r, i) => (
+          {rankedByWeek.map((r, i) => {
+            const struggle = getTopStruggle(r.missions_summary)
+            return (
             <div key={r.user_id} className={styles.boxWrap}>
               {i === 0 && <Crown />}
               <div className={`${styles.box} ${r.user_id === currentUserId ? styles.boxMe : ''}`}>
@@ -55,6 +76,16 @@ export default function FriendsView({ rows, currentUserId, loading }) {
               <div className={styles.boxMeta}>
                 <span>{fmtMoney(r.balance)}</span>
                 <span>{r.account_count ?? 0} {r.account_count === 1 ? 'conto' : 'conti'}</span>
+              </div>
+              <div
+                className={`${styles.struggleTag} ${!struggle ? styles.struggleTagEmpty : ''}`}
+                style={struggle ? { '--struggle-color': struggle.color } : undefined}
+              >
+                {struggle ? (
+                  <><span aria-hidden="true">{struggle.icon}</span> Punto debole: {struggle.label}</>
+                ) : (
+                  <>Nessun punto debole rilevato</>
+                )}
               </div>
               <div className={styles.cubes}>
                 {WEEKDAY_LABELS.map((label, idx) => {
@@ -81,7 +112,8 @@ export default function FriendsView({ rows, currentUserId, loading }) {
               </div>
               </div>
             </div>
-          ))}
+            )
+          })}
         </div>
       </Card>
 

@@ -29,6 +29,8 @@ import SettingsMenu from './components/SettingsMenu.jsx'
 import FriendsView from './components/FriendsView.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
 import { TAB_ICONS } from './components/TabIcons.jsx'
+import { isSfxMuted, setSfxMuted, playNav, playSave, playDelete, playClick } from './sounds'
+import { isMotionDisabled, setMotionDisabled } from './motion'
 import styles from './App.module.css'
 
 const TABS = [
@@ -151,11 +153,66 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
   const [showInactiveDashboard, setShowInactiveDashboard] = useState(false)
   const [showInactiveAnalytics, setShowInactiveAnalytics] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'dark')
+  const [sfxMuted, setSfxMutedState] = useState(() => isSfxMuted())
+  const [motionDisabled, setMotionDisabledState] = useState(() => isMotionDisabled())
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem(THEME_KEY, theme)
   }, [theme])
+
+  useEffect(() => {
+    document.documentElement.dataset.motion = motionDisabled ? 'reduced' : 'full'
+  }, [motionDisabled])
+
+  function handleSfxToggle(muted) {
+    setSfxMuted(muted)
+    setSfxMutedState(muted)
+  }
+
+  function handleMotionToggle(disabled) {
+    setMotionDisabled(disabled)
+    setMotionDisabledState(disabled)
+  }
+
+  // Sfx + effetto visivo "burst" delegati su tutta l'app: un solo listener invece di richiamare
+  // playX()/spawnBurst() in ogni form/pulsante. Il tipo si sceglie dal contesto del bottone
+  // (dentro la nav = cambio sezione, submit = salvataggio, testo "elimina"/"conferma" = azione
+  // distruttiva, resto = click generico) — stessa classificazione per suono e colore del burst.
+  useEffect(() => {
+    function spawnBurst(x, y, color) {
+      const el = document.createElement('span')
+      el.className = 'click-burst'
+      el.style.left = `${x}px`
+      el.style.top = `${y}px`
+      el.style.borderColor = color
+      document.body.appendChild(el)
+      el.addEventListener('animationend', () => el.remove())
+      setTimeout(() => el.remove(), 500)
+    }
+
+    function handleClick(e) {
+      const btn = e.target.closest('button')
+      if (!btn || btn.disabled) return
+      const text = (btn.textContent || '').trim().toLowerCase()
+      let color = 'var(--text-muted)'
+      if (btn.closest(`.${styles.tabs}`)) {
+        playNav()
+        color = 'var(--accent)'
+      } else if (text.includes('elimina') || text === 'conferma') {
+        playDelete()
+        color = 'var(--red)'
+      } else if (btn.type === 'submit') {
+        playSave()
+        color = 'var(--green)'
+      } else {
+        playClick()
+      }
+      if (!isMotionDisabled()) spawnBurst(e.clientX, e.clientY, color)
+    }
+    document.addEventListener('click', handleClick, true)
+    return () => document.removeEventListener('click', handleClick, true)
+  }, [])
   const {
     accounts,
     entries,
@@ -164,6 +221,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
     deleteAccount,
     toggleAccountActive,
     saveDayEntry,
+    updateEntry,
     saveOvertradingDay,
     deleteEntry,
     importCsvEntries,
@@ -264,6 +322,10 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
           onOpenAdmin={() => setTab('admin')}
           onDeleteAllData={handleDeleteAllData}
           onSignOut={onSignOut}
+          sfxMuted={sfxMuted}
+          onToggleSfx={handleSfxToggle}
+          motionDisabled={motionDisabled}
+          onToggleMotion={handleMotionToggle}
         />
       </header>
 
@@ -311,6 +373,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
                 selectedId={selectedAccountId}
                 onSelect={setSelectedAccountId}
                 theme={theme}
+                motionEnabled={!motionDisabled}
               />
             </div>
           </div>
@@ -338,7 +401,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
 
         {tab === 'calendar' && <CalendarView accounts={accounts} entries={entries} />}
 
-        {tab === 'history' && <HistoryView accounts={accounts} entries={entries} onDeleteEntry={deleteEntry} />}
+        {tab === 'history' && <HistoryView accounts={accounts} entries={entries} onDeleteEntry={deleteEntry} onUpdateEntry={updateEntry} />}
 
         {tab === 'weekly' && <WeeklyReview accounts={analyticsAccounts} getWeeklyAnalytics={getWeeklyAnalytics} />}
 

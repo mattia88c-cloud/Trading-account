@@ -615,16 +615,18 @@ export function useTradingData() {
     return mapped
   }
 
-  // Upserts one entry per selected account for the given date.
-  async function saveDayEntry({
-    date, accountIds, profit, tradesOpened, tradesEffective, side,
+  // Costruisce l'oggetto entry (camelCase) per un conto a partire dai campi del form Journal
+  // trade. Condiviso tra saveDayEntry (crea/upsert, uno o più conti) e updateEntry (modifica
+  // in place una singola riga esistente).
+  function buildEntryFields({
+    date, accountId, profit, tradesOpened, tradesEffective, side,
     market, initialSizeMicro, finalSizeMicro, initialRisk, finalRisk, reEntry,
     hasNews, openSession, closeSession, entryTime, exitTime, followedStrategy,
     riskReward, outcome, closeType, grade,
     emotionalState, confidenceLevel, mistake, whatWentWell, lesson, tags,
     riskPoints, resultPoints, chartUrl,
   }) {
-    const entryObjects = accountIds.map((accountId) => ({
+    return {
       date,
       accountId,
       profit: Number(profit),
@@ -657,8 +659,40 @@ export function useTradingData() {
       riskPoints: riskPoints ? Number(riskPoints) : null,
       resultPoints: resultPoints ? Number(resultPoints) : null,
       chartUrl: chartUrl || null,
-    }))
+    }
+  }
+
+  // Upserts one entry per selected account for the given date.
+  async function saveDayEntry({ date, accountIds, ...fields }) {
+    const entryObjects = accountIds.map((accountId) => buildEntryFields({ date, accountId, ...fields }))
     await upsertEntries(entryObjects)
+  }
+
+  // Modifica in place una entry esistente (update by id, non upsert by account_id+date): a
+  // differenza di saveDayEntry, qui la entry è già nota e va aggiornata anche se cambiano
+  // data o conto, non ricreata come nuova riga.
+  // Il modal di modifica espone solo i campi del Journal trade standard, quindi NON deve mai
+  // toccare i campi del flusso overtrading (overtrading_day, data_quality, ecc.): entryToDb
+  // li valorizzerebbe con dei default (es. overtrading_day: false) cancellando il flag su
+  // entry create con saveOvertradingDay/importCsvEntries.
+  async function updateEntry(id, { date, accountIds, ...fields }) {
+    const row = entryToDb(buildEntryFields({ date, accountId: accountIds[0], ...fields }))
+    delete row.overtrading_day
+    delete row.estimated_trade_count
+    delete row.lost_control_at_trade
+    delete row.main_trigger
+    delete row.data_quality
+    delete row.quick_note
+    delete row.tomorrow_correction
+    const { data, error } = await supabase.from('entries').update(row).eq('id', id).select()
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Errore modifica entry:', error.message)
+      return
+    }
+    const updated = entryFromDb(data[0])
+    setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)))
+    return updated
   }
 
   // Flusso rapido "emergency mode" per le giornate di overtrading: salva il danno grezzo
@@ -1100,6 +1134,7 @@ export function useTradingData() {
     deleteAccount,
     toggleAccountActive,
     saveDayEntry,
+    updateEntry,
     saveOvertradingDay,
     deleteEntry,
     importCsvEntries,

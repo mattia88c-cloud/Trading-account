@@ -16,6 +16,15 @@ function fmtMoney(n) {
   return `${n >= 0 ? '+' : ''}$${fmt(n, 0)}`
 }
 
+// Verso del confronto "prima → dopo": per episodi (revenge, overlot) un valore più basso è
+// il miglioramento, per piano/P&L è il contrario. Usato solo per l'accento colorato in
+// modalità giorno (vedi [data-theme="light"] in BehaviorProgress.module.css).
+function trend(prev, curr, higherIsBetter) {
+  if (prev === null || prev === undefined || curr === null || curr === undefined || curr === prev) return ''
+  const improved = higherIsBetter ? curr > prev : curr < prev
+  return improved ? 'up' : 'down'
+}
+
 // Testo generato con un template deterministico sui numeri calcolati (nessuna chiamata AI:
 // quella sezione è rimandata). Copre gli scenari principali richiesti dal riepilogo.
 function buildSummary(data) {
@@ -172,7 +181,7 @@ export default function BehaviorProgress({ data }) {
       <Card>
         <div className={styles.sectionTitle}>Ultimi 30 giorni vs precedenti</div>
         <div className={styles.compareGrid}>
-          <div className={styles.compareCol}>
+          <div className={`${styles.compareCol} ${styles[trend(data.planPrev30Pct, data.planLast30Pct, true)] || ''}`}>
             <div className={styles.compareLabel}>Rispetto del piano</div>
             <div className={styles.compareValues}>
               <span>{data.planPrev30Pct !== null ? `${fmt(data.planPrev30Pct, 0)}%` : '—'}</span>
@@ -180,7 +189,7 @@ export default function BehaviorProgress({ data }) {
               <span className={styles.compareNow}>{data.planLast30Pct !== null ? `${fmt(data.planLast30Pct, 0)}%` : '—'}</span>
             </div>
           </div>
-          <div className={styles.compareCol}>
+          <div className={`${styles.compareCol} ${styles[trend(data.revengePrev30, data.revengeLast30, false)] || ''}`}>
             <div className={styles.compareLabel}>Revenge trading (episodi)</div>
             <div className={styles.compareValues}>
               <span>{data.revengePrev30}</span>
@@ -188,7 +197,7 @@ export default function BehaviorProgress({ data }) {
               <span className={styles.compareNow}>{data.revengeLast30}</span>
             </div>
           </div>
-          <div className={styles.compareCol}>
+          <div className={`${styles.compareCol} ${styles[trend(data.overlotPrev30, data.overlotLast30, false)] || ''}`}>
             <div className={styles.compareLabel}>Overlottaggio (episodi)</div>
             <div className={styles.compareValues}>
               <span>{data.overlotPrev30}</span>
@@ -196,7 +205,7 @@ export default function BehaviorProgress({ data }) {
               <span className={styles.compareNow}>{data.overlotLast30}</span>
             </div>
           </div>
-          <div className={styles.compareCol}>
+          <div className={`${styles.compareCol} ${styles[trend(data.pnlPrev30, data.pnlLast30, true)] || ''}`}>
             <div className={styles.compareLabel}>P&amp;L del periodo</div>
             <div className={styles.compareValues}>
               <span>{fmtMoney(data.pnlPrev30)}</span>

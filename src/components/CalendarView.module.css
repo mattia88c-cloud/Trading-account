@@ -73,19 +73,37 @@
 }
 
 .emptyCell {
-  min-height: 68px;
+  min-height: 96px;
 }
 
 .cell {
-  min-height: 68px;
+  min-height: 96px;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 6px;
+  padding: 7px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
   font-size: 11px;
+}
+
+.cellTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.dots {
+  display: flex;
+  gap: 3px;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 
 .cellPositive {
@@ -116,7 +134,7 @@
 
 .dayPnl {
   font-weight: 700;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .dayTrades {
@@ -130,6 +148,77 @@
 
 .cellNegative .dayPnl {
   color: var(--red);
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.gradePill {
+  font-size: 9.5px;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 5px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+}
+
+.gradeA {
+  color: var(--green);
+  border-color: rgba(46, 204, 113, 0.4);
+}
+
+.gradeB {
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+.gradeC {
+  color: var(--amber);
+  border-color: rgba(224, 168, 61, 0.4);
+}
+
+.gradeD {
+  color: var(--red);
+  border-color: rgba(231, 76, 60, 0.4);
+}
+
+.wlRow {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: auto;
+}
+
+.winBar {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  overflow: hidden;
+  display: flex;
+  background: var(--border);
+}
+
+.segWin {
+  background: var(--green);
+  height: 100%;
+}
+
+.segLoss {
+  background: var(--red);
+  opacity: 0.5;
+  height: 100%;
+}
+
+.wlLabel {
+  flex: none;
+  font-size: 9px;
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 .yearWrap {
@@ -220,13 +309,103 @@
   color: var(--text-muted);
 }
 
+.annualWrap {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.annualHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.annualTitle {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.annualTotalPositive {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--green);
+  line-height: 1;
+}
+
+.annualTotalNegative {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--red);
+  line-height: 1;
+}
+
+.annualPct {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.annualRange {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.statCard {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.statLabel {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.statValue {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.statSub {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.statGreen .statValue {
+  color: var(--green);
+}
+
+.statRed .statValue {
+  color: var(--red);
+}
+
 @media (max-width: 600px) {
   .cell {
-    min-height: 44px;
+    min-height: 64px;
     font-size: 9px;
     padding: 4px;
   }
   .dayPnl {
-    font-size: 10px;
+    font-size: 12px;
+  }
+  .wlLabel {
+    display: none;
   }
 }

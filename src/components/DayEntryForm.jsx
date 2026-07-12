@@ -6,47 +6,48 @@ function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
-export default function DayEntryForm({ accounts, onSave }) {
-  const [date, setDate] = useState(today())
-  const [selectedIds, setSelectedIds] = useState([])
-  const [market, setMarket] = useState(MARKETS[0])
-  const [hasNews, setHasNews] = useState(false)
-  const [openSession, setOpenSession] = useState(SESSIONS[0])
-  const [closeSession, setCloseSession] = useState(SESSIONS[0])
-  const [entryTime, setEntryTime] = useState('')
-  const [exitTime, setExitTime] = useState('')
-  const [profit, setProfit] = useState('')
-  const [tradesOpened, setTradesOpened] = useState('')
-  const [tradesEffective, setTradesEffective] = useState('')
-  const [side, setSide] = useState('misto')
-  const [initialSizeMicro, setInitialSizeMicro] = useState('')
-  const [finalSizeMicro, setFinalSizeMicro] = useState('')
-  const [initialRisk, setInitialRisk] = useState('')
-  const [finalRisk, setFinalRisk] = useState('')
-  const [reEntry, setReEntry] = useState(false)
-  const [followedStrategy, setFollowedStrategy] = useState(true)
-  const [riskPoints, setRiskPoints] = useState('')
-  const [resultPoints, setResultPoints] = useState('')
-  const [riskReward, setRiskReward] = useState('')
-  const [outcome, setOutcome] = useState('')
-  const [closeType, setCloseType] = useState('')
-  const [grade, setGrade] = useState('')
-  const [emotionalState, setEmotionalState] = useState('')
-  const [confidenceLevel, setConfidenceLevel] = useState(5)
-  const [mistake, setMistake] = useState('')
-  const [whatWentWell, setWhatWentWell] = useState('')
-  const [lesson, setLesson] = useState('')
-  const [tags, setTags] = useState('')
-  const [chartUrl, setChartUrl] = useState('')
+export default function DayEntryForm({ accounts, onSave, initialEntry, accountName, onClose }) {
+  const isEdit = Boolean(initialEntry)
+  const [date, setDate] = useState(initialEntry?.date || today())
+  const [selectedIds, setSelectedIds] = useState(initialEntry ? [initialEntry.accountId] : [])
+  const [market, setMarket] = useState(initialEntry?.market || MARKETS[0])
+  const [hasNews, setHasNews] = useState(initialEntry?.hasNews || false)
+  const [openSession, setOpenSession] = useState(initialEntry?.openSession || SESSIONS[0])
+  const [closeSession, setCloseSession] = useState(initialEntry?.closeSession || SESSIONS[0])
+  const [entryTime, setEntryTime] = useState(initialEntry?.entryTime || '')
+  const [exitTime, setExitTime] = useState(initialEntry?.exitTime || '')
+  const [profit, setProfit] = useState(initialEntry?.profit ?? '')
+  const [tradesOpened, setTradesOpened] = useState(initialEntry?.tradesOpened ?? '')
+  const [tradesEffective, setTradesEffective] = useState(initialEntry?.tradesEffective ?? '')
+  const [side, setSide] = useState(initialEntry?.side || 'misto')
+  const [initialSizeMicro, setInitialSizeMicro] = useState(initialEntry?.initialSizeMicro ?? '')
+  const [finalSizeMicro, setFinalSizeMicro] = useState(initialEntry?.finalSizeMicro ?? '')
+  const [initialRisk, setInitialRisk] = useState(initialEntry?.initialRisk ?? '')
+  const [finalRisk, setFinalRisk] = useState(initialEntry?.finalRisk ?? '')
+  const [reEntry, setReEntry] = useState(initialEntry?.reEntry || false)
+  const [followedStrategy, setFollowedStrategy] = useState(initialEntry?.followedStrategy ?? true)
+  const [riskPoints, setRiskPoints] = useState(initialEntry?.riskPoints ?? '')
+  const [resultPoints, setResultPoints] = useState(initialEntry?.resultPoints ?? '')
+  const [riskReward, setRiskReward] = useState(initialEntry?.riskReward ?? '')
+  const [outcome, setOutcome] = useState(initialEntry?.outcome || '')
+  const [closeType, setCloseType] = useState(initialEntry?.closeType || '')
+  const [grade, setGrade] = useState(initialEntry?.grade || '')
+  const [emotionalState, setEmotionalState] = useState(initialEntry?.emotionalState || '')
+  const [confidenceLevel, setConfidenceLevel] = useState(initialEntry?.confidenceLevel ?? 5)
+  const [mistake, setMistake] = useState(initialEntry?.mistake || '')
+  const [whatWentWell, setWhatWentWell] = useState(initialEntry?.whatWentWell || '')
+  const [lesson, setLesson] = useState(initialEntry?.lesson || '')
+  const [tags, setTags] = useState((initialEntry?.tags || []).join(', '))
+  const [chartUrl, setChartUrl] = useState(initialEntry?.chartUrl || '')
 
   function toggleAccount(id) {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (selectedIds.length === 0 || profit === '') return
-    onSave({
+    await onSave({
       date,
       accountIds: selectedIds,
       market,
@@ -79,6 +80,12 @@ export default function DayEntryForm({ accounts, onSave }) {
       tags,
       chartUrl,
     })
+
+    if (isEdit) {
+      onClose?.()
+      return
+    }
+
     setProfit('')
     setTradesOpened('')
     setTradesEffective('')
@@ -113,7 +120,14 @@ export default function DayEntryForm({ accounts, onSave }) {
 
   return (
     <form className={styles.form} onSubmit={handleSubmit}>
-      <h3 className={styles.title}>Journal trade</h3>
+      {isEdit ? (
+        <div className={styles.editHeader}>
+          <h3 className={styles.title}>Modifica giornata</h3>
+          <button type="button" className={styles.closeBtn} onClick={onClose} title="Annulla e torna indietro">✕</button>
+        </div>
+      ) : (
+        <h3 className={styles.title}>Journal trade</h3>
+      )}
 
       <label className={styles.label}>Data</label>
       <input
@@ -123,19 +137,28 @@ export default function DayEntryForm({ accounts, onSave }) {
         onChange={(e) => setDate(e.target.value)}
       />
 
-      <label className={styles.label}>Conto/i (seleziona uno o più per copy trading)</label>
-      <div className={styles.accountList}>
-        {accounts.map((a) => (
-          <label key={a.id} className={styles.checkboxRow}>
-            <input
-              type="checkbox"
-              checked={selectedIds.includes(a.id)}
-              onChange={() => toggleAccount(a.id)}
-            />
-            {a.name}
-          </label>
-        ))}
-      </div>
+      {isEdit ? (
+        <>
+          <label className={styles.label}>Conto</label>
+          <p className={styles.staticValue}>{accountName || '—'}</p>
+        </>
+      ) : (
+        <>
+          <label className={styles.label}>Conto/i (seleziona uno o più per copy trading)</label>
+          <div className={styles.accountList}>
+            {accounts.map((a) => (
+              <label key={a.id} className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={selectedIds.includes(a.id)}
+                  onChange={() => toggleAccount(a.id)}
+                />
+                {a.name}
+              </label>
+            ))}
+          </div>
+        </>
+      )}
 
       <label className={styles.label}>Mercato</label>
       <select className={styles.input} value={market} onChange={(e) => setMarket(e.target.value)}>
@@ -441,7 +464,7 @@ export default function DayEntryForm({ accounts, onSave }) {
       />
 
       <button type="submit" className={styles.submit}>
-        Salva giornata
+        {isEdit ? 'Salva' : 'Salva giornata'}
       </button>
     </form>
   )

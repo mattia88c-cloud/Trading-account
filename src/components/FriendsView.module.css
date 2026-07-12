@@ -12,6 +12,8 @@
 .boxWrap {
   position: relative;
   padding-top: 18px;
+  display: flex;
+  flex-direction: column;
 }
 
 .crownIcon {
@@ -27,6 +29,9 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 .boxMe { border-color: var(--accent-border); box-shadow: 0 0 0 1px var(--accent-border); }
 
@@ -40,6 +45,27 @@
   font-size: 11px;
   color: var(--text-muted);
   margin-bottom: 10px;
+}
+
+.struggleTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--struggle-color);
+  background: color-mix(in srgb, var(--struggle-color) 16%, transparent);
+  border-radius: 999px;
+  padding: 3px 9px;
+  margin-bottom: 10px;
+  width: fit-content;
+}
+
+.struggleTagEmpty {
+  color: var(--text-muted);
+  background: none;
+  font-weight: 400;
+  padding: 3px 0;
 }
 
 .cubes { display: flex; gap: 6px; }
@@ -62,7 +88,7 @@
 .cubeNegative { background: color-mix(in srgb, var(--red) 80%, transparent); }
 .cubeEmpty { background: rgba(255, 255, 255, 0.06); color: var(--text-muted); }
 
-.weekFooter { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+.weekFooter { display: flex; justify-content: flex-end; gap: 10px; margin-top: auto; padding-top: 10px; }
 .weekTotalPositive { font-size: 13px; font-weight: 700; color: var(--green); }
 .weekTotalNegative { font-size: 13px; font-weight: 700; color: var(--red); }
 

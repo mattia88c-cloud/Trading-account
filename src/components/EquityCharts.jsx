@@ -29,7 +29,7 @@ const THEME_COLORS = {
   },
 }
 
-export default function EquityCharts({ accounts, getAccountSeries, getThreshold, selectedId, onSelect, theme = 'dark' }) {
+export default function EquityCharts({ accounts, getAccountSeries, getThreshold, selectedId, onSelect, theme = 'dark', motionEnabled = true }) {
   if (accounts.length === 0) return null
 
   const colors = THEME_COLORS[theme] || THEME_COLORS.dark
@@ -40,7 +40,7 @@ export default function EquityCharts({ accounts, getAccountSeries, getThreshold,
 
   return (
     <div className={styles.stack}>
-      {accounts.map((account) => {
+      {accounts.map((account, index) => {
         const series = getAccountSeries(account.id)
         const isSelected = selectedId === account.id
         const isDimmed = selectedId && !isSelected
@@ -91,6 +91,18 @@ export default function EquityCharts({ accounts, getAccountSeries, getThreshold,
         }
         const options = {
           responsive: true,
+          // Al primo mount (es. arrivando sulla Dashboard da un'altra sezione, dato che
+          // key={tab} in App.jsx smonta/rimonta il contenuto) la linea si disegna "da zero":
+          // ogni punto parte dal fondo dell'asse Y (animations.y.from) e sale al suo valore
+          // reale, invece del solito fade-in di Chart.js. Disattivabile da Impostazioni.
+          animation: motionEnabled ? { duration: 900, easing: 'easeOutQuart' } : false,
+          animations: motionEnabled ? {
+            y: {
+              easing: 'easeOutQuart',
+              duration: 900,
+              from: (ctx) => ctx.chart.scales.y.getPixelForValue(ctx.chart.scales.y.min),
+            },
+          } : false,
           plugins: { legend: { display: false } },
           scales: {
             x: {
@@ -104,8 +116,8 @@ export default function EquityCharts({ accounts, getAccountSeries, getThreshold,
         return (
           <div
             key={account.id}
-            className={`${styles.card} ${isSelected ? styles.cardSelected : ''} ${isDimmed ? styles.cardDimmed : ''} ${threshold?.breached ? styles.cardBreached : ''}`}
-            style={{ borderLeftColor: lineColor }}
+            className={`${styles.card} ${motionEnabled ? styles.cardEnter : ''} ${isSelected ? styles.cardSelected : ''} ${isDimmed ? styles.cardDimmed : ''} ${threshold?.breached ? styles.cardBreached : ''}`}
+            style={{ borderLeftColor: lineColor, animationDelay: motionEnabled ? `${index * 70}ms` : undefined }}
             onClick={() => onSelect(isSelected ? null : account.id)}
           >
             <div className={styles.header}>

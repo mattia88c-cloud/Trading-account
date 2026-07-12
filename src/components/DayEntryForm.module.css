@@ -18,6 +18,43 @@
   font-weight: 600;
 }
 
+.editHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.editHeader .title {
+  margin: 0;
+}
+
+.closeBtn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.closeBtn:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+.staticValue {
+  margin: 0;
+  padding: 10px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 14px;
+}
+
 .empty {
   color: var(--text-muted);
   font-size: 14px;

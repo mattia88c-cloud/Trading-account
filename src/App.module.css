@@ -70,6 +70,12 @@
   }
 }
 
+:root[data-motion="reduced"] .glowA,
+:root[data-motion="reduced"] .glowB,
+:root[data-motion="reduced"] .glowC {
+  animation: none;
+}
+
 .header {
   position: relative;
   z-index: 50;
@@ -223,6 +229,10 @@
   .tabContent {
     animation: none;
   }
+}
+
+:root[data-motion="reduced"] .tabContent {
+  animation: none;
 }
 
 .dashboardGrid {

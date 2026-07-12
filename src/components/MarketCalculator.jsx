@@ -153,29 +153,37 @@ export default function MarketCalculator({ market, logo, defaultPpp, pppHint, ta
           <div className={styles.tableTitle}>{tableTitle}</div>
           {tickInfo && <span className={styles.tickInfo}>{tickInfo}</span>}
         </div>
-        <table className={styles.refTable}>
-          <thead>
-            <tr>
-              <th>Micro</th>
-              <th>$ per punto</th>
-            </tr>
-          </thead>
-          <tbody>
-            {presets.map(preset => {
-              const isActive = parseFloat(micro) === preset.micro && ppp === preset.ppp
-              return (
-                <tr
-                  key={preset.micro}
-                  className={`${styles.refRow} ${isActive ? styles.refRowActive : ''}`}
-                  onClick={() => applyPreset(preset)}
-                >
-                  <td>{preset.micro}</td>
-                  <td>${preset.ppp}</td>
+        <div className={styles.tableCardBody}>
+          <div className={styles.tableFrame}>
+            <table className={styles.refTable}>
+              <thead>
+                <tr>
+                  <th>Micro</th>
+                  <th>$ per punto</th>
                 </tr>
-              )
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {presets.map(preset => {
+                  const isActive = parseFloat(micro) === preset.micro && ppp === preset.ppp
+                  return (
+                    <tr
+                      key={preset.micro}
+                      className={`${styles.refRow} ${isActive ? styles.refRowActive : ''}`}
+                      onClick={() => applyPreset(preset)}
+                    >
+                      <td>{preset.micro}</td>
+                      <td>${preset.ppp}</td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+          <div className={styles.sideNote}>
+            <b>Promemoria formula</b>
+            SL punti = Risk $ ÷ (Micro × ${ppp}/punto)
+          </div>
+        </div>
         <p className={styles.tableNote}>Clicca su una riga per usare quel numero di micro nel calcolatore</p>
       </Card>
     </>
