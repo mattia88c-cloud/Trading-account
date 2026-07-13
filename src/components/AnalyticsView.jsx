@@ -61,7 +61,7 @@ function StatsBlock({ stats, compact }) {
     { label: 'Crescita', value: `${stats.growthPct >= 0 ? '+' : ''}${stats.growthPct.toFixed(2)}%`, tone: stats.growthPct >= 0 ? 'positive' : 'negative' },
     { label: 'Win rate', value: `${stats.winRate.toFixed(1)}%` },
     { label: 'Giorni tradati', value: stats.daysTraded, sub: `${stats.winningDays}W / ${stats.losingDays}L` },
-    { label: 'Trade (aperti/eff.)', value: `${stats.totalTradesOpened}/${stats.totalTradesEffective}` },
+    { label: 'Trade', value: stats.totalTradesEffective },
     { label: 'Freq. media trade/g', value: stats.avgTradeFrequency.toFixed(2) },
     { label: 'Expectancy', value: fmtSigned(stats.expectancy), tone: stats.expectancy >= 0 ? 'positive' : 'negative' },
     { label: 'Profit factor', value: fmt(stats.profitFactor), tone: stats.profitFactor >= 1 ? 'positive' : 'negative' },
@@ -69,6 +69,15 @@ function StatsBlock({ stats, compact }) {
     { label: 'Rischio medio (% conto)', value: stats.avgRiskPct !== null ? `${stats.avgRiskPct.toFixed(2)}%` : '—' },
     { label: 'Fiducia media', value: stats.avgConfidence !== null ? `${stats.avgConfidence.toFixed(1)}/10` : '—' },
   ]
+
+  if (stats.disciplineCost.offPlanCount > 0) {
+    kpis.push({
+      label: 'TP mancati per indisciplina',
+      value: `${stats.disciplineCost.missedTPCount}/${stats.disciplineCost.offPlanCount}`,
+      sub: `${stats.disciplineCost.missedTPPct.toFixed(0)}% dei trade fuori piano · P/L reale in quei trade: ${fmtSigned(stats.disciplineCost.missedTPPnl)}`,
+      tone: stats.disciplineCost.missedTPCount > 0 ? 'negative' : undefined,
+    })
+  }
 
   return (
     <>

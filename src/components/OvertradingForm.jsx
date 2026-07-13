@@ -24,6 +24,8 @@ const EMPTY = {
 export default function OvertradingForm({ accounts, onSave }) {
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY)
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   function update(field, value) {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -41,21 +43,31 @@ export default function OvertradingForm({ accounts, onSave }) {
   function close() {
     setOpen(false)
     setForm(EMPTY)
+    setSaveError('')
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (form.accountIds.length === 0 || form.dailyPnL === '') return
-    onSave({
-      date: form.date,
-      accountIds: form.accountIds,
-      estimatedTradeCount: form.estimatedTradeCount,
-      dailyPnL: form.dailyPnL,
-      lostControlAtTrade: form.lostControlAtTrade,
-      mainTrigger: form.mainTrigger,
-      quickNote: form.quickNote,
-      tomorrowCorrection: form.tomorrowCorrection,
-    })
+    setSaveError('')
+    setSaving(true)
+    try {
+      await onSave({
+        date: form.date,
+        accountIds: form.accountIds,
+        estimatedTradeCount: form.estimatedTradeCount,
+        dailyPnL: form.dailyPnL,
+        lostControlAtTrade: form.lostControlAtTrade,
+        mainTrigger: form.mainTrigger,
+        quickNote: form.quickNote,
+        tomorrowCorrection: form.tomorrowCorrection,
+      })
+    } catch (err) {
+      setSaving(false)
+      setSaveError(err.message || 'Salvataggio fallito, riprova.')
+      return
+    }
+    setSaving(false)
     close()
   }
 
@@ -166,9 +178,13 @@ export default function OvertradingForm({ accounts, onSave }) {
           onChange={(e) => update('tomorrowCorrection', e.target.value)}
         />
 
+        {saveError && <p className={styles.error}>Salvataggio fallito: {saveError}</p>}
+
         <div className={styles.actions}>
           <button type="button" className={styles.cancelBtn} onClick={close}>Annulla</button>
-          <button type="submit" className={styles.submitBtn}>Salva giornata overtrading</button>
+          <button type="submit" className={styles.submitBtn} disabled={saving}>
+            {saving ? 'Salvataggio…' : 'Salva giornata overtrading'}
+          </button>
         </div>
       </form>
     </div>

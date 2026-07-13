@@ -26,6 +26,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
   const [finalRisk, setFinalRisk] = useState(initialEntry?.finalRisk ?? '')
   const [reEntry, setReEntry] = useState(initialEntry?.reEntry || false)
   const [followedStrategy, setFollowedStrategy] = useState(initialEntry?.followedStrategy ?? true)
+  const [wouldHaveHitTP, setWouldHaveHitTP] = useState(initialEntry?.wouldHaveHitTP || false)
   const [riskPoints, setRiskPoints] = useState(initialEntry?.riskPoints ?? '')
   const [resultPoints, setResultPoints] = useState(initialEntry?.resultPoints ?? '')
   const [riskReward, setRiskReward] = useState(initialEntry?.riskReward ?? '')
@@ -39,6 +40,8 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
   const [lesson, setLesson] = useState(initialEntry?.lesson || '')
   const [tags, setTags] = useState((initialEntry?.tags || []).join(', '))
   const [chartUrl, setChartUrl] = useState(initialEntry?.chartUrl || '')
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   function toggleAccount(id) {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
@@ -47,39 +50,49 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
   async function handleSubmit(e) {
     e.preventDefault()
     if (selectedIds.length === 0 || profit === '') return
-    await onSave({
-      date,
-      accountIds: selectedIds,
-      market,
-      hasNews,
-      openSession,
-      closeSession,
-      entryTime,
-      exitTime,
-      profit,
-      tradesOpened,
-      tradesEffective,
-      side,
-      initialSizeMicro,
-      finalSizeMicro,
-      initialRisk,
-      finalRisk,
-      riskPoints,
-      resultPoints,
-      reEntry,
-      followedStrategy,
-      riskReward,
-      outcome,
-      closeType,
-      grade,
-      emotionalState,
-      confidenceLevel,
-      mistake,
-      whatWentWell,
-      lesson,
-      tags,
-      chartUrl,
-    })
+    setSaveError('')
+    setSaving(true)
+    try {
+      await onSave({
+        date,
+        accountIds: selectedIds,
+        market,
+        hasNews,
+        openSession,
+        closeSession,
+        entryTime,
+        exitTime,
+        profit,
+        tradesOpened,
+        tradesEffective,
+        side,
+        initialSizeMicro,
+        finalSizeMicro,
+        initialRisk,
+        finalRisk,
+        riskPoints,
+        resultPoints,
+        reEntry,
+        followedStrategy,
+        wouldHaveHitTP: followedStrategy ? false : wouldHaveHitTP,
+        riskReward,
+        outcome,
+        closeType,
+        grade,
+        emotionalState,
+        confidenceLevel,
+        mistake,
+        whatWentWell,
+        lesson,
+        tags,
+        chartUrl,
+      })
+    } catch (err) {
+      setSaving(false)
+      setSaveError(err.message || 'Salvataggio fallito, riprova.')
+      return
+    }
+    setSaving(false)
 
     if (isEdit) {
       onClose?.()
@@ -100,6 +113,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
     setEntryTime('')
     setExitTime('')
     setFollowedStrategy(true)
+    setWouldHaveHitTP(false)
     setRiskReward('')
     setOutcome('')
     setCloseType('')
@@ -119,7 +133,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit}>
+    <form className={`${styles.form} ${isEdit ? styles.formModal : ''}`} onSubmit={handleSubmit}>
       {isEdit ? (
         <div className={styles.editHeader}>
           <h3 className={styles.title}>Modifica giornata</h3>
@@ -137,27 +151,30 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         onChange={(e) => setDate(e.target.value)}
       />
 
-      {isEdit ? (
-        <>
-          <label className={styles.label}>Conto</label>
-          <p className={styles.staticValue}>{accountName || '—'}</p>
-        </>
-      ) : (
-        <>
-          <label className={styles.label}>Conto/i (seleziona uno o più per copy trading)</label>
-          <div className={styles.accountList}>
-            {accounts.map((a) => (
-              <label key={a.id} className={styles.checkboxRow}>
-                <input
-                  type="checkbox"
-                  checked={selectedIds.includes(a.id)}
-                  onChange={() => toggleAccount(a.id)}
-                />
-                {a.name}
-              </label>
-            ))}
-          </div>
-        </>
+      <label className={styles.label}>
+        {isEdit ? 'Conto/i (spunta altri conti per aggiungerli in copy trading)' : 'Conto/i (seleziona uno o più per copy trading)'}
+      </label>
+      <div className={styles.accountList}>
+        {accounts.map((a) => {
+          const isOriginal = isEdit && a.id === initialEntry.accountId
+          return (
+            <label key={a.id} className={styles.checkboxRow}>
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(a.id)}
+                disabled={isOriginal}
+                onChange={() => toggleAccount(a.id)}
+              />
+              {a.name}
+            </label>
+          )
+        })}
+      </div>
+      {isEdit && (
+        <p className={styles.hint}>
+          {accountName} resta il conto di questa entry. I conti in più che spunti diventano nuove entry con
+          gli stessi dati, per registrare che il trade era in copy trading.
+        </p>
       )}
 
       <label className={styles.label}>Mercato</label>
@@ -315,7 +332,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
           />
         </div>
         <div className={styles.col}>
-          <label className={styles.label}>Punti fatti (risultato)</label>
+          <label className={styles.label}>Punti TP</label>
           <input
             className={styles.input}
             type="number"
@@ -369,14 +386,34 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         Ho fatto re-entry
       </label>
 
-      <label className={styles.checkboxRow}>
-        <input
-          type="checkbox"
-          checked={followedStrategy}
-          onChange={(e) => setFollowedStrategy(e.target.checked)}
-        />
-        Ho seguito la strategia
-      </label>
+      <label className={styles.label}>Hai seguito la strategia?</label>
+      <div className={styles.toggleGroup}>
+        <button
+          type="button"
+          className={`${styles.toggleOption} ${followedStrategy ? styles.toggleOptionActive : ''}`}
+          onClick={() => setFollowedStrategy(true)}
+        >
+          Ho seguito la strategia
+        </button>
+        <button
+          type="button"
+          className={`${styles.toggleOption} ${!followedStrategy ? styles.toggleOptionActive : ''}`}
+          onClick={() => setFollowedStrategy(false)}
+        >
+          Non ho seguito la strategia
+        </button>
+      </div>
+
+      {!followedStrategy && (
+        <label className={styles.checkboxRow}>
+          <input
+            type="checkbox"
+            checked={wouldHaveHitTP}
+            onChange={(e) => setWouldHaveHitTP(e.target.checked)}
+          />
+          Avrei preso TP se avessi seguito la strategia
+        </label>
+      )}
 
       <label className={styles.label}>Dai un voto da A a D</label>
       <div className={styles.toggleGroup}>
@@ -463,8 +500,10 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         onChange={(e) => setLesson(e.target.value)}
       />
 
-      <button type="submit" className={styles.submit}>
-        {isEdit ? 'Salva' : 'Salva giornata'}
+      {saveError && <p className={styles.error}>Salvataggio fallito: {saveError}</p>}
+
+      <button type="submit" className={styles.submit} disabled={saving}>
+        {saving ? 'Salvataggio…' : (isEdit ? 'Salva' : 'Salva giornata')}
       </button>
     </form>
   )

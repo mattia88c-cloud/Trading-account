@@ -11,15 +11,26 @@ export default function QuickEntryForm({ accounts, onSave }) {
   const [selectedIds, setSelectedIds] = useState([])
   const [profit, setProfit] = useState('')
   const [chartUrl, setChartUrl] = useState('')
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   function toggleAccount(id) {
     setSelectedIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (selectedIds.length === 0 || profit === '') return
-    onSave({ date, accountIds: selectedIds, profit, chartUrl })
+    setSaveError('')
+    setSaving(true)
+    try {
+      await onSave({ date, accountIds: selectedIds, profit, chartUrl })
+    } catch (err) {
+      setSaving(false)
+      setSaveError(err.message || 'Salvataggio fallito, riprova.')
+      return
+    }
+    setSaving(false)
     setProfit('')
     setChartUrl('')
     setSelectedIds([])
@@ -92,8 +103,10 @@ export default function QuickEntryForm({ accounts, onSave }) {
         onChange={(e) => setChartUrl(e.target.value)}
       />
 
-      <button type="submit" className={styles.submit}>
-        Salva giornata
+      {saveError && <p className={styles.error}>Salvataggio fallito: {saveError}</p>}
+
+      <button type="submit" className={styles.submit} disabled={saving}>
+        {saving ? 'Salvataggio…' : 'Salva giornata'}
       </button>
     </form>
   )

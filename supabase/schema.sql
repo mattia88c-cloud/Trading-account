@@ -12,8 +12,13 @@ create table if not exists public.profiles (
   role text not null default 'user' check (role in ('user', 'admin')),
   status text not null default 'active' check (status in ('active', 'disabled')),
   must_change_password boolean not null default true,
+  last_login_at timestamptz,
   created_at timestamptz not null default now()
 );
+
+-- Il progetto era già live quando è stato aggiunto last_login_at: "create table if not exists"
+-- sopra non tocca una tabella già esistente, serve questa alter esplicita.
+alter table public.profiles add column if not exists last_login_at timestamptz;
 
 alter table public.profiles enable row level security;
 
@@ -25,6 +30,38 @@ create policy "profiles_self_select" on public.profiles
 drop policy if exists "profiles_self_update" on public.profiles;
 create policy "profiles_self_update" on public.profiles
   for update using (id = auth.uid());
+
+-- La policy sopra permette a un utente di aggiornare QUALSIASI colonna della propria riga
+-- (serve per username, must_change_password, last_login_at, e per mettersi da solo in
+-- standby dopo 30gg di inattività — vedi useAuth.js). Senza questo trigger, però, lo stesso
+-- utente potrebbe scriversi role='admin' o status='active' dal client e auto-promuoversi.
+-- Le Edge Function admin-* (admin-create-user, admin-set-status, ecc.) usano la service role
+-- key: auth.role() per quelle richieste è 'service_role', quindi passano indenni.
+create or replace function public.protect_profile_privileges()
+returns trigger
+language plpgsql
+as $$
+begin
+  if auth.role() = 'service_role' then
+    return new;
+  end if;
+
+  if new.role is distinct from old.role then
+    new.role := old.role;
+  end if;
+
+  if old.status = 'disabled' and new.status = 'active' then
+    new.status := old.status;
+  end if;
+
+  return new;
+end;
+$$;
+
+drop trigger if exists protect_profile_privileges on public.profiles;
+create trigger protect_profile_privileges
+  before update on public.profiles
+  for each row execute function public.protect_profile_privileges();
 
 -- ...l'Admin in più vede l'elenco di TUTTI i profili (serve per il pannello Gestione Account),
 -- ma NON ha alcuna policy sulle tabelle dati sotto: questo è il confine di privacy.
@@ -104,6 +141,7 @@ create table if not exists public.entries (
   open_session text,
   close_session text,
   followed_strategy boolean default true,
+  would_have_hit_tp boolean,
   risk_reward numeric,
   outcome text,
   close_type text,
@@ -132,6 +170,7 @@ create table if not exists public.entries (
 -- Il progetto era già live quando è stato aggiunto chart_url: "create table if not exists" sopra
 -- non tocca una tabella già esistente, serve questa alter esplicita per chi ha già fatto il deploy.
 alter table public.entries add column if not exists chart_url text;
+alter table public.entries add column if not exists would_have_hit_tp boolean;
 
 create table if not exists public.payouts (
   id uuid primary key default gen_random_uuid(),

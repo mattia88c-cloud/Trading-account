@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import DayEntryForm from './DayEntryForm.jsx'
 import styles from './HistoryView.module.css'
 
-export default function HistoryView({ accounts, entries, onDeleteEntry, onUpdateEntry }) {
+export default function HistoryView({ accounts, entries, onDeleteEntry, onUpdateEntry, onSaveDayEntry }) {
   const [accountFilter, setAccountFilter] = useState('all')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
@@ -148,18 +149,26 @@ export default function HistoryView({ accounts, entries, onDeleteEntry, onUpdate
         {filtered.length === 0 && <p className={styles.empty}>Nessuna entry trovata con questi filtri.</p>}
       </div>
 
-      {editingEntry && (
+      {editingEntry && createPortal(
         <div className={styles.modalOverlay} onClick={() => setEditingEntry(null)}>
           <div className={styles.modalBox} onClick={(ev) => ev.stopPropagation()}>
             <DayEntryForm
               accounts={accounts}
               initialEntry={editingEntry}
               accountName={accountById[editingEntry.accountId]?.name}
-              onSave={(formData) => onUpdateEntry(editingEntry.id, formData)}
+              onSave={async (formData) => {
+                const { accountIds, ...rest } = formData
+                const extraIds = accountIds.filter((id) => id !== editingEntry.accountId)
+                await onUpdateEntry(editingEntry.id, formData)
+                if (extraIds.length > 0) {
+                  await onSaveDayEntry({ ...rest, accountIds: extraIds })
+                }
+              }}
               onClose={() => setEditingEntry(null)}
             />
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

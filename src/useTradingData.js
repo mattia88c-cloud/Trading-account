@@ -192,6 +192,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
     byOpenSession: {},
     byNews: {},
     byStrategy: {},
+    disciplineCost: { offPlanCount: 0, missedTPCount: 0, missedTPPct: null, missedTPPnl: 0 },
     byCloseType: {},
     byGrade: {},
     byEmotionalState: {},
@@ -313,6 +314,18 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   })
   Object.values(byStrategy).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
+  // Costo dell'indisciplina: tra i giorni in cui NON hai seguito il piano, quanti avresti
+  // comunque preso TP se lo avessi seguito — quantifica il P/L "regalato" per non aver
+  // rispettato la strategia, non solo quante volte è successo.
+  const offPlan = sorted.filter((e) => e.followedStrategy === false)
+  const offPlanMissedTP = offPlan.filter((e) => e.wouldHaveHitTP === true)
+  const disciplineCost = {
+    offPlanCount: offPlan.length,
+    missedTPCount: offPlanMissedTP.length,
+    missedTPPct: offPlan.length > 0 ? (offPlanMissedTP.length / offPlan.length) * 100 : null,
+    missedTPPnl: offPlanMissedTP.reduce((sum, e) => sum + e.profit, 0),
+  }
+
   const byCloseType = {}
   sorted.forEach((e) => {
     const key = e.closeType || 'N/D'
@@ -430,6 +443,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
     byOpenSession,
     byNews,
     byStrategy,
+    disciplineCost,
     byCloseType,
     byGrade,
     byEmotionalState,
@@ -600,7 +614,10 @@ export function useTradingData() {
     if (error) {
       // eslint-disable-next-line no-console
       console.error('Errore salvataggio giornata:', error.message)
-      return []
+      // Prima veniva solo loggato in console: un salvataggio fallito (es. colonna non ancora
+      // migrata sul database) sembrava "non succede niente" invece di un errore vero. Ora
+      // rilanciamo, così DayEntryForm/QuickEntryForm possono mostrare un messaggio all'utente.
+      throw new Error(error.message)
     }
     const mapped = data.map(entryFromDb)
     setEntries((prev) => {
@@ -621,7 +638,7 @@ export function useTradingData() {
   function buildEntryFields({
     date, accountId, profit, tradesOpened, tradesEffective, side,
     market, initialSizeMicro, finalSizeMicro, initialRisk, finalRisk, reEntry,
-    hasNews, openSession, closeSession, entryTime, exitTime, followedStrategy,
+    hasNews, openSession, closeSession, entryTime, exitTime, followedStrategy, wouldHaveHitTP,
     riskReward, outcome, closeType, grade,
     emotionalState, confidenceLevel, mistake, whatWentWell, lesson, tags,
     riskPoints, resultPoints, chartUrl,
@@ -646,6 +663,7 @@ export function useTradingData() {
       openSession: openSession || null,
       closeSession: closeSession || openSession || null,
       followedStrategy: followedStrategy !== undefined ? !!followedStrategy : true,
+      wouldHaveHitTP: followedStrategy === false ? !!wouldHaveHitTP : null,
       riskReward: riskReward ? Number(riskReward) : null,
       outcome: outcome || null,
       closeType: closeType || null,
@@ -688,7 +706,7 @@ export function useTradingData() {
     if (error) {
       // eslint-disable-next-line no-console
       console.error('Errore modifica entry:', error.message)
-      return
+      throw new Error(error.message)
     }
     const updated = entryFromDb(data[0])
     setEntries((prev) => prev.map((e) => (e.id === id ? updated : e)))

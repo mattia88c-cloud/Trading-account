@@ -4,7 +4,7 @@ import styles from './AccountForm.module.css'
 
 export default function AccountForm({ onCreate }) {
   const [open, setOpen] = useState(false)
-  const [type, setType] = useState('personal')
+  const [type, setType] = useState('propfirm')
   const [name, setName] = useState('')
   const [preset, setPreset] = useState(BALANCE_PRESETS[0])
   const [customBalance, setCustomBalance] = useState('')
@@ -44,17 +44,17 @@ export default function AccountForm({ onCreate }) {
       <div className={styles.toggleGroup}>
         <button
           type="button"
-          className={`${styles.toggle} ${type === 'personal' ? styles.active : ''}`}
-          onClick={() => setType('personal')}
-        >
-          Personale
-        </button>
-        <button
-          type="button"
           className={`${styles.toggle} ${type === 'propfirm' ? styles.active : ''}`}
           onClick={() => setType('propfirm')}
         >
           Prop Firm
+        </button>
+        <button
+          type="button"
+          className={`${styles.toggle} ${type === 'personal' ? styles.active : ''}`}
+          onClick={() => setType('personal')}
+        >
+          Personale
         </button>
       </div>
 

@@ -12,7 +12,13 @@ Deno.serve(async (req) => {
     }
     if (userId === callerId) throw new Error('Non puoi disattivare il tuo stesso account')
 
-    const { error } = await admin.from('profiles').update({ status: nextStatus }).eq('id', userId)
+    // Riattivando un account azzeriamo last_login_at: altrimenti lo standby automatico per
+    // inattività (30gg, vedi useAuth.js) lo ridisattiverebbe al primissimo accesso successivo,
+    // dato che l'ultimo login registrato resterebbe quello vecchio da prima della disattivazione.
+    const patch = { status: nextStatus }
+    if (nextStatus === 'active') patch.last_login_at = null
+
+    const { error } = await admin.from('profiles').update(patch).eq('id', userId)
     if (error) throw error
 
     return new Response(JSON.stringify({ ok: true }), {

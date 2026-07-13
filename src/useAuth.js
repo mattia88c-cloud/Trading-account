@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { supabase, supabaseConfigured } from './supabaseClient'
 
+const STANDBY_AFTER_DAYS = 30
+
 // Auth + profilo dell'utente loggato. La sessione stessa è gestita interamente dal client
 // Supabase (persistSession/autoRefreshToken in supabaseClient.js) — qui ci limitiamo ad
 // ascoltarla e a tenere in sync il profilo (ruolo, stato, must_change_password) da Postgres.
@@ -28,7 +30,46 @@ export function useAuth() {
       setProfileError(error.message)
       return
     }
-    setProfile(data)
+
+    let nextProfile = data
+
+    // Standby automatico per inattività (30gg): solo per i non-admin, e solo se avevamo già
+    // una data di ultimo accesso registrata — al primo giro dopo l'aggiunta di questo campo
+    // last_login_at è null per tutti, quindi nessuno viene disattivato "a sorpresa". Riusa lo
+    // stesso status 'disabled' già gestito a mano da Gestione Account: stessa schermata di
+    // blocco, stesso modo di riattivare.
+    if (data.role !== 'admin' && data.status === 'active' && data.last_login_at) {
+      const daysSinceLogin = (Date.now() - new Date(data.last_login_at).getTime()) / 86400000
+      if (daysSinceLogin > STANDBY_AFTER_DAYS) {
+        const { data: standby, error: standbyError } = await supabase
+          .from('profiles')
+          .update({ status: 'disabled' })
+          .eq('id', userId)
+          .select()
+          .single()
+        if (standbyError) {
+          // eslint-disable-next-line no-console
+          console.error('Impossibile mettere in standby il profilo:', standbyError.message)
+        } else if (standby) {
+          nextProfile = standby
+        }
+      }
+    }
+
+    // Segna "visto ora": copre sia il login col form sia la sessione salvata che si riapre da
+    // sola, perché è l'unico modo per intercettare davvero l'inattività (l'utente potrebbe non
+    // ripassare mai dal form di login). Non blocca il caricamento del profilo.
+    if (nextProfile.status === 'active') {
+      supabase.from('profiles').update({ last_login_at: new Date().toISOString() }).eq('id', userId)
+        .then(({ error: touchError }) => {
+          if (touchError) {
+            // eslint-disable-next-line no-console
+            console.error('Impossibile aggiornare last_login_at:', touchError.message)
+          }
+        })
+    }
+
+    setProfile(nextProfile)
     setProfileError(null)
   }, [])
 

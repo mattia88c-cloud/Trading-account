@@ -401,7 +401,15 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
 
         {tab === 'calendar' && <CalendarView accounts={accounts} entries={entries} />}
 
-        {tab === 'history' && <HistoryView accounts={accounts} entries={entries} onDeleteEntry={deleteEntry} onUpdateEntry={updateEntry} />}
+        {tab === 'history' && (
+          <HistoryView
+            accounts={accounts}
+            entries={entries}
+            onDeleteEntry={deleteEntry}
+            onUpdateEntry={updateEntry}
+            onSaveDayEntry={saveDayEntry}
+          />
+        )}
 
         {tab === 'weekly' && <WeeklyReview accounts={analyticsAccounts} getWeeklyAnalytics={getWeeklyAnalytics} />}
 
