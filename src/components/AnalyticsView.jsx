@@ -5,6 +5,9 @@ import HeatmapTable from './HeatmapTable.jsx'
 import RankedList from './RankedList.jsx'
 import IdealTradeCard from './IdealTradeCard.jsx'
 import OvertradingImpact from './OvertradingImpact.jsx'
+import RiskBudgetCard from './RiskBudgetCard.jsx'
+import CollapseToggle from './CollapseToggle.jsx'
+import { useCollapsed } from '../useCollapsed.js'
 import styles from './AnalyticsView.module.css'
 
 // In the compact (summary) view, pick the chart type best suited to each data shape:
@@ -40,7 +43,7 @@ function fmtDuration(min) {
 const SIDE_LABELS = { long: 'Long', short: 'Short', misto: 'Misto' }
 const WEEKDAY_ORDER = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 
-function StatsBlock({ stats, compact }) {
+function StatsBlock({ stats, compact, entries, storageKey }) {
   const monthEntries = Object.entries(stats.byMonth).sort((a, b) => a[0].localeCompare(b[0]))
   const weekdayEntries = WEEKDAY_ORDER.filter((w) => stats.byWeekday[w]).map((w) => [w, stats.byWeekday[w]])
   const sideEntries = Object.entries(stats.bySide).map(([k, v]) => [SIDE_LABELS[k] || k, v])
@@ -79,64 +82,77 @@ function StatsBlock({ stats, compact }) {
     })
   }
 
+  const [winOpen, toggleWin] = useCollapsed(`${storageKey}:winners`)
+  const [loseOpen, toggleLose] = useCollapsed(`${storageKey}:losers`)
+  const [payoutOpen, togglePayout] = useCollapsed(`${storageKey}:payout`)
+
   return (
     <>
       <MetricsGrid metrics={kpis} />
 
+      <RiskBudgetCard entries={entries} initialBalance={stats.initialBalance} storageKey={storageKey} />
+
       <div className={styles.winLoseGrid}>
         <div className={styles.winBox}>
-          <div className={styles.winLoseTitle}>Winners</div>
-          <div className={styles.miniRow}><span>Totale</span><span>{stats.winners.total}</span></div>
-          <div className={styles.miniRow}><span>Best win</span><span>{fmtSigned(stats.winners.best)}</span></div>
-          <div className={styles.miniRow}><span>Media</span><span>{fmtSigned(stats.winners.average)}</span></div>
-          <div className={styles.miniRow}><span>Durata media</span><span>{fmtDuration(stats.winners.avgDuration)}</span></div>
-          <div className={styles.miniRow}><span>Streak max/media</span><span>{stats.winners.maxStreak} / {stats.winners.avgStreak.toFixed(1)}</span></div>
+          <div className={styles.winLoseTitle}><span>Winners</span><CollapseToggle open={winOpen} onToggle={toggleWin} /></div>
+          {winOpen && <>
+            <div className={styles.miniRow}><span>Totale</span><span>{stats.winners.total}</span></div>
+            <div className={styles.miniRow}><span>Best win</span><span>{fmtSigned(stats.winners.best)}</span></div>
+            <div className={styles.miniRow}><span>Media</span><span>{fmtSigned(stats.winners.average)}</span></div>
+            <div className={styles.miniRow}><span>Durata media</span><span>{fmtDuration(stats.winners.avgDuration)}</span></div>
+            <div className={styles.miniRow}><span>Streak max/media</span><span>{stats.winners.maxStreak} / {stats.winners.avgStreak.toFixed(1)}</span></div>
+          </>}
         </div>
         <div className={styles.loseBox}>
-          <div className={styles.winLoseTitle}>Losers</div>
-          <div className={styles.miniRow}><span>Totale</span><span>{stats.losers.total}</span></div>
-          <div className={styles.miniRow}><span>Best loss</span><span>{fmtSigned(stats.losers.best)}</span></div>
-          <div className={styles.miniRow}><span>Media</span><span>{fmtSigned(stats.losers.average)}</span></div>
-          <div className={styles.miniRow}><span>Durata media</span><span>{fmtDuration(stats.losers.avgDuration)}</span></div>
-          <div className={styles.miniRow}><span>Streak max/media</span><span>{stats.losers.maxStreak} / {stats.losers.avgStreak.toFixed(1)}</span></div>
+          <div className={styles.winLoseTitle}><span>Losers</span><CollapseToggle open={loseOpen} onToggle={toggleLose} /></div>
+          {loseOpen && <>
+            <div className={styles.miniRow}><span>Totale</span><span>{stats.losers.total}</span></div>
+            <div className={styles.miniRow}><span>Best loss</span><span>{fmtSigned(stats.losers.best)}</span></div>
+            <div className={styles.miniRow}><span>Media</span><span>{fmtSigned(stats.losers.average)}</span></div>
+            <div className={styles.miniRow}><span>Durata media</span><span>{fmtDuration(stats.losers.avgDuration)}</span></div>
+            <div className={styles.miniRow}><span>Streak max/media</span><span>{stats.losers.maxStreak} / {stats.losers.avgStreak.toFixed(1)}</span></div>
+          </>}
         </div>
       </div>
 
       {payouts.count > 0 && (
         <div className={styles.payoutBlock}>
-          <div className={styles.payoutTitle}>Payout</div>
-          <div className={styles.miniRow}><span>Totale prelevato</span><span>${fmt(payouts.total)}</span></div>
-          <div className={styles.miniRow}><span>Numero payout</span><span>{payouts.count}</span></div>
-          <div className={styles.miniRow}><span>Media per payout</span><span>${fmt(payouts.total / payouts.count)}</span></div>
-          <div className={styles.payoutList}>
-            {payouts.list.slice(0, 5).map((p) => (
-              <div key={p.id} className={styles.payoutListRow}>
-                <span>{p.date}</span>
-                <span>${fmt(p.amount)}</span>
-              </div>
-            ))}
-          </div>
+          <div className={styles.payoutTitle}><span>Payout</span><CollapseToggle open={payoutOpen} onToggle={togglePayout} /></div>
+          {payoutOpen && <>
+            <div className={styles.miniRow}><span>Totale prelevato</span><span>${fmt(payouts.total)}</span></div>
+            <div className={styles.miniRow}><span>Numero payout</span><span>{payouts.count}</span></div>
+            <div className={styles.miniRow}><span>Media per payout</span><span>${fmt(payouts.total / payouts.count)}</span></div>
+            <div className={styles.payoutList}>
+              {payouts.list.slice(0, 5).map((p) => (
+                <div key={p.id} className={styles.payoutListRow}>
+                  <span>{p.date}</span>
+                  <span>${fmt(p.amount)}</span>
+                </div>
+              ))}
+            </div>
+          </>}
         </div>
       )}
 
       <BreakdownWrap compact={compact}>
-        <Breakdown kind="ranked" title="Performance by market" entries={marketEntries} compact={compact} />
-        <Breakdown kind="ranked" title="Performance by session" entries={sessionEntries} compact={compact} />
-        <Breakdown kind="ranked" title="Performance con/senza notizie" entries={newsEntries} compact={compact} />
-        <Breakdown kind="ranked" title="Aderenza alla strategia" entries={strategyEntries} compact={compact} />
-        <Breakdown kind="table" title="Performance by close type" entries={closeTypeEntries} compact={compact} />
-        <Breakdown kind="table" title="Performance by grade" entries={gradeEntries} compact={compact} />
-        <Breakdown kind="ranked" title="Performance by stato emotivo" entries={emotionalStateEntries} compact={compact} />
-        <Breakdown kind="ranked" title="Performance by tag" entries={tagEntries} formatLabel={(k) => `#${k}`} compact={compact} />
-        <Breakdown kind="ranked" title="Performance by side" entries={sideEntries} compact={compact} />
-        <Breakdown kind="ranked" title="Performance by day" entries={weekdayEntries} compact={compact} />
-        <Breakdown kind="ranked" title="Performance by month" entries={monthEntries} compact={compact} />
+        <Breakdown kind="ranked" title="Performance by market" entries={marketEntries} compact={compact} boxKey={`${storageKey}:market`} />
+        <Breakdown kind="ranked" title="Performance by session" entries={sessionEntries} compact={compact} boxKey={`${storageKey}:session`} />
+        <Breakdown kind="ranked" title="Performance con/senza notizie" entries={newsEntries} compact={compact} boxKey={`${storageKey}:news`} />
+        <Breakdown kind="ranked" title="Aderenza alla strategia" entries={strategyEntries} compact={compact} boxKey={`${storageKey}:strategy`} />
+        <Breakdown kind="table" title="Performance by close type" entries={closeTypeEntries} compact={compact} boxKey={`${storageKey}:closeType`} />
+        <Breakdown kind="table" title="Performance by grade" entries={gradeEntries} compact={compact} boxKey={`${storageKey}:grade`} />
+        <Breakdown kind="ranked" title="Performance by stato emotivo" entries={emotionalStateEntries} compact={compact} boxKey={`${storageKey}:emotion`} />
+        <Breakdown kind="ranked" title="Performance by tag" entries={tagEntries} formatLabel={(k) => `#${k}`} compact={compact} boxKey={`${storageKey}:tag`} />
+        <Breakdown kind="ranked" title="Performance by side" entries={sideEntries} compact={compact} boxKey={`${storageKey}:side`} />
+        <Breakdown kind="ranked" title="Performance by day" entries={weekdayEntries} compact={compact} boxKey={`${storageKey}:weekday`} />
+        <Breakdown kind="ranked" title="Performance by month" entries={monthEntries} compact={compact} boxKey={`${storageKey}:month`} />
 
         {(mods.reEntry.count > 0 || mods.stopWidened.count > 0 || mods.lotIncreased.count > 0) && (
           <Breakdown
             kind="ranked"
             title="Modifiche al trade"
             compact={compact}
+            boxKey={`${storageKey}:mods`}
             entries={[
               mods.reEntry.count > 0 ? ['Re-entry', mods.reEntry] : null,
               mods.stopWidened.count > 0 ? ['Stop allungato', mods.stopWidened] : null,
@@ -154,7 +170,8 @@ function BreakdownWrap({ compact, children }) {
   return <div className={styles.breakdownGrid}>{children}</div>
 }
 
-function NotesList({ entries, accountId }) {
+function NotesList({ entries, accountId, storageKey }) {
+  const [open, toggle] = useCollapsed(`${storageKey}:notes`)
   const notes = entries
     .filter((e) => (accountId ? e.accountId === accountId : true) && (e.mistake || e.whatWentWell || e.lesson))
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -164,8 +181,8 @@ function NotesList({ entries, accountId }) {
 
   return (
     <div className={styles.notesBlock}>
-      <div className={styles.notesTitle}>Note e lezioni recenti</div>
-      {notes.map((e) => (
+      <div className={styles.notesTitle}><span>Note e lezioni recenti</span><CollapseToggle open={open} onToggle={toggle} /></div>
+      {open && notes.map((e) => (
         <div key={e.id} className={styles.noteBlock}>
           <div className={styles.noteDate}>{e.date}</div>
           {e.mistake && <div className={styles.noteLine}><span className={styles.noteLabel}>Errore:</span> {e.mistake}</div>}
@@ -177,7 +194,42 @@ function NotesList({ entries, accountId }) {
   )
 }
 
-export default function AnalyticsView({ accounts, entries, getAnalytics, getSummaryAnalytics, getOvertradingAnalytics }) {
+function CollapsibleCard({ storageKey, className, style, headerContent, children }) {
+  const [open, toggle] = useCollapsed(`${storageKey}:card`)
+  return (
+    <div className={className} style={style}>
+      <div className={styles.header}>
+        {headerContent}
+        <CollapseToggle open={open} onToggle={toggle} />
+      </div>
+      {open && children}
+    </div>
+  )
+}
+
+function AccountAnalyticsCard({ account, stats, entries }) {
+  return (
+    <CollapsibleCard
+      storageKey={account.id}
+      className={`${styles.card} ${!account.active ? styles.cardInactive : ''}`}
+      style={{ borderLeftColor: !account.active ? 'var(--red)' : account.color }}
+      headerContent={(
+        <>
+          <span className={styles.dot} style={{ background: account.color }} />
+          {account.name}
+          {!account.active && <span className={styles.inactiveTag}>Disattivato</span>}
+        </>
+      )}
+    >
+      <StatsBlock stats={stats} entries={entries.filter((e) => e.accountId === account.id)} storageKey={account.id} />
+      <NotesList entries={entries} accountId={account.id} storageKey={account.id} />
+    </CollapsibleCard>
+  )
+}
+
+export default function AnalyticsView({
+  accounts, entries, getAnalytics, getSummaryAnalytics, getOvertradingAnalytics, getAccountBalance, getThreshold,
+}) {
   if (accounts.length === 0) {
     return <p className={styles.empty}>Crea un conto per vedere le statistiche.</p>
   }
@@ -187,40 +239,58 @@ export default function AnalyticsView({ accounts, entries, getAnalytics, getSumm
   const relevantEntries = entries.filter((e) => accountIds.includes(e.accountId))
   const overtradingData = getOvertradingAnalytics(accountIds)
 
+  // Margine residuo prima del threshold (drawdown massimo) di ogni conto: quanto puoi ancora
+  // perdere, in totale e conto per conto, prima di bruciare qualcosa. Conti già bruciati non
+  // hanno margine (0), non un numero negativo che confonderebbe la somma.
+  const thresholdRows = accounts.map((account) => {
+    const threshold = getThreshold(account.id)
+    const balance = getAccountBalance(account.id)
+    const distance = threshold ? Math.max(0, balance - threshold.threshold) : null
+    return { account, threshold, distance }
+  })
+  const totalThresholdDistance = thresholdRows.reduce((sum, r) => sum + (r.distance || 0), 0)
+
   return (
     <div className={styles.wrap}>
       <OvertradingImpact data={overtradingData} />
 
-      <div className={styles.card} style={{ borderLeftColor: 'var(--accent)' }}>
-        <div className={styles.header}>
-          Riepilogo ({summaryStats.accountCount} cont{summaryStats.accountCount === 1 ? 'o' : 'i'})
+      <CollapsibleCard storageKey="threshold" className={styles.card} style={{ borderLeftColor: 'var(--accent)' }} headerContent="Margine dal threshold">
+        <div className={styles.thresholdTotal}>
+          ${totalThresholdDistance.toLocaleString('it-IT', { maximumFractionDigits: 2 })}
         </div>
-        <StatsBlock stats={summaryStats} compact />
-        <div className={styles.notesIdealGrid}>
-          <NotesList entries={relevantEntries} />
-          <IdealTradeCard stats={summaryStats} />
-        </div>
-      </div>
-
-      <div className={styles.grid}>
-        {accounts.map((account) => {
-          const stats = getAnalytics(account.id)
-          return (
-            <div
-              key={account.id}
-              className={`${styles.card} ${!account.active ? styles.cardInactive : ''}`}
-              style={{ borderLeftColor: !account.active ? 'var(--red)' : account.color }}
-            >
-              <div className={styles.header}>
+        <p className={styles.thresholdSub}>quanto puoi ancora perdere in totale prima di bruciare un conto</p>
+        <div className={styles.thresholdList}>
+          {thresholdRows.map(({ account, threshold, distance }) => (
+            <div key={account.id} className={styles.thresholdRow}>
+              <span className={styles.thresholdName}>
                 <span className={styles.dot} style={{ background: account.color }} />
                 {account.name}
-                {!account.active && <span className={styles.inactiveTag}>Disattivato</span>}
-              </div>
-              <StatsBlock stats={stats} />
-              <NotesList entries={entries} accountId={account.id} />
+              </span>
+              <span className={threshold?.breached ? styles.thresholdBreachedTag : styles.thresholdValue}>
+                {threshold?.breached ? 'Bruciato' : `$${distance.toLocaleString('it-IT', { maximumFractionDigits: 2 })}`}
+              </span>
             </div>
-          )
-        })}
+          ))}
+        </div>
+      </CollapsibleCard>
+
+      <CollapsibleCard
+        storageKey="summary"
+        className={styles.card}
+        style={{ borderLeftColor: 'var(--accent)' }}
+        headerContent={`Riepilogo (${summaryStats.accountCount} cont${summaryStats.accountCount === 1 ? 'o' : 'i'})`}
+      >
+        <StatsBlock stats={summaryStats} entries={relevantEntries} storageKey="summary" compact />
+        <div className={styles.notesIdealGrid}>
+          <NotesList entries={relevantEntries} storageKey="summary" />
+          <IdealTradeCard stats={summaryStats} storageKey="summary" />
+        </div>
+      </CollapsibleCard>
+
+      <div className={styles.grid}>
+        {accounts.map((account) => (
+          <AccountAnalyticsCard key={account.id} account={account} stats={getAnalytics(account.id)} entries={entries} />
+        ))}
       </div>
     </div>
   )

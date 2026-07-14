@@ -23,6 +23,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
+  box-shadow: var(--card-shadow-subtle);
 }
 .chipIcon { color: var(--accent); flex-shrink: 0; display: flex; }
 .chipValue { font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.2; }
@@ -82,6 +83,7 @@
   border-left: 3px solid var(--border-strong);
   border-radius: 0 8px 8px 0;
   padding: 12px 14px 12px 12px;
+  box-shadow: var(--card-shadow-subtle);
 }
 [data-theme="light"] .compareCol.up { border-left-color: var(--green); }
 [data-theme="light"] .compareCol.down { border-left-color: var(--red); }

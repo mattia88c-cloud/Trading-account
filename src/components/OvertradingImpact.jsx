@@ -1,5 +1,7 @@
 import Card from './Card'
 import MetricsGrid from './MetricsGrid.jsx'
+import CollapseToggle from './CollapseToggle.jsx'
+import { useCollapsed } from '../useCollapsed.js'
 import styles from './OvertradingImpact.module.css'
 
 function fmt(n) {
@@ -13,6 +15,7 @@ function fmtSigned(n) {
 }
 
 export default function OvertradingImpact({ data }) {
+  const [open, toggle] = useCollapsed('overtradingImpact:card')
   if (!data || data.count === 0) return null
 
   const metrics = [
@@ -29,7 +32,11 @@ export default function OvertradingImpact({ data }) {
 
   return (
     <Card className={styles.card}>
-      <div className={styles.title}>⚠ Impatto Overtrading</div>
+      <div className={styles.title}>
+        <span>⚠ Impatto Overtrading</span>
+        <CollapseToggle open={open} onToggle={toggle} />
+      </div>
+      {open && <>
       <MetricsGrid metrics={metrics} />
 
       <div className={styles.compareBlock}>
@@ -62,6 +69,7 @@ export default function OvertradingImpact({ data }) {
           ))}
         </div>
       )}
+      </>}
     </Card>
   )
 }

@@ -9,6 +9,7 @@ const MONTH_NAMES = [
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 
 const GRADE_CLASS = { A: 'gradeA', B: 'gradeB', C: 'gradeC', D: 'gradeD' }
+const GRADE_MEANING = { A: 'Ottimo', B: 'Buono', C: 'Mediocre', D: 'Impulsivo' }
 
 function toDateKey(y, m, d) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
@@ -206,6 +207,27 @@ export default function CalendarView({ accounts, entries }) {
             </div>
           )
         })}
+      </div>
+
+      <div className={styles.legend}>
+        <div className={styles.legendGroup}>
+          <span className={styles.legendTitle}>Conti</span>
+          {accounts.map((a) => (
+            <span key={a.id} className={styles.legendItem}>
+              <span className={styles.legendDot} style={{ background: a.color }} />
+              {a.name}
+            </span>
+          ))}
+        </div>
+        <div className={styles.legendGroup}>
+          <span className={styles.legendTitle}>Voto</span>
+          {GRADES.map((g) => (
+            <span key={g} className={styles.legendItem}>
+              <span className={`${styles.legendGradeDot} ${styles[GRADE_CLASS[g]]}`}>{g}</span>
+              {GRADE_MEANING[g]}
+            </span>
+          ))}
+        </div>
       </div>
 
       <div className={styles.yearWrap}>

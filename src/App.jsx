@@ -395,6 +395,8 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
               getAnalytics={getAnalytics}
               getSummaryAnalytics={getSummaryAnalytics}
               getOvertradingAnalytics={getOvertradingAnalytics}
+              getAccountBalance={getAccountBalance}
+              getThreshold={getThreshold}
             />
           </>
         )}

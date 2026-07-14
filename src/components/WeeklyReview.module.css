@@ -41,6 +41,7 @@
   padding: 8px 10px;
   font-size: 12px;
   margin-top: 4px;
+  box-shadow: var(--card-shadow-subtle);
 }
 
 [data-theme="light"] .payoutBlock { background: rgba(155, 107, 214, 0.18); border-color: rgba(155, 107, 214, 0.45); }

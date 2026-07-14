@@ -1,6 +1,9 @@
+import { useCollapsed } from '../useCollapsed.js'
+import CollapseToggle from './CollapseToggle.jsx'
 import styles from './RankedList.module.css'
 
-export default function RankedList({ title, entries, formatLabel, limit = 8 }) {
+export default function RankedList({ title, entries, formatLabel, limit = 8, boxKey }) {
+  const [open, toggle] = useCollapsed(boxKey || title)
   if (!entries || entries.length === 0) return null
 
   const sorted = [...entries].sort((a, b) => b[1].pnl - a[1].pnl).slice(0, limit)
@@ -8,15 +11,18 @@ export default function RankedList({ title, entries, formatLabel, limit = 8 }) {
 
   return (
     <div className={styles.block}>
-      <div className={styles.title}>{title}</div>
-      {sorted.map(([key, v], i) => {
+      <div className={styles.title}>
+        <span>{title}</span>
+        <CollapseToggle open={open} onToggle={toggle} />
+      </div>
+      {open && sorted.map(([key, v], i) => {
         const isPositive = v.pnl >= 0
         const widthPct = Math.max((Math.abs(v.pnl) / maxAbs) * 100, 6)
         return (
           <div key={key} className={styles.row}>
             <span className={styles.rank}>{i + 1}</span>
             <span className={styles.label}>{formatLabel ? formatLabel(key) : key}</span>
-            <span className={styles.meta}>{v.days}g{v.winRate !== undefined ? ` · ${v.winRate.toFixed(0)}%` : ''}</span>
+            <span className={styles.meta}>{v.days} trade{v.winRate !== undefined ? ` · ${v.winRate.toFixed(0)}%` : ''}</span>
             <div className={styles.track}>
               <div
                 className={isPositive ? styles.fillPositive : styles.fillNegative}

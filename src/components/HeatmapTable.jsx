@@ -1,14 +1,20 @@
+import { useCollapsed } from '../useCollapsed.js'
+import CollapseToggle from './CollapseToggle.jsx'
 import styles from './HeatmapTable.module.css'
 
-export default function HeatmapTable({ title, entries, formatLabel }) {
+export default function HeatmapTable({ title, entries, formatLabel, boxKey }) {
+  const [open, toggle] = useCollapsed(boxKey || title)
   if (!entries || entries.length === 0) return null
 
   const maxAbs = Math.max(...entries.map(([, v]) => Math.abs(v.pnl)), 1)
 
   return (
     <div className={styles.block}>
-      <div className={styles.title}>{title}</div>
-      <table className={styles.table}>
+      <div className={styles.title}>
+        <span>{title}</span>
+        <CollapseToggle open={open} onToggle={toggle} />
+      </div>
+      {open && <table className={styles.table}>
         <thead>
           <tr>
             <th>Categoria</th>
@@ -36,7 +42,7 @@ export default function HeatmapTable({ title, entries, formatLabel }) {
             )
           })}
         </tbody>
-      </table>
+      </table>}
     </div>
   )
 }

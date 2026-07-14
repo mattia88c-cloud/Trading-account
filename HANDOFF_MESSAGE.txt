@@ -1,33 +1,42 @@
 Continuiamo il lavoro sul progetto "trading-accounts" (cartella C:\Users\pc\Desktop\Clode Code\trading-accounts) — "Stratton Account Manager", app React + Vite per tracciare conti di trading, con backend Supabase (Postgres + Auth + RLS) multi-utente. Leggi NOTES.md nella root del progetto prima di fare modifiche: contiene le decisioni architetturali chiave del journal.
 
-STATO ATTUALE — tutto quanto segue è già fatto, deployato e funzionante in produzione:
+STATO ATTUALE — già fatto, deployato e live in produzione (fino al commit 7967bdb incluso):
 
-- Sistema utenti completo: login, sessione persistente, primo accesso forza nome vero + password nuova, reset password via email, Impostazioni (cambia password / modifica profilo / elimina tutti i dati con conferma a digitazione) accessibile dalla rotellina in alto a destra.
-- Pannello Admin ("Gestione Account", dentro Impostazioni, dietro re-inserimento password): crea/disattiva/riattiva/elimina utenti, reset password, backend su 4 Supabase Edge Functions (supabase/functions/admin-*) già deployate.
-- Sezione "Friends": classifica settimanale a cubetti (% giornaliera lun-ven, saldo, numero conti) e classifica disciplina (score + missioni superate/fallite), su tabella condivisa leaderboard_stats (solo dati aggregati, mai trade/note — privacy per design).
-- 3 account amici reali già creati: Antonio (keitmoon1@gmail.com), Pietro (pietro.pignat@gmail.com), Daniele (claudiostore98@gmail.com) — password temporanee già consegnate, dovranno impostare nome+password al primo login.
-- Journal trade / Registro rapido: campo link screenshot TradingView, mostrato come link cliccabile in Cronologia.
-- Calculator: due calcolatori affiancati NAS100 (MNQ $2/punto, 4 tick/punto) e XAUUSD (MGC $10/punto, 10 tick/punto), ciascuno con logo mercato nell'angolo.
-- Switch giorno/notte singolo (sole/luna scorrevole) al posto dei vecchi due pulsanti.
-- Redesign completo modalità giorno: sfondo con bagliori pastello diffusi (oro/verde), TUTTI i box del sito con ombra profonda per effetto 3D fluttuante, colori rosso/verde/viola degli stati (calendario, winners/losers, payout, ecc.) accentuati per non risultare sbiaditi. Modalità notte invariata.
-- Logo/favicon del sito (monogramma "S" oro su nero).
-- Deploy: repo GitHub mattia88c-cloud/Trading-account → push su main → Netlify fa auto-deploy. Sito live: https://stratton-account-manager.netlify.app
+- Sistema utenti: login, sessione persistente, primo accesso forza nome vero + password, reset password via email, Impostazioni (cambia password / modifica profilo / elimina dati) dalla rotellina, standby automatico dopo 30gg di inattività per i profili non-admin, trigger DB che impedisce a un utente di auto-promuoversi admin o riattivarsi da solo.
+- Pannello Admin ("Gestione Account", dietro re-inserimento password): crea/disattiva/riattiva/elimina utenti, reset password — 4 Edge Functions (supabase/functions/admin-*) deployate.
+- Sezione "Friends": classifica settimanale (cubetti % giornaliera + saldo) e classifica disciplina (score + missioni), badge "Punto debole" (missione fallita più frequente), card sempre della stessa altezza. Tabella condivisa leaderboard_stats, solo dati aggregati.
+- 3 account amici reali: Antonio, Pietro, Daniele (credenziali già consegnate).
+- Cronologia: colonna Link screenshot TradingView, pulsante Modifica con modal (checkbox conti per aggiungere copy trading a una entry già salvata), conferma prima di eliminare.
+- Journal trade: link screenshot, toggle "Ho seguito la strategia" / "Non ho seguito la strategia" con checkbox "Avrei preso TP se avessi seguito la strategia" quando fuori piano; errori di salvataggio ora mostrati all'utente (prima fallivano in silenzio) su Journal trade, Registro rapido, Overtrading Mode.
+- Calendario: box giorno con pallini conto, voto A-D, barra TP/SL, % sul saldo; box "{anno} in cifre" con statistiche annuali.
+- Calculator NAS100 + XAUUSD affiancati. Switch giorno/notte singolo. Suoni ed effetti visivi (attivabili/disattivabili da Impostazioni > Suoni e animazioni). Redesign modalità giorno (modalità notte invariata).
+- Nuovo conto: default su "Prop Firm" invece di "Personale".
+- Deploy: push su main → Netlify auto-deploy. Sito live: https://stratton-account-manager.netlify.app
 
-WORKFLOW DA SEGUIRE D'ORA IN AVANTI (importante, richiesto esplicitamente):
-Fai le modifiche in locale, verificale nel preview locale, e NON fare commit/push finché non te lo chiedo esplicitamente ("ok procedi" / "aggiorna il sito online" o simili). Un push su main è visibile subito a tutti (incluso i 3 amici), quindi va fatto solo su mia conferma.
+FATTO IN LOCALE, NON ANCORA PUBBLICATO (aspetta conferma esplicita prima di fare commit/push):
+- Fix bug: il modal "Modifica giornata" in Cronologia veniva tagliato/schiacciato dentro la card (un backdrop-filter su un antenato rompeva position:fixed) — ora è montato via React Portal su <body>.
+- Legenda nel Calendario sotto la griglia mensile: pallini conto (nome + colore) e significato voti A-D (Ottimo/Buono/Mediocre/Impulsivo).
+- 4 bug corretti in Analytics/Weekly Review, tutti della stessa famiglia (un'entry per conto sulla stessa data, tipico del copy trading, veniva contata come "giorni"/"trade" multipli invece di uno): "Giorni tradati", "Freq. media trade/g", "Giorni overtrading", e TUTTI i breakdown per categoria (Performance by Market/Session/Grade/Tag/Side/ecc, ora dicono "X trade" invece di "Xg"). Un trade in copy trading su più conti conta 1 volta ovunque, ma il P/L resta sempre la somma reale di tutti i conti coinvolti.
+- Nuovo box "Margine dal threshold" in cima ad Analytics: quanto puoi ancora perdere in totale prima di bruciare un conto, più il dettaglio per singolo conto (verificato che i numeri coincidano esattamente con quelli già mostrati in Dashboard).
+
+Tutto quanto sopra ("fatto in locale") è stato verificato con build pulita (npm run build) e test dal vivo sui dati reali, dati di prova puliti subito dopo.
+
+MIGRAZIONI SQL: già tutte applicate sul database di produzione in questa sessione precedente (last_login_at, trigger protect_profile_privileges, would_have_hit_tp) — non richiederle di nuovo, sono confermate funzionanti. Se in futuro serve un'altra colonna/migrazione, segui lo stesso schema: aggiorna supabase/schema.sql con un `alter table ... add column if not exists`, spiegami passo passo cosa incollare nel SQL Editor di Supabase (il mio PC è isolato dal tuo sandbox).
+
+WORKFLOW DA SEGUIRE (importante, richiesto esplicitamente):
+Fai le modifiche in locale, verificale (build + test dal vivo nel browser di anteprima, pulendo sempre i dati di prova dopo), e NON fare commit/push finché non te lo chiedo esplicitamente ("ok procedi" / "aggiorna il sito online" / "si" o simili). Un push su main è visibile subito a tutti, incluso i 3 amici.
 
 RIFERIMENTI TECNICI:
-- Supabase project: flvimfpdwxhzdfjuejra.supabase.co — Supabase CLI già installata e collegata (supabase login + link già fatti sul mio PC), le prossime `supabase functions deploy` funzionano dirette dal mio terminale.
+- Supabase project: flvimfpdwxhzdfjuejra.supabase.co — Supabase CLI già installata e collegata sul mio PC (supabase login + link già fatti); `supabase functions deploy <nome>` funziona diretto dal mio terminale quando serve.
 - .env.local locale già configurato (gitignored, non richiederlo di nuovo se il file c'è ancora).
-- Il tuo ambiente Bash/PowerShell (sandbox) è ISOLATO dal mio PC reale: se serve installare qualcosa o lanciare comandi che devono girare sul MIO terminale (non nel tuo sandbox), dammi i comandi esatti da eseguire io, non dare per scontato che le tue esecuzioni bash abbiano effetto sul mio PC.
-- Per verificare visivamente le modifiche nel browser di anteprima, se la sessione richiede login e non hai le mie credenziali, chiedimi di controllare io stesso o verifica che il codice compili senza errori.
+- Il tuo ambiente Bash/PowerShell (sandbox) è ISOLATO dal mio PC reale: se serve eseguire qualcosa sul MIO terminale (deploy function, SQL Editor, ecc.), dammi i comandi/SQL esatti passo passo, non presumere che le tue esecuzioni bash abbiano effetto sul mio PC. Il tuo browser di anteprima invece punta al MIO Supabase reale (stesso database di produzione): quando crei dati di test per verificare una funzione, ripuliscili sempre subito dopo.
 
 COSA NON RIPETERE:
-- Non rifare gli stage A-D (auth, migrazione dati, admin, impostazioni) — tutti completati.
-- Non toccare TabIcons.jsx in modo distruttivo (solo aggiunte, mai "correzioni" delle icone esistenti).
-- Non richiedere di nuovo se usare Supabase (già deciso e implementato da tempo).
-- Non reintrodurre localStorage per i dati del journal.
-- Non modificare la modalità notte a meno che non richiesto esplicitamente — il redesign di oggi ha toccato solo la modalità giorno.
-- usePropFirmOverrides.js resta volutamente su localStorage (dati non sensibili, per-dispositivo).
+- Non rifare login/auth/admin/impostazioni/standby — tutti completati.
+- Non toccare TabIcons.jsx in modo distruttivo (solo aggiunte).
+- Non richiedere di nuovo se usare Supabase.
+- Non reintrodurre localStorage per i dati del journal. usePropFirmOverrides.js resta volutamente su localStorage (dati non sensibili, per-dispositivo).
+- Non modificare la modalità notte a meno che non richiesto esplicitamente.
+- Nei calcoli di Analytics/Weekly Review, un'entry per conto sulla stessa data (copy trading) va sempre contata come 1 trade/1 giorno nei conteggi, ma il P/L va sempre sommato su tutti i conti — non reintrodurre il vecchio bug per errore in future modifiche a useTradingData.js.
 
 Aspetto la tua prossima richiesta.

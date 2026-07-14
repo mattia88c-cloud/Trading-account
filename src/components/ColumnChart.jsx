@@ -1,10 +1,13 @@
 import { Chart as ChartJS, BarElement, CategoryScale, LinearScale, Tooltip } from 'chart.js'
 import { Bar } from 'react-chartjs-2'
+import { useCollapsed } from '../useCollapsed.js'
+import CollapseToggle from './CollapseToggle.jsx'
 import styles from './ColumnChart.module.css'
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip)
 
-export default function ColumnChart({ title, entries, formatLabel }) {
+export default function ColumnChart({ title, entries, formatLabel, boxKey }) {
+  const [open, toggle] = useCollapsed(boxKey || title)
   if (!entries || entries.length === 0) return null
 
   const labels = entries.map(([key]) => (formatLabel ? formatLabel(key) : key))
@@ -31,7 +34,7 @@ export default function ColumnChart({ title, entries, formatLabel }) {
         callbacks: {
           label: (ctx) => {
             const v = entries[ctx.dataIndex][1]
-            return `${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toLocaleString('it-IT')} · ${v.days}g · ${v.winRate !== undefined ? v.winRate.toFixed(0) + '% win' : ''}`
+            return `${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toLocaleString('it-IT')} · ${v.days} trade · ${v.winRate !== undefined ? v.winRate.toFixed(0) + '% win' : ''}`
           },
         },
       },
@@ -44,10 +47,15 @@ export default function ColumnChart({ title, entries, formatLabel }) {
 
   return (
     <div className={styles.block}>
-      <div className={styles.title}>{title}</div>
-      <div className={styles.chartWrap}>
-        <Bar data={data} options={options} />
+      <div className={styles.title}>
+        <span>{title}</span>
+        <CollapseToggle open={open} onToggle={toggle} />
       </div>
+      {open && (
+        <div className={styles.chartWrap}>
+          <Bar data={data} options={options} />
+        </div>
+      )}
     </div>
   )
 }

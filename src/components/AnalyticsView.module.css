@@ -45,6 +45,57 @@
   flex-shrink: 0;
 }
 
+.thresholdTotal {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  line-height: 1;
+}
+
+.thresholdSub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 4px 0 12px;
+}
+
+.thresholdList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.thresholdRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  box-shadow: var(--card-shadow-subtle);
+}
+
+.thresholdName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.thresholdValue {
+  font-weight: 700;
+  color: var(--green);
+}
+
+.thresholdBreachedTag {
+  font-weight: 700;
+  color: var(--red);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
 .subHeader {
   font-size: 12px;
   text-transform: uppercase;
@@ -97,10 +148,9 @@
 }
 
 .notesIdealGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 10px;
-  align-items: start;
   margin-top: 10px;
 }
 
@@ -123,6 +173,7 @@
   border: 1px solid rgba(46, 204, 113, 0.25);
   border-radius: 8px;
   padding: 10px;
+  box-shadow: var(--card-shadow-subtle);
 }
 
 .loseBox {
@@ -130,9 +181,12 @@
   border: 1px solid rgba(231, 76, 60, 0.25);
   border-radius: 8px;
   padding: 10px;
+  box-shadow: var(--card-shadow-subtle);
 }
 
 .winLoseTitle {
+  display: flex;
+  align-items: center;
   font-size: 11px;
   text-transform: uppercase;
   font-weight: 700;
@@ -158,9 +212,12 @@
   border-radius: 8px;
   padding: 10px;
   margin-top: 10px;
+  box-shadow: var(--card-shadow-subtle);
 }
 
 .payoutTitle {
+  display: flex;
+  align-items: center;
   font-size: 11px;
   text-transform: uppercase;
   font-weight: 700;
@@ -195,6 +252,8 @@
 }
 
 .notesTitle {
+  display: flex;
+  align-items: center;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;

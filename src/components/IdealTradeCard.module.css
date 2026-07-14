@@ -1,13 +1,21 @@
 .card {
-  background: var(--accent-dim);
-  border: 1px solid var(--accent-border);
+  background: rgba(201, 166, 96, 0.07);
+  border: 1px solid rgba(201, 166, 96, 0.25);
   border-radius: 8px;
   padding: 12px 14px;
   height: 100%;
   box-sizing: border-box;
+  box-shadow: var(--card-shadow-subtle);
+}
+
+[data-theme="light"] .card {
+  background: rgba(201, 166, 96, 0.16);
+  border-color: rgba(201, 166, 96, 0.4);
 }
 
 .title {
+  display: flex;
+  align-items: center;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -22,7 +30,43 @@
   margin-bottom: 8px;
 }
 
-.goodList, .badList {
+.compareGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+
+.colTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: var(--green);
+}
+
+.badCol .colTitle {
+  color: var(--red);
+}
+
+.goodCol, .badCol {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow: var(--card-shadow-subtle);
+}
+
+.goodCol {
+  border-left: 3px solid var(--green);
+}
+
+.badCol {
+  border-left: 3px solid var(--red);
+}
+
+.list {
   display: flex;
   flex-direction: column;
   gap: 5px;

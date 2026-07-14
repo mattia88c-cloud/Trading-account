@@ -1,0 +1,28 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  color: var(--text-muted);
+  cursor: pointer;
+  margin-left: auto;
+}
+
+.btn:hover {
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.chevronOpen,
+.chevronClosed {
+  transition: transform 0.15s ease;
+}
+
+.chevronClosed {
+  transform: rotate(-90deg);
+}

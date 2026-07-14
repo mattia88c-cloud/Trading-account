@@ -165,7 +165,9 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   // ma non devono influenzare le statistiche "di qualità" (win rate, expectancy, breakdown per
   // mercato/sessione/ecc.): per quelle usiamo solo i giorni compilati in modo affidabile.
   const sorted = allSorted.filter((e) => !e.overtradingDay)
-  const overtradingDaysCount = allSorted.length - sorted.length
+  // Conta le date distinte, non le entry: con più conti selezionati un giorno di overtrading
+  // può avere un'entry per conto sulla stessa data.
+  const overtradingDaysCount = new Set(allSorted.filter((e) => e.overtradingDay).map((e) => e.date)).size
 
   const empty = {
     totalPnl: 0,
@@ -224,30 +226,62 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   }
 
   const totalPnl = allSorted.reduce((sum, e) => sum + e.profit, 0)
-  const winningEntries = sorted.filter((e) => e.profit > 0)
-  const losingEntries = sorted.filter((e) => e.profit < 0)
-  const winningDays = winningEntries.length
-  const losingDays = losingEntries.length
-  const bestDay = allSorted.reduce((best, e) => (e.profit > best.profit ? e : best), allSorted[0])
-  const worstDay = allSorted.reduce((worst, e) => (e.profit < worst.profit ? e : worst), allSorted[0])
+
+  // Con più conti selezionati insieme (Riepilogo), la stessa data può avere più entry — una
+  // per conto, tipico del copy trading. Le statistiche "a giorni" (giorni tradati, win rate,
+  // streak, miglior/peggior giorno, expectancy) vanno contate una volta per data reale, non
+  // una volta per entry, altrimenti un giorno in copy trading su 2 conti risulta "2 giorni".
+  function groupByDate(entries) {
+    const byDate = {}
+    entries.forEach((e) => { byDate[e.date] = (byDate[e.date] || 0) + e.profit })
+    return Object.entries(byDate)
+      .map(([date, profit]) => ({ date, profit }))
+      .sort((a, b) => a.date.localeCompare(b.date))
+  }
+
+  const allDayRecords = groupByDate(allSorted)
+  const dayRecords = groupByDate(sorted)
+
+  // Un trade in copy trading su più conti genera un'entry per conto sulla stessa data, ma è
+  // UN trade solo, non N: per ogni breakdown "per categoria" (mercato, sessione, voto, tag,
+  // lato, ecc.) e per i conteggi trade/durata contiamo una volta per data, sommando il P/L e
+  // unendo i tag di tutti i conti coinvolti; per gli altri campi (mercato, voto, ecc.) usiamo
+  // il valore della prima entry di quella data, dato che un copy trade li replica identici.
+  const tradesByDate = {}
+  sorted.forEach((e) => {
+    if (!tradesByDate[e.date]) tradesByDate[e.date] = { ...e, profit: 0, tags: [] }
+    const t = tradesByDate[e.date]
+    t.profit += e.profit
+    t.tags = [...new Set([...(t.tags || []), ...(e.tags || [])])]
+  })
+  const trades = Object.values(tradesByDate)
+
+  const winningEntries = trades.filter((e) => e.profit > 0)
+  const losingEntries = trades.filter((e) => e.profit < 0)
+  const winningDayRecords = dayRecords.filter((d) => d.profit > 0)
+  const losingDayRecords = dayRecords.filter((d) => d.profit < 0)
+  const winningDays = winningDayRecords.length
+  const losingDays = losingDayRecords.length
+  const bestDay = allDayRecords.reduce((best, d) => (d.profit > best.profit ? d : best), allDayRecords[0])
+  const worstDay = allDayRecords.reduce((worst, d) => (d.profit < worst.profit ? d : worst), allDayRecords[0])
   const currentBalance = initialBalance + totalPnl
 
-  const totalTradesEffective = sorted.reduce((sum, e) => sum + e.tradesEffective, 0)
+  const totalTradesEffective = trades.reduce((sum, e) => sum + e.tradesEffective, 0)
 
-  const grossWin = winningEntries.reduce((sum, e) => sum + e.profit, 0)
-  const grossLoss = Math.abs(losingEntries.reduce((sum, e) => sum + e.profit, 0))
+  const grossWin = winningDayRecords.reduce((sum, d) => sum + d.profit, 0)
+  const grossLoss = Math.abs(losingDayRecords.reduce((sum, d) => sum + d.profit, 0))
   const avgWin = winningDays > 0 ? grossWin / winningDays : 0
   const avgLoss = losingDays > 0 ? grossLoss / losingDays : 0
-  const winRateFrac = sorted.length > 0 ? winningDays / sorted.length : 0
-  const lossRateFrac = sorted.length > 0 ? losingDays / sorted.length : 0
+  const winRateFrac = dayRecords.length > 0 ? winningDays / dayRecords.length : 0
+  const lossRateFrac = dayRecords.length > 0 ? losingDays / dayRecords.length : 0
   const expectancy = winRateFrac * avgWin - lossRateFrac * avgLoss
   const profitFactor = grossLoss > 0 ? grossWin / grossLoss : (grossWin > 0 ? Infinity : 0)
 
-  const winStreaks = computeStreaks(sorted, (e) => e.profit > 0)
-  const lossStreaks = computeStreaks(sorted, (e) => e.profit < 0)
+  const winStreaks = computeStreaks(dayRecords, (d) => d.profit > 0)
+  const lossStreaks = computeStreaks(dayRecords, (d) => d.profit < 0)
 
   const bySide = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.side || 'misto'
     if (!bySide[key]) bySide[key] = { pnl: 0, days: 0, wins: 0 }
     bySide[key].pnl += e.profit
@@ -257,7 +291,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   Object.values(bySide).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
   const byWeekday = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = dayOfWeekLabel(e.date)
     if (!byWeekday[key]) byWeekday[key] = { pnl: 0, days: 0, wins: 0 }
     byWeekday[key].pnl += e.profit
@@ -266,7 +300,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   })
 
   const byMonth = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.date.slice(0, 7)
     if (!byMonth[key]) byMonth[key] = { pnl: 0, days: 0, wins: 0 }
     byMonth[key].pnl += e.profit
@@ -275,7 +309,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   })
 
   const byMarket = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.market || 'N/D'
     if (!byMarket[key]) byMarket[key] = { pnl: 0, days: 0, wins: 0 }
     byMarket[key].pnl += e.profit
@@ -285,7 +319,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   Object.values(byMarket).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
   const byOpenSession = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.openSession || 'N/D'
     if (!byOpenSession[key]) byOpenSession[key] = { pnl: 0, days: 0, wins: 0 }
     byOpenSession[key].pnl += e.profit
@@ -295,7 +329,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   Object.values(byOpenSession).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
   const byNews = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.hasNews ? 'Con notizia' : 'Senza notizia'
     if (!byNews[key]) byNews[key] = { pnl: 0, days: 0, wins: 0 }
     byNews[key].pnl += e.profit
@@ -305,7 +339,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   Object.values(byNews).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
   const byStrategy = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.followedStrategy ? 'Strategia seguita' : 'Strategia non seguita'
     if (!byStrategy[key]) byStrategy[key] = { pnl: 0, days: 0, wins: 0 }
     byStrategy[key].pnl += e.profit
@@ -317,7 +351,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   // Costo dell'indisciplina: tra i giorni in cui NON hai seguito il piano, quanti avresti
   // comunque preso TP se lo avessi seguito — quantifica il P/L "regalato" per non aver
   // rispettato la strategia, non solo quante volte è successo.
-  const offPlan = sorted.filter((e) => e.followedStrategy === false)
+  const offPlan = trades.filter((e) => e.followedStrategy === false)
   const offPlanMissedTP = offPlan.filter((e) => e.wouldHaveHitTP === true)
   const disciplineCost = {
     offPlanCount: offPlan.length,
@@ -327,7 +361,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   }
 
   const byCloseType = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.closeType || 'N/D'
     if (!byCloseType[key]) byCloseType[key] = { pnl: 0, days: 0, wins: 0 }
     byCloseType[key].pnl += e.profit
@@ -337,7 +371,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   Object.values(byCloseType).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
   const byGrade = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.grade || 'N/D'
     if (!byGrade[key]) byGrade[key] = { pnl: 0, days: 0, wins: 0 }
     byGrade[key].pnl += e.profit
@@ -346,13 +380,13 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   })
   Object.values(byGrade).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
-  const withRiskReward = sorted.filter((e) => e.riskReward !== null && e.riskReward !== undefined)
+  const withRiskReward = trades.filter((e) => e.riskReward !== null && e.riskReward !== undefined)
   const avgRiskReward = withRiskReward.length > 0
     ? withRiskReward.reduce((sum, e) => sum + e.riskReward, 0) / withRiskReward.length
     : null
 
   const byEmotionalState = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     const key = e.emotionalState || 'N/D'
     if (!byEmotionalState[key]) byEmotionalState[key] = { pnl: 0, days: 0, wins: 0 }
     byEmotionalState[key].pnl += e.profit
@@ -362,7 +396,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   Object.values(byEmotionalState).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
   const byTag = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     (e.tags || []).forEach((tag) => {
       if (!byTag[tag]) byTag[tag] = { pnl: 0, days: 0, wins: 0 }
       byTag[tag].pnl += e.profit
@@ -372,18 +406,18 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   })
   Object.values(byTag).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
-  const withRiskPct = sorted.filter((e) => e.initialRisk)
+  const withRiskPct = trades.filter((e) => e.initialRisk)
   const avgRiskPct = withRiskPct.length > 0
     ? withRiskPct.reduce((sum, e) => sum + (e.initialRisk / initialBalance) * 100, 0) / withRiskPct.length
     : null
 
-  const withConfidence = sorted.filter((e) => e.confidenceLevel)
+  const withConfidence = trades.filter((e) => e.confidenceLevel)
   const avgConfidence = withConfidence.length > 0
     ? withConfidence.reduce((sum, e) => sum + e.confidenceLevel, 0) / withConfidence.length
     : null
 
   const byLotSize = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     if (!e.initialSizeMicro) return
     const key = String(e.initialSizeMicro)
     if (!byLotSize[key]) byLotSize[key] = { pnl: 0, days: 0, wins: 0 }
@@ -394,7 +428,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   Object.values(byLotSize).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
   const byRiskPoints = {}
-  sorted.forEach((e) => {
+  trades.forEach((e) => {
     if (!e.riskPoints) return
     const key = String(e.riskPoints)
     if (!byRiskPoints[key]) byRiskPoints[key] = { pnl: 0, days: 0, wins: 0 }
@@ -407,12 +441,12 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   return {
     totalPnl,
     winRate: winRateFrac * 100,
-    daysTraded: sorted.length,
+    daysTraded: dayRecords.length,
     overtradingDaysCount,
-    totalDaysTradedAll: allSorted.length,
+    totalDaysTradedAll: allDayRecords.length,
     winningDays,
     losingDays,
-    totalTradesOpened: sorted.reduce((sum, e) => sum + e.tradesOpened, 0),
+    totalTradesOpened: trades.reduce((sum, e) => sum + e.tradesOpened, 0),
     totalTradesEffective,
     bestDay,
     worstDay,
@@ -422,7 +456,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
     profitFactor,
     winners: {
       total: winningDays,
-      best: winningEntries.length ? Math.max(...winningEntries.map((e) => e.profit)) : 0,
+      best: winningDayRecords.length ? Math.max(...winningDayRecords.map((d) => d.profit)) : 0,
       average: avgWin,
       avgDuration: avgDuration(winningEntries),
       maxStreak: winStreaks.max,
@@ -430,7 +464,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
     },
     losers: {
       total: losingDays,
-      best: losingEntries.length ? Math.max(...losingEntries.map((e) => e.profit)) : 0,
+      best: losingDayRecords.length ? Math.max(...losingDayRecords.map((d) => d.profit)) : 0,
       average: avgLoss === 0 ? 0 : -avgLoss,
       avgDuration: avgDuration(losingEntries),
       maxStreak: lossStreaks.max,
@@ -455,11 +489,11 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
     avgConfidence,
     initialBalance,
     modifications: {
-      reEntry: modificationStats(sorted, (e) => e.reEntry),
-      stopWidened: modificationStats(sorted, (e) => e.finalRisk && e.initialRisk && e.finalRisk > e.initialRisk),
-      lotIncreased: modificationStats(sorted, (e) => e.finalSizeMicro && e.initialSizeMicro && e.finalSizeMicro > e.initialSizeMicro),
+      reEntry: modificationStats(trades, (e) => e.reEntry),
+      stopWidened: modificationStats(trades, (e) => e.finalRisk && e.initialRisk && e.finalRisk > e.initialRisk),
+      lotIncreased: modificationStats(trades, (e) => e.finalSizeMicro && e.initialSizeMicro && e.finalSizeMicro > e.initialSizeMicro),
     },
-    avgTradeFrequency: sorted.length > 0 ? totalTradesEffective / sorted.length : 0,
+    avgTradeFrequency: dayRecords.length > 0 ? totalTradesEffective / dayRecords.length : 0,
     payouts: {
       total: groupPayouts.reduce((sum, p) => sum + p.amount, 0),
       count: groupPayouts.length,

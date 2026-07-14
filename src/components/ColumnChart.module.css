@@ -5,9 +5,12 @@
   padding: 10px 12px;
   height: 100%;
   box-sizing: border-box;
+  box-shadow: var(--card-shadow-subtle);
 }
 
 .title {
+  display: flex;
+  align-items: center;
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
