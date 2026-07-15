@@ -119,6 +119,13 @@ create table if not exists public.accounts (
   created_at timestamptz not null default now()
 );
 
+-- Il progetto era già live quando sono stati aggiunti i conti CFD a threshold fisso: "create
+-- table if not exists" sopra non tocca una tabella già esistente, servono queste alter esplicite.
+-- Threshold fisso = il floor non insegue mai il massimo storico raggiunto (a differenza del
+-- trailing drawdown delle valutazioni prop firm): l'utente imposta un numero assoluto e resta quello.
+alter table public.accounts add column if not exists fixed_threshold boolean not null default false;
+alter table public.accounts add column if not exists threshold_value numeric;
+
 create table if not exists public.entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),

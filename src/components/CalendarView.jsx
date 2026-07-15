@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { GRADES } from '../useTradingData'
+import YearHeatmap from './YearHeatmap.jsx'
 import styles from './CalendarView.module.css'
 
 const MONTH_NAMES = [
@@ -131,7 +132,9 @@ export default function CalendarView({ accounts, entries }) {
   }, 0)
 
   return (
-    <div className={styles.wrap}>
+    <div className={styles.page}>
+      <YearHeatmap year={year} statsByDay={statsByDay} storageKey={accountFilter} />
+      <div className={styles.wrap}>
       <div className={styles.controls}>
         <button className={styles.navBtn} onClick={() => changeMonth(-1)}>‹</button>
         <span className={styles.monthLabel}>{MONTH_NAMES[month]} {year}</span>
@@ -321,6 +324,7 @@ export default function CalendarView({ accounts, entries }) {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

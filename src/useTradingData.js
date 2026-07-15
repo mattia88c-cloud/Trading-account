@@ -48,6 +48,21 @@ export const ACCOUNT_COLORS = [
   '#9b59b6', '#1abc9c', '#f1c40f', '#ff6b9d',
 ]
 
+// I marker dei payout nei grafici Dashboard sono bianchi (vedi EquityCharts.jsx): un conto
+// bianco/quasi bianco renderebbe quel punto invisibile sulla propria linea. Il filtro qui è
+// una rete di sicurezza — nessun colore in ACCOUNT_COLORS è bianco oggi, ma se in futuro se ne
+// aggiunge uno (o si introduce un color picker) questo esclude comunque i colori troppo chiari
+// dall'assegnazione automatica, invece di fidarsi solo della convenzione.
+function isNearWhite(hex) {
+  if (!hex) return false
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return r > 230 && g > 230 && b > 230
+}
+
+const SAFE_ACCOUNT_COLORS = ACCOUNT_COLORS.filter((c) => !isNearWhite(c))
+
 export const MARKETS = ['NAS100', 'XAUUSD']
 
 export const SESSIONS = ['Asia', 'Londra', 'New York']
@@ -561,13 +576,15 @@ export function useTradingData() {
     setPayouts((prev) => prev.filter((p) => p.id !== id))
   }
 
-  async function addAccount({ name, type, initialBalance, maxDrawdown }) {
+  async function addAccount({ name, type, initialBalance, maxDrawdown, fixedThreshold, thresholdValue }) {
     const payload = accountToDb({
       name,
       type,
       initialBalance: Number(initialBalance),
-      maxDrawdown: maxDrawdown ? Number(maxDrawdown) : 0,
-      color: ACCOUNT_COLORS[accounts.length % ACCOUNT_COLORS.length],
+      maxDrawdown: fixedThreshold ? 0 : (maxDrawdown ? Number(maxDrawdown) : 0),
+      fixedThreshold: !!fixedThreshold,
+      thresholdValue: fixedThreshold ? thresholdValue : null,
+      color: SAFE_ACCOUNT_COLORS[accounts.length % SAFE_ACCOUNT_COLORS.length],
       active: true,
     })
     const { data, error } = await supabase.from('accounts').insert(payload).select().single()
@@ -609,9 +626,25 @@ export function useTradingData() {
 
   // Trailing drawdown threshold: rises with new balance highs (high water mark - maxDrawdown),
   // never falls, and locks permanently once it reaches the account's initial balance.
+  // Conti CFD con "threshold fisso" saltano tutta questa logica: il floor è un numero fisso
+  // scelto dall'utente, non insegue mai il saldo che cresce (a differenza delle valutazioni
+  // prop firm, dove il floor sale col massimo storico raggiunto).
   function getThreshold(accountId) {
     const account = accounts.find((a) => a.id === accountId)
-    if (!account || !account.maxDrawdown) return null
+    if (!account) return null
+
+    if (account.fixedThreshold) {
+      if (account.thresholdValue === null || account.thresholdValue === undefined) return null
+      const currentBalance = getAccountBalance(accountId)
+      return {
+        threshold: account.thresholdValue,
+        locked: false,
+        fixed: true,
+        breached: currentBalance <= account.thresholdValue,
+      }
+    }
+
+    if (!account.maxDrawdown) return null
 
     const series = getAccountSeries(accountId)
     let highWaterMark = account.initialBalance

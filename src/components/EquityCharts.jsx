@@ -14,14 +14,16 @@ function hexToRgba(hex, alpha) {
 
 const THEME_COLORS = {
   dark: {
-    payout: '#9b6bd6',
+    payout: '#ffffff',
+    payoutBorder: 'rgba(0, 0, 0, 0.55)',
     breached: '#ff5c5c',
     threshold: 'rgba(255, 92, 92, 0.6)',
     grid: 'rgba(245, 245, 240, 0.08)',
     tick: '#8a8a80',
   },
   light: {
-    payout: '#6f47a8',
+    payout: '#ffffff',
+    payoutBorder: 'rgba(44, 40, 30, 0.6)',
     breached: '#c94444',
     threshold: 'rgba(201, 68, 68, 0.55)',
     grid: 'rgba(44, 40, 30, 0.1)',
@@ -34,6 +36,7 @@ export default function EquityCharts({ accounts, getAccountSeries, getThreshold,
 
   const colors = THEME_COLORS[theme] || THEME_COLORS.dark
   const PAYOUT_COLOR = colors.payout
+  const PAYOUT_BORDER_COLOR = colors.payoutBorder
   const BREACHED_COLOR = colors.breached
   const GRID_COLOR = colors.grid
   const TICK_COLOR = colors.tick
@@ -59,7 +62,8 @@ export default function EquityCharts({ accounts, getAccountSeries, getThreshold,
             tension: 0.25,
             pointRadius: series.map((p) => (p.isPayout ? 5 : 2)),
             pointBackgroundColor: series.map((p) => (p.isPayout ? PAYOUT_COLOR : lineColor)),
-            pointBorderColor: series.map((p) => (p.isPayout ? PAYOUT_COLOR : lineColor)),
+            pointBorderColor: series.map((p) => (p.isPayout ? PAYOUT_BORDER_COLOR : lineColor)),
+            pointBorderWidth: series.map((p) => (p.isPayout ? 2 : 1)),
             borderWidth: isSelected ? 3 : 2,
             segment: {
               borderColor: (ctx) => (series[ctx.p1DataIndex]?.isPayout ? PAYOUT_COLOR : undefined),

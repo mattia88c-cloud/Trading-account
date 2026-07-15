@@ -138,10 +138,10 @@ export default function AccountsOverview({
                 <div className={threshold.breached ? styles.thresholdBreached : styles.thresholdInfo}>
                   {threshold.breached ? 'CONTO BRUCIATO — ' : ''}
                   Threshold: ${threshold.threshold.toLocaleString('it-IT', { maximumFractionDigits: 2 })}
-                  {threshold.locked ? ' (bloccata)' : ''}
+                  {threshold.locked ? ' (bloccata)' : threshold.fixed ? ' (fisso)' : ''}
                 </div>
                 {!threshold.breached && (
-                  <div className={distanceColorClass(balance - threshold.threshold, account.maxDrawdown, styles)}>
+                  <div className={distanceColorClass(balance - threshold.threshold, threshold.fixed ? (account.initialBalance - threshold.threshold) : account.maxDrawdown, styles)}>
                     Distanza dal bruciarlo: ${(balance - threshold.threshold).toLocaleString('it-IT', { maximumFractionDigits: 2 })}
                   </div>
                 )}

@@ -8,6 +8,8 @@ export function accountFromDb(row) {
     type: row.type,
     initialBalance: Number(row.initial_balance),
     maxDrawdown: Number(row.max_drawdown) || 0,
+    fixedThreshold: row.fixed_threshold || false,
+    thresholdValue: row.threshold_value !== null && row.threshold_value !== undefined ? Number(row.threshold_value) : null,
     color: row.color,
     active: row.active,
     createdAt: row.created_at,
@@ -20,6 +22,8 @@ export function accountToDb(a) {
     type: a.type,
     initial_balance: Number(a.initialBalance),
     max_drawdown: a.maxDrawdown ? Number(a.maxDrawdown) : 0,
+    fixed_threshold: !!a.fixedThreshold,
+    threshold_value: a.thresholdValue !== null && a.thresholdValue !== undefined && a.thresholdValue !== '' ? Number(a.thresholdValue) : null,
     color: a.color,
     active: a.active,
   }

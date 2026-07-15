@@ -1,0 +1,127 @@
+.wrap {
+  background: var(--bg-card);
+  backdrop-filter: blur(var(--card-blur));
+  -webkit-backdrop-filter: blur(var(--card-blur));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: var(--card-shadow);
+  margin-bottom: 12px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--text);
+}
+
+.scrollArea {
+  overflow-x: auto;
+  margin-top: 14px;
+  padding-bottom: 4px;
+}
+
+.grid {
+  display: grid;
+  grid-template-rows: 20px repeat(5, 1fr);
+  gap: 5px;
+  width: 100%;
+  min-width: 600px;
+}
+
+.monthLabel {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.cell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.cellOut {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.empty0 {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+}
+
+.neutral0 {
+  background: var(--text-muted);
+  opacity: 0.35;
+  border: 1px solid var(--border);
+}
+
+.win1 { background: rgba(46, 204, 113, 0.22); border-color: rgba(46, 204, 113, 0.3); }
+.win2 { background: rgba(46, 204, 113, 0.42); border-color: rgba(46, 204, 113, 0.5); }
+.win3 { background: rgba(46, 204, 113, 0.65); border-color: rgba(46, 204, 113, 0.7); }
+.win4 { background: rgba(46, 204, 113, 0.92); border-color: rgba(46, 204, 113, 0.95); }
+
+.loss1 { background: rgba(231, 76, 60, 0.22); border-color: rgba(231, 76, 60, 0.3); }
+.loss2 { background: rgba(231, 76, 60, 0.42); border-color: rgba(231, 76, 60, 0.5); }
+.loss3 { background: rgba(231, 76, 60, 0.65); border-color: rgba(231, 76, 60, 0.7); }
+.loss4 { background: rgba(231, 76, 60, 0.92); border-color: rgba(231, 76, 60, 0.95); }
+
+[data-theme="light"] .win1 { background: rgba(46, 204, 113, 0.3); }
+[data-theme="light"] .win2 { background: rgba(46, 204, 113, 0.5); }
+[data-theme="light"] .win3 { background: rgba(46, 204, 113, 0.72); }
+[data-theme="light"] .win4 { background: rgba(46, 204, 113, 0.95); }
+
+[data-theme="light"] .loss1 { background: rgba(231, 76, 60, 0.3); }
+[data-theme="light"] .loss2 { background: rgba(231, 76, 60, 0.5); }
+[data-theme="light"] .loss3 { background: rgba(231, 76, 60, 0.72); }
+[data-theme="light"] .loss4 { background: rgba(231, 76, 60, 0.95); }
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.legendLabel {
+  margin: 0 4px;
+}
+
+.legendSwatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+/* Oro fisso (non var(--accent), che in tema giorno diventa quasi nero) e più tenue: deve
+   segnalare il giorno di news senza dominare il colore win/loss della cella. */
+.newsDay {
+  box-shadow: inset 0 0 0 1.5px rgba(201, 166, 96, 0.55);
+}
+
+[data-theme="light"] .newsDay {
+  box-shadow: inset 0 0 0 1.5px rgba(178, 138, 56, 0.5);
+}
+
+.newsLegend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 14px;
+  cursor: pointer;
+}
+
+.newsCheckbox {
+  cursor: pointer;
+  accent-color: var(--accent);
+  width: 13px;
+  height: 13px;
+}

@@ -10,17 +10,29 @@ export default function AccountForm({ onCreate }) {
   const [customBalance, setCustomBalance] = useState('')
   const [useCustom, setUseCustom] = useState(false)
   const [customDrawdown, setCustomDrawdown] = useState('')
+  const [fixedThreshold, setFixedThreshold] = useState(false)
+  const [thresholdValue, setThresholdValue] = useState('')
 
   function handleSubmit(e) {
     e.preventDefault()
     const initialBalance = useCustom ? customBalance : preset
     if (!name.trim() || !initialBalance || Number(initialBalance) <= 0) return
+    if (useCustom && fixedThreshold && (!thresholdValue || Number(thresholdValue) <= 0)) return
     const maxDrawdown = useCustom ? customDrawdown : DRAWDOWN_BY_PRESET[preset]
-    onCreate({ name: name.trim(), type, initialBalance, maxDrawdown })
+    onCreate({
+      name: name.trim(),
+      type,
+      initialBalance,
+      maxDrawdown,
+      fixedThreshold: useCustom && fixedThreshold,
+      thresholdValue: useCustom && fixedThreshold ? thresholdValue : null,
+    })
     setName('')
     setCustomBalance('')
     setUseCustom(false)
     setCustomDrawdown('')
+    setFixedThreshold(false)
+    setThresholdValue('')
     setOpen(false)
   }
 
@@ -98,14 +110,35 @@ export default function AccountForm({ onCreate }) {
             value={customBalance}
             onChange={(e) => setCustomBalance(e.target.value)}
           />
-          <input
-            className={styles.input}
-            type="number"
-            min="0"
-            placeholder="Drawdown massimo ($) - opzionale"
-            value={customDrawdown}
-            onChange={(e) => setCustomDrawdown(e.target.value)}
-          />
+
+          <label className={styles.checkboxRow}>
+            <input
+              type="checkbox"
+              checked={fixedThreshold}
+              onChange={(e) => setFixedThreshold(e.target.checked)}
+            />
+            Threshold fisso (non insegue il saldo che cresce) — per conti CFD
+          </label>
+
+          {fixedThreshold ? (
+            <input
+              className={styles.input}
+              type="number"
+              min="0"
+              placeholder="Valore threshold fisso ($)"
+              value={thresholdValue}
+              onChange={(e) => setThresholdValue(e.target.value)}
+            />
+          ) : (
+            <input
+              className={styles.input}
+              type="number"
+              min="0"
+              placeholder="Drawdown massimo ($) - opzionale"
+              value={customDrawdown}
+              onChange={(e) => setCustomDrawdown(e.target.value)}
+            />
+          )}
         </>
       ) : (
         <div className={styles.drawdownInfo}>
