@@ -40,8 +40,13 @@ export default function CalendarView({ accounts, entries }) {
     return map
   }, [accounts])
 
+  // "Tutti i conti" deve rispettare la lista di conti effettivamente passata (che App.jsx filtra
+  // già in base a "Mostra conti disattivati"), non tutte le entries a prescindere — altrimenti un
+  // conto disattivato ci finirebbe comunque dentro anche a checkbox spenta.
+  const accountIds = useMemo(() => accounts.map((a) => a.id), [accounts])
+
   const statsByDay = useMemo(() => {
-    const filtered = accountFilter === 'all' ? entries : entries.filter((e) => e.accountId === accountFilter)
+    const filtered = accountFilter === 'all' ? entries.filter((e) => accountIds.includes(e.accountId)) : entries.filter((e) => e.accountId === accountFilter)
     const map = {}
     filtered.forEach((e) => {
       if (!map[e.date]) {
@@ -61,12 +66,12 @@ export default function CalendarView({ accounts, entries }) {
       if (e.grade) day.grades.push(e.grade)
     })
     return map
-  }, [entries, accountFilter])
+  }, [entries, accountFilter, accountIds])
 
   const { year, month } = cursor
 
   const statsByMonth = useMemo(() => {
-    const filtered = accountFilter === 'all' ? entries : entries.filter((e) => e.accountId === accountFilter)
+    const filtered = accountFilter === 'all' ? entries.filter((e) => accountIds.includes(e.accountId)) : entries.filter((e) => e.accountId === accountFilter)
     const map = {}
     filtered.forEach((e) => {
       if (!e.date.startsWith(String(year))) return
@@ -76,7 +81,7 @@ export default function CalendarView({ accounts, entries }) {
       map[key].trades += e.tradesEffective
     })
     return map
-  }, [entries, accountFilter, year])
+  }, [entries, accountFilter, year, accountIds])
 
   const relevantAccounts = accountFilter === 'all' ? accounts : accounts.filter((a) => a.id === accountFilter)
   const yearBaseBalance = relevantAccounts.reduce((sum, a) => sum + a.initialBalance, 0)

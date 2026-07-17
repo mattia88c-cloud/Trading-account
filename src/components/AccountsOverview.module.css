@@ -135,6 +135,17 @@
   padding: 2px 4px 4px;
 }
 
+.targetInput {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .confirmActions {
   display: flex;
   gap: 4px;

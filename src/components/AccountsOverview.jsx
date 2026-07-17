@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Sparkline from './Sparkline.jsx'
+import AccountGoalGauge from './AccountGoalGauge.jsx'
 import styles from './AccountsOverview.module.css'
 
 function distanceColorClass(distance, maxDrawdown, styles) {
@@ -19,11 +20,14 @@ export default function AccountsOverview({
   payouts,
   onDelete,
   onToggleActive,
+  onUpdateTarget,
   selectedId,
   onSelect,
 }) {
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [targetEditId, setTargetEditId] = useState(null)
+  const [targetDraft, setTargetDraft] = useState('')
 
   if (accounts.length === 0) {
     return <p className={styles.empty}>Nessun conto creato. Aggiungine uno per iniziare.</p>
@@ -67,6 +71,7 @@ export default function AccountsOverview({
                     e.stopPropagation()
                     setMenuOpenId(isMenuOpen ? null : account.id)
                     setConfirmDeleteId(null)
+                    setTargetEditId(null)
                   }}
                 >
                   ⋮
@@ -97,6 +102,35 @@ export default function AccountsOverview({
                           </button>
                         </div>
                       </div>
+                    ) : targetEditId === account.id ? (
+                      <div className={styles.confirmBox}>
+                        <div className={styles.confirmText}>
+                          Traguardo di profitto ($) — es. primo payout
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          className={styles.targetInput}
+                          value={targetDraft}
+                          onChange={(e) => setTargetDraft(e.target.value)}
+                          autoFocus
+                        />
+                        <div className={styles.confirmActions}>
+                          <button className={styles.menuItem} onClick={() => setTargetEditId(null)}>
+                            Annulla
+                          </button>
+                          <button
+                            className={styles.menuItem}
+                            onClick={() => {
+                              onUpdateTarget(account.id, targetDraft)
+                              setTargetEditId(null)
+                              setMenuOpenId(null)
+                            }}
+                          >
+                            Salva
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <>
                         <button
@@ -107,6 +141,15 @@ export default function AccountsOverview({
                           }}
                         >
                           {account.active ? 'Disattiva' : 'Attiva'}
+                        </button>
+                        <button
+                          className={styles.menuItem}
+                          onClick={() => {
+                            setTargetDraft(account.targetProfit ? String(account.targetProfit) : '')
+                            setTargetEditId(account.id)
+                          }}
+                        >
+                          {account.targetProfit ? 'Modifica traguardo' : 'Imposta traguardo'}
                         </button>
                         <button
                           className={`${styles.menuItem} ${styles.menuItemDanger}`}
@@ -144,6 +187,9 @@ export default function AccountsOverview({
                   <div className={distanceColorClass(balance - threshold.threshold, threshold.fixed ? (account.initialBalance - threshold.threshold) : account.maxDrawdown, styles)}>
                     Distanza dal bruciarlo: ${(balance - threshold.threshold).toLocaleString('it-IT', { maximumFractionDigits: 2 })}
                   </div>
+                )}
+                {account.active && (
+                  <AccountGoalGauge account={account} threshold={threshold} currentBalance={balance} />
                 )}
               </>
             )}

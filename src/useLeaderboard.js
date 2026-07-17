@@ -22,7 +22,9 @@ export function useLeaderboard() {
   useEffect(() => { load() }, [load])
 
   async function publish({
-    userId, username, balance, accountCount, dailyPct, weeklyProfit, disciplineScore, missionsSummary,
+    userId, username, balance, accountCount, dailyPct, weeklyProfit,
+    monthlyProfit, monthlyPct, quarterlyProfit, quarterlyPct,
+    disciplineScore, missionsSummary,
   }) {
     const { error } = await supabase.from('leaderboard_stats').upsert({
       user_id: userId,
@@ -31,6 +33,10 @@ export function useLeaderboard() {
       account_count: accountCount,
       daily_pct: dailyPct,
       weekly_profit: weeklyProfit,
+      monthly_profit: monthlyProfit,
+      monthly_pct: monthlyPct,
+      quarterly_profit: quarterlyProfit,
+      quarterly_pct: quarterlyPct,
       discipline_score: disciplineScore,
       missions_summary: missionsSummary,
       updated_at: new Date().toISOString(),

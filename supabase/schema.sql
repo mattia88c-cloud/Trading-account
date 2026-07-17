@@ -126,6 +126,10 @@ create table if not exists public.accounts (
 alter table public.accounts add column if not exists fixed_threshold boolean not null default false;
 alter table public.accounts add column if not exists threshold_value numeric;
 
+-- Traguardo di profitto opzionale (es. il primo payout di una prop firm) mostrato come indicatore
+-- nella card del conto in Dashboard, insieme alla distanza dal threshold.
+alter table public.accounts add column if not exists target_profit numeric;
+
 create table if not exists public.entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
@@ -277,6 +281,13 @@ create table if not exists public.leaderboard_stats (
   missions_summary jsonb not null default '[]'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+-- Classifica mensile/trimestrale (oltre alla settimanale già esistente): stesso principio,
+-- solo aggregati (% e $ del mese/trimestre in corso sul saldo iniziale), mai singoli trade.
+alter table public.leaderboard_stats add column if not exists monthly_profit numeric;
+alter table public.leaderboard_stats add column if not exists monthly_pct numeric;
+alter table public.leaderboard_stats add column if not exists quarterly_profit numeric;
+alter table public.leaderboard_stats add column if not exists quarterly_pct numeric;
 
 alter table public.leaderboard_stats enable row level security;
 

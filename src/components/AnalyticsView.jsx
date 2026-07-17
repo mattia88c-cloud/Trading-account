@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import MetricsGrid from './MetricsGrid.jsx'
 import BreakdownBars from './BreakdownBars.jsx'
 import ColumnChart from './ColumnChart.jsx'
@@ -172,9 +173,18 @@ function BreakdownWrap({ compact, children }) {
 
 function NotesList({ entries, accountId, storageKey }) {
   const [open, toggle] = useCollapsed(`${storageKey}:notes`)
-  const notes = entries
-    .filter((e) => (accountId ? e.accountId === accountId : true) && (e.mistake || e.whatWentWell || e.lesson))
+  const filtered = entries.filter((e) => (accountId ? e.accountId === accountId : true) && (e.mistake || e.whatWentWell || e.lesson))
+  // In modalità aggregata (accountId non passato) un giorno in copy trading ha un'entry per
+  // conto sulla stessa data con la stessa nota (stesso salvataggio del Journal trade): senza
+  // deduplicare per data la stessa nota comparirebbe una volta per conto invece che una sola.
+  const seenDates = new Set()
+  const notes = filtered
     .sort((a, b) => b.date.localeCompare(a.date))
+    .filter((e) => {
+      if (seenDates.has(e.date)) return false
+      seenDates.add(e.date)
+      return true
+    })
     .slice(0, 5)
 
   if (notes.length === 0) return null
@@ -234,10 +244,18 @@ export default function AnalyticsView({
     return <p className={styles.empty}>Crea un conto per vedere le statistiche.</p>
   }
 
-  const summaryStats = getSummaryAnalytics(accounts.map((a) => a.id))
+  const [summaryActiveOnly, setSummaryActiveOnly] = useState(true)
   const accountIds = accounts.map((a) => a.id)
-  const relevantEntries = entries.filter((e) => accountIds.includes(e.accountId))
   const overtradingData = getOvertradingAnalytics(accountIds)
+
+  // Il Riepilogo aggregato ha un filtro suo, indipendente dalla checkbox "Mostra conti
+  // disattivati" in cima alla pagina (quella controlla cos'altro è visibile, es. le card per
+  // conto e Margine dal threshold): di default somma solo i conti attivi, cosi un conto vecchio
+  // disattivato non gonfia le statistiche "correnti" a meno che non lo richieda esplicitamente.
+  const summaryAccounts = summaryActiveOnly ? accounts.filter((a) => a.active) : accounts
+  const summaryAccountIds = summaryAccounts.map((a) => a.id)
+  const summaryStats = getSummaryAnalytics(summaryAccountIds)
+  const relevantEntries = entries.filter((e) => summaryAccountIds.includes(e.accountId))
 
   // Margine residuo prima del threshold (drawdown massimo) di ogni conto: quanto puoi ancora
   // perdere, in totale e conto per conto, prima di bruciare qualcosa. Conti già bruciati non
@@ -273,6 +291,14 @@ export default function AnalyticsView({
           ))}
         </div>
       </CollapsibleCard>
+
+      <button
+        type="button"
+        className={styles.summaryFilterBtn}
+        onClick={() => setSummaryActiveOnly((v) => !v)}
+      >
+        {summaryActiveOnly ? '● Riepilogo: solo conti attivi' : '○ Riepilogo: tutti i conti mostrati'}
+      </button>
 
       <CollapsibleCard
         storageKey="summary"

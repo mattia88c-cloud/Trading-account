@@ -42,12 +42,23 @@ export default function RiskBudgetCard({ entries, initialBalance, storageKey }) 
   const year = String(new Date().getFullYear())
   const yearEntries = entries.filter((e) => e.date.startsWith(year) && !e.overtradingDay)
 
-  const pointsEntries = yearEntries.filter((e) => e.riskPoints)
+  // Un giorno in copy trading ha un'entry per conto sulla stessa data, ma i punti (rischio in
+  // punti, risultato in punti) sono gli stessi in tutte perché è lo stesso trade replicato: a
+  // differenza dei dollari (che vanno sommati su tutti i conti coinvolti, vedi pctEntries sotto),
+  // qui vanno contati una volta sola per data, altrimenti un giorno in copy su 2 conti raddoppia
+  // i punti rischiati/portati a casa.
+  const pointsByDate = new Map()
+  yearEntries.forEach((e) => {
+    if (e.riskPoints && !pointsByDate.has(e.date)) pointsByDate.set(e.date, e)
+  })
+  const pointsEntries = [...pointsByDate.values()]
   const pointsRisked = pointsEntries.reduce((sum, e) => sum + e.riskPoints, 0)
   const pointsHome = pointsEntries.reduce((sum, e) => sum + (e.resultPoints || 0), 0)
   const totalBudgetPoints = settings.riskPoints * settings.maxTradesPerDay * settings.marketDays
   const remainingPoints = totalBudgetPoints - pointsRisked
 
+  // Qui invece sommare tutte le entry è corretto: initialRisk/profit sono dollari reali per
+  // ogni conto coinvolto nel copy trade, e initialBalance è già il saldo iniziale combinato.
   const pctEntries = yearEntries.filter((e) => e.initialRisk && initialBalance)
   const pctRisked = pctEntries.reduce((sum, e) => sum + (e.initialRisk / initialBalance) * 100, 0)
   const pctHome = pctEntries.reduce((sum, e) => sum + (e.profit / initialBalance) * 100, 0)

@@ -1,0 +1,58 @@
+.wrap {
+  margin-top: 8px;
+}
+
+.track {
+  position: relative;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  overflow: visible;
+}
+
+.neutralMark {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  bottom: -2px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--text-muted);
+  border-radius: 1px;
+  z-index: 1;
+}
+
+.redFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 50%;
+  background: var(--red);
+  border-radius: 3px 0 0 3px;
+}
+
+.greenFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  background: var(--green);
+  border-radius: 0 3px 3px 0;
+}
+
+.labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.labelLoss {
+  color: var(--red);
+}
+
+.labelTarget {
+  color: var(--green);
+}

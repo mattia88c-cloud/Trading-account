@@ -21,8 +21,11 @@ export default function HistoryView({ accounts, entries, onDeleteEntry, onUpdate
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
+    // "Tutti i conti" deve rispettare la lista di conti passata (App.jsx la filtra già in base a
+    // "Mostra conti disattivati"): accountById esiste solo per i conti attualmente visibili,
+    // quindi un'entry di un conto disattivato e nascosto sparisce anche dal totale qui sotto.
     return entries
-      .filter((e) => accountFilter === 'all' || e.accountId === accountFilter)
+      .filter((e) => (accountFilter === 'all' ? Boolean(accountById[e.accountId]) : e.accountId === accountFilter))
       .filter((e) => !dateFrom || e.date >= dateFrom)
       .filter((e) => !dateTo || e.date <= dateTo)
       .filter((e) => {

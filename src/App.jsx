@@ -46,45 +46,6 @@ const TABS = [
   { id: 'propfirms', label: 'Prop Firm' },
 ]
 
-// SOLO anteprima visiva temporanea per il tab Friends, prima del deploy reale su Supabase.
-// TODO: rimuovere e ripristinare `rows={leaderboardRows}` una volta verificato il risultato.
-const DEMO_ROWS = [
-  {
-    user_id: 'demo-you', username: 'mattia88c', balance: 53309, account_count: 4,
-    daily_pct: [{ pct: 1.2 }, { pct: 0.8 }, { pct: -0.4 }, { pct: 2.1 }, { pct: 0.5 }],
-    weekly_profit: 2226,
-    discipline_score: 78,
-    missions_summary: [{ type: 'overtrading', label: 'Overtrading', date: '2026-07-01', status: 'completed' }],
-  },
-  {
-    user_id: 'demo-1', username: 'Marco', balance: 61200, account_count: 2,
-    daily_pct: [{ pct: 2.5 }, { pct: 1.1 }, { pct: 0.9 }, { pct: 1.8 }, { pct: 0.6 }],
-    weekly_profit: 4223,
-    discipline_score: 91,
-    missions_summary: [
-      { type: 'revenge', label: 'Revenge Trading', date: '2026-06-20', status: 'completed' },
-      { type: 'stoploss', label: 'Stop Loss', date: '2026-07-02', status: 'completed' },
-    ],
-  },
-  {
-    user_id: 'demo-2', username: 'Luca', balance: 48900, account_count: 3,
-    daily_pct: [{ pct: -1.2 }, { pct: 0.4 }, { pct: -0.8 }, { pct: 1.5 }, { pct: null }],
-    weekly_profit: -55,
-    discipline_score: 54,
-    missions_summary: [{ type: 'revenge', label: 'Revenge Trading', date: '2026-07-08', status: 'failed' }],
-  },
-  {
-    user_id: 'demo-3', username: 'Sara', balance: 39500, account_count: 1,
-    daily_pct: [{ pct: -2.1 }, { pct: -1.5 }, { pct: 0.3 }, { pct: -0.9 }, { pct: null }],
-    weekly_profit: -1660,
-    discipline_score: 38,
-    missions_summary: [
-      { type: 'overtrading', label: 'Overtrading', date: '2026-07-07', status: 'failed' },
-      { type: 'stoploss', label: 'Stop Loss', date: '2026-07-09', status: 'failed' },
-    ],
-  },
-]
-
 const THEME_KEY = 'trading-accounts:theme'
 
 // Gate di autenticazione: mostra login, poi (se necessario) il cambio password obbligatorio
@@ -152,6 +113,8 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
   const [selectedAccountId, setSelectedAccountId] = useState(null)
   const [showInactiveDashboard, setShowInactiveDashboard] = useState(false)
   const [showInactiveAnalytics, setShowInactiveAnalytics] = useState(false)
+  const [showInactiveCalendar, setShowInactiveCalendar] = useState(false)
+  const [showInactiveHistory, setShowInactiveHistory] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'dark')
   const [sfxMuted, setSfxMutedState] = useState(() => isSfxMuted())
   const [motionDisabled, setMotionDisabledState] = useState(() => isMotionDisabled())
@@ -220,6 +183,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
     addAccount,
     deleteAccount,
     toggleAccountActive,
+    updateAccountTarget,
     saveDayEntry,
     updateEntry,
     saveOvertradingDay,
@@ -261,7 +225,9 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
   useEffect(() => {
     if (tab !== 'friends' || !profile) return
     const activeAccountIds = accounts.filter((a) => a.active).map((a) => a.id)
-    const { balance, accountCount, dailyPct, weeklyProfit } = getFriendsSnapshot(activeAccountIds)
+    const {
+      balance, accountCount, dailyPct, weeklyProfit, monthlyProfit, monthlyPct, quarterlyProfit, quarterlyPct,
+    } = getFriendsSnapshot(activeAccountIds)
     const disciplineScore = getBehaviorProgress(activeAccountIds).disciplineScore
     const missionsSummary = missions
       .map((m) => ({ ...evaluateMission(m, entries), type: m.type }))
@@ -275,6 +241,10 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
       accountCount,
       dailyPct,
       weeklyProfit,
+      monthlyProfit,
+      monthlyPct,
+      quarterlyProfit,
+      quarterlyPct,
       disciplineScore,
       missionsSummary,
     })
@@ -283,6 +253,8 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
 
   const dashboardAccounts = accounts.filter((a) => a.active || showInactiveDashboard)
   const analyticsAccounts = accounts.filter((a) => a.active || showInactiveAnalytics)
+  const calendarAccounts = accounts.filter((a) => a.active || showInactiveCalendar)
+  const historyAccounts = accounts.filter((a) => a.active || showInactiveHistory)
 
   return (
     <div className={styles.app}>
@@ -363,6 +335,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
                 payouts={payouts}
                 onDelete={deleteAccount}
                 onToggleActive={toggleAccountActive}
+                onUpdateTarget={updateAccountTarget}
                 selectedId={selectedAccountId}
                 onSelect={setSelectedAccountId}
               />
@@ -401,16 +374,38 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
           </>
         )}
 
-        {tab === 'calendar' && <CalendarView accounts={accounts} entries={entries} />}
+        {tab === 'calendar' && (
+          <>
+            <label className={styles.inactiveToggle}>
+              <input
+                type="checkbox"
+                checked={showInactiveCalendar}
+                onChange={(e) => setShowInactiveCalendar(e.target.checked)}
+              />
+              Mostra conti disattivati
+            </label>
+            <CalendarView accounts={calendarAccounts} entries={entries} />
+          </>
+        )}
 
         {tab === 'history' && (
-          <HistoryView
-            accounts={accounts}
-            entries={entries}
-            onDeleteEntry={deleteEntry}
-            onUpdateEntry={updateEntry}
-            onSaveDayEntry={saveDayEntry}
-          />
+          <>
+            <label className={styles.inactiveToggle}>
+              <input
+                type="checkbox"
+                checked={showInactiveHistory}
+                onChange={(e) => setShowInactiveHistory(e.target.checked)}
+              />
+              Mostra conti disattivati
+            </label>
+            <HistoryView
+              accounts={historyAccounts}
+              entries={entries}
+              onDeleteEntry={deleteEntry}
+              onUpdateEntry={updateEntry}
+              onSaveDayEntry={saveDayEntry}
+            />
+          </>
         )}
 
         {tab === 'weekly' && <WeeklyReview accounts={analyticsAccounts} getWeeklyAnalytics={getWeeklyAnalytics} />}
@@ -432,7 +427,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
         )}
 
         {tab === 'friends' && (
-          <FriendsView rows={DEMO_ROWS} currentUserId="demo-you" loading={false} />
+          <FriendsView rows={leaderboardRows} currentUserId={profile?.id} loading={leaderboardLoading} />
         )}
 
         {tab === 'calculator' && <CalculatorTab />}

@@ -624,6 +624,17 @@ export function useTradingData() {
     setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a)))
   }
 
+  async function updateAccountTarget(id, targetProfit) {
+    const value = targetProfit ? Number(targetProfit) : null
+    const { error } = await supabase.from('accounts').update({ target_profit: value }).eq('id', id)
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Errore aggiornamento traguardo:', error.message)
+      return
+    }
+    setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, targetProfit: value } : a)))
+  }
+
   // Trailing drawdown threshold: rises with new balance highs (high water mark - maxDrawdown),
   // never falls, and locks permanently once it reaches the account's initial balance.
   // Conti CFD con "threshold fisso" saltano tutta questa logica: il floor è un numero fisso
@@ -1115,9 +1126,20 @@ export function useTradingData() {
       }))
   }
 
+  function getMonthStart(dateStr) {
+    return `${dateStr.slice(0, 7)}-01`
+  }
+
+  function getQuarterStart(dateStr) {
+    const [y, m] = dateStr.split('-').map(Number)
+    const qStartMonth = Math.floor((m - 1) / 3) * 3 + 1
+    return `${y}-${String(qStartMonth).padStart(2, '0')}-01`
+  }
+
   // Snapshot pensato per la classifica Friends: saldo aggregato, numero conti, % e $ di
   // profitto giornaliero/settimanale di lunedì-venerdì della settimana corrente (weekend non
-  // tradato, quindi 5 celle). La % è calcolata sul saldo iniziale aggregato, come growthPct.
+  // tradato, quindi 5 celle), più i totali del mese e del trimestre in corso per le classifiche
+  // mensile/trimestrale. La % è sempre calcolata sul saldo iniziale aggregato, come growthPct.
   function getFriendsSnapshot(accountIds) {
     const relevantAccounts = accounts.filter((a) => accountIds.includes(a.id))
     const totalInitialBalance = relevantAccounts.reduce((sum, a) => sum + a.initialBalance, 0)
@@ -1127,7 +1149,8 @@ export function useTradingData() {
       + groupEntries.reduce((sum, e) => sum + e.profit, 0)
       - groupPayouts.reduce((sum, p) => sum + p.amount, 0)
 
-    const monday = getMonday(todayStr())
+    const today = todayStr()
+    const monday = getMonday(today)
     const byDate = {}
     groupEntries.forEach((e) => {
       byDate[e.date] = (byDate[e.date] || 0) + e.profit
@@ -1143,7 +1166,23 @@ export function useTradingData() {
     })
     const weeklyProfit = dailyPct.reduce((sum, d) => sum + (byDate[d.date] || 0), 0)
 
-    return { balance, accountCount: relevantAccounts.length, dailyPct, weeklyProfit }
+    const monthStart = getMonthStart(today)
+    const quarterStart = getQuarterStart(today)
+    const monthlyProfit = groupEntries.filter((e) => e.date >= monthStart).reduce((sum, e) => sum + e.profit, 0)
+    const quarterlyProfit = groupEntries.filter((e) => e.date >= quarterStart).reduce((sum, e) => sum + e.profit, 0)
+    const monthlyPct = totalInitialBalance > 0 ? (monthlyProfit / totalInitialBalance) * 100 : null
+    const quarterlyPct = totalInitialBalance > 0 ? (quarterlyProfit / totalInitialBalance) * 100 : null
+
+    return {
+      balance,
+      accountCount: relevantAccounts.length,
+      dailyPct,
+      weeklyProfit,
+      monthlyProfit,
+      monthlyPct,
+      quarterlyProfit,
+      quarterlyPct,
+    }
   }
 
   function getEntriesForDate(date) {
@@ -1218,6 +1257,7 @@ export function useTradingData() {
     addAccount,
     deleteAccount,
     toggleAccountActive,
+    updateAccountTarget,
     saveDayEntry,
     updateEntry,
     saveOvertradingDay,

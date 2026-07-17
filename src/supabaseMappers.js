@@ -10,6 +10,7 @@ export function accountFromDb(row) {
     maxDrawdown: Number(row.max_drawdown) || 0,
     fixedThreshold: row.fixed_threshold || false,
     thresholdValue: row.threshold_value !== null && row.threshold_value !== undefined ? Number(row.threshold_value) : null,
+    targetProfit: row.target_profit !== null && row.target_profit !== undefined ? Number(row.target_profit) : null,
     color: row.color,
     active: row.active,
     createdAt: row.created_at,
