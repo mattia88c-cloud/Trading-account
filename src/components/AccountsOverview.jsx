@@ -12,6 +12,10 @@ function distanceColorClass(distance, maxDrawdown, styles) {
   return styles.distanceRed
 }
 
+function today() {
+  return new Date().toISOString().slice(0, 10)
+}
+
 export default function AccountsOverview({
   accounts,
   getAccountBalance,
@@ -21,6 +25,7 @@ export default function AccountsOverview({
   onDelete,
   onToggleActive,
   onUpdateTarget,
+  onAddCapital,
   selectedId,
   onSelect,
 }) {
@@ -28,6 +33,9 @@ export default function AccountsOverview({
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
   const [targetEditId, setTargetEditId] = useState(null)
   const [targetDraft, setTargetDraft] = useState('')
+  const [capitalEditId, setCapitalEditId] = useState(null)
+  const [capitalDraft, setCapitalDraft] = useState('')
+  const [capitalDateDraft, setCapitalDateDraft] = useState(today())
 
   if (accounts.length === 0) {
     return <p className={styles.empty}>Nessun conto creato. Aggiungine uno per iniziare.</p>
@@ -44,9 +52,11 @@ export default function AccountsOverview({
         const isMenuOpen = menuOpenId === account.id
         const series = getAccountSeries ? getAccountSeries(account.id) : null
         const sparklineColor = threshold?.breached ? 'var(--red)' : account.color
-        const payoutTotal = payouts
-          .filter((p) => p.accountId === account.id)
-          .reduce((sum, p) => sum + p.amount, 0)
+        const accountPayouts = payouts.filter((p) => p.accountId === account.id)
+        // Importi negativi in payouts sono capitale aggiunto (vedi addCapital in useTradingData.js),
+        // non prelievi: vanno tenuti fuori dal totale "Payout" mostrato in card.
+        const payoutTotal = accountPayouts.filter((p) => p.amount > 0).reduce((sum, p) => sum + p.amount, 0)
+        const capitalTotal = accountPayouts.filter((p) => p.amount < 0).reduce((sum, p) => sum - p.amount, 0)
 
         return (
           <div
@@ -72,6 +82,7 @@ export default function AccountsOverview({
                     setMenuOpenId(isMenuOpen ? null : account.id)
                     setConfirmDeleteId(null)
                     setTargetEditId(null)
+                    setCapitalEditId(null)
                   }}
                 >
                   ⋮
@@ -131,6 +142,43 @@ export default function AccountsOverview({
                           </button>
                         </div>
                       </div>
+                    ) : capitalEditId === account.id ? (
+                      <div className={styles.confirmBox}>
+                        <div className={styles.confirmText}>
+                          Capitale versato ($) — ricarica del conto
+                        </div>
+                        <input
+                          type="number"
+                          min="0"
+                          className={styles.targetInput}
+                          value={capitalDraft}
+                          onChange={(e) => setCapitalDraft(e.target.value)}
+                          autoFocus
+                        />
+                        <input
+                          type="date"
+                          className={styles.targetInput}
+                          value={capitalDateDraft}
+                          onChange={(e) => setCapitalDateDraft(e.target.value)}
+                        />
+                        <div className={styles.confirmActions}>
+                          <button className={styles.menuItem} onClick={() => setCapitalEditId(null)}>
+                            Annulla
+                          </button>
+                          <button
+                            className={styles.menuItem}
+                            onClick={() => {
+                              if (!capitalDraft || Number(capitalDraft) <= 0) return
+                              onAddCapital({ accountId: account.id, date: capitalDateDraft, amount: capitalDraft })
+                              setCapitalDraft('')
+                              setCapitalEditId(null)
+                              setMenuOpenId(null)
+                            }}
+                          >
+                            Salva
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <>
                         <button
@@ -151,6 +199,18 @@ export default function AccountsOverview({
                         >
                           {account.targetProfit ? 'Modifica traguardo' : 'Imposta traguardo'}
                         </button>
+                        {account.type === 'personal' && onAddCapital && (
+                          <button
+                            className={styles.menuItem}
+                            onClick={() => {
+                              setCapitalDraft('')
+                              setCapitalDateDraft(today())
+                              setCapitalEditId(account.id)
+                            }}
+                          >
+                            Aggiungi capitale
+                          </button>
+                        )}
                         <button
                           className={`${styles.menuItem} ${styles.menuItemDanger}`}
                           onClick={() => setConfirmDeleteId(account.id)}
@@ -196,6 +256,11 @@ export default function AccountsOverview({
             {payoutTotal > 0 && (
               <div className={styles.payoutInfo}>
                 Payout totali: ${payoutTotal.toLocaleString('it-IT', { maximumFractionDigits: 2 })}
+              </div>
+            )}
+            {capitalTotal > 0 && (
+              <div className={styles.payoutInfo}>
+                Capitale aggiunto: ${capitalTotal.toLocaleString('it-IT', { maximumFractionDigits: 2 })}
               </div>
             )}
           </div>

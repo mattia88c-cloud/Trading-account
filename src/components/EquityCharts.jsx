@@ -50,8 +50,14 @@ export default function EquityCharts({ accounts, getAccountSeries, getThreshold,
         const threshold = getThreshold(account.id)
         const lineColor = threshold?.breached ? BREACHED_COLOR : account.color
 
-        const hasPayout = series.some((p) => p.isPayout)
+        const hasPayout = series.some((p) => p.isPayout && !p.isDeposit)
+        const hasDeposit = series.some((p) => p.isPayout && p.isDeposit)
 
+        // Asse X a indice (un punto = uno slot, spaziatura uniforme): un asse temporale vero
+        // comprimerebbe tutti gli eventi di uno stesso giorno (comune su un conto appena creato:
+        // trade + payout + capitale "oggi") in un'unica posizione X, riducendo il grafico a una
+        // linea verticale. Con l'indice ogni evento resta leggibile come punto distinto della
+        // curva; le etichette sotto restano le date reali (deduplicate se consecutive uguali).
         const datasets = [
           {
             label: account.name,
@@ -107,10 +113,31 @@ export default function EquityCharts({ accounts, getAccountSeries, getThreshold,
               from: (ctx) => ctx.chart.scales.y.getPixelForValue(ctx.chart.scales.y.min),
             },
           } : false,
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                title: (items) => new Date(items[0].label).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+              },
+            },
+          },
           scales: {
             x: {
-              ticks: { color: TICK_COLOR, maxTicksLimit: 6 },
+              ticks: {
+                color: TICK_COLOR,
+                maxTicksLimit: 6,
+                // Formatta la data e nasconde l'etichetta se identica alla precedente (più eventi
+                // nello stesso giorno), cosi l'asse non mostra la stessa data ripetuta in fila.
+                callback: function callback(value, i, ticks) {
+                  const label = this.getLabelForValue(value)
+                  const formatted = new Date(label).toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' })
+                  if (i > 0) {
+                    const prevLabel = this.getLabelForValue(ticks[i - 1].value)
+                    if (prevLabel === label) return ''
+                  }
+                  return formatted
+                },
+              },
               grid: { display: true, color: GRID_COLOR, drawTicks: true },
               border: { color: GRID_COLOR },
             },
@@ -129,6 +156,7 @@ export default function EquityCharts({ accounts, getAccountSeries, getThreshold,
               {account.name}
               {threshold?.breached && <span className={styles.breachedTag}>BRUCIATO</span>}
               {!threshold?.breached && hasPayout && <span className={styles.payoutTag}>● payout</span>}
+              {!threshold?.breached && hasDeposit && <span className={styles.payoutTag}>● capitale aggiunto</span>}
             </div>
             <Line data={data} options={options} />
           </div>

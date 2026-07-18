@@ -183,6 +183,9 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   // Conta le date distinte, non le entry: con più conti selezionati un giorno di overtrading
   // può avere un'entry per conto sulla stessa data.
   const overtradingDaysCount = new Set(allSorted.filter((e) => e.overtradingDay).map((e) => e.date)).size
+  // Importi negativi in groupPayouts sono capitale aggiunto (vedi addCapital in useTradingData.js),
+  // non prelievi: la statistica "payouts" mostrata all'utente conta solo i prelievi veri.
+  const withdrawalPayouts = groupPayouts.filter((p) => p.amount > 0)
 
   const empty = {
     totalPnl: 0,
@@ -230,11 +233,11 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   }
 
   if (allSorted.length === 0 || !initialBalance) {
-    if (groupPayouts.length > 0) {
+    if (withdrawalPayouts.length > 0) {
       empty.payouts = {
-        total: groupPayouts.reduce((sum, p) => sum + p.amount, 0),
-        count: groupPayouts.length,
-        list: [...groupPayouts].sort((a, b) => b.date.localeCompare(a.date)),
+        total: withdrawalPayouts.reduce((sum, p) => sum + p.amount, 0),
+        count: withdrawalPayouts.length,
+        list: [...withdrawalPayouts].sort((a, b) => b.date.localeCompare(a.date)),
       }
     }
     return empty
@@ -510,9 +513,9 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
     },
     avgTradeFrequency: dayRecords.length > 0 ? totalTradesEffective / dayRecords.length : 0,
     payouts: {
-      total: groupPayouts.reduce((sum, p) => sum + p.amount, 0),
-      count: groupPayouts.length,
-      list: [...groupPayouts].sort((a, b) => b.date.localeCompare(a.date)),
+      total: withdrawalPayouts.reduce((sum, p) => sum + p.amount, 0),
+      count: withdrawalPayouts.length,
+      list: [...withdrawalPayouts].sort((a, b) => b.date.localeCompare(a.date)),
     },
   }
 }
@@ -564,6 +567,14 @@ export function useTradingData() {
     const payout = payoutFromDb(data)
     setPayouts((prev) => [...prev, payout])
     return payout
+  }
+
+  // Capitale proprio versato su un conto personale (es. ricarica del conto Live): riusa la
+  // tabella payouts con importo negativo, cosi balance/serie/grafico lo trattano automaticamente
+  // come un movimento di cassa esterno al trading (l'opposto di un prelievo) senza bisogno di
+  // uno schema Supabase dedicato.
+  async function addCapital({ accountId, date, amount }) {
+    return recordPayout({ accountId, date, amount: -Math.abs(Number(amount)) })
   }
 
   async function deletePayout(id) {
@@ -647,11 +658,14 @@ export function useTradingData() {
     if (account.fixedThreshold) {
       if (account.thresholdValue === null || account.thresholdValue === undefined) return null
       const currentBalance = getAccountBalance(accountId)
+      // thresholdValue è il drawdown massimo consentito ($), non un saldo assoluto:
+      // la soglia reale è il saldo iniziale meno quel drawdown.
+      const floor = account.initialBalance - account.thresholdValue
       return {
-        threshold: account.thresholdValue,
+        threshold: floor,
         locked: false,
         fixed: true,
-        breached: currentBalance <= account.thresholdValue,
+        breached: currentBalance <= floor,
       }
     }
 
@@ -913,14 +927,22 @@ export function useTradingData() {
     if (!account) return []
     const events = [
       ...entries.filter((e) => e.accountId === accountId).map((e) => ({ date: e.date, delta: e.profit, isPayout: false })),
-      ...payouts.filter((p) => p.accountId === accountId).map((p) => ({ date: p.date, delta: -p.amount, isPayout: true })),
+      ...payouts.filter((p) => p.accountId === accountId).map((p) => ({ date: p.date, delta: -p.amount, isPayout: true, isDeposit: p.amount < 0 })),
     ].sort((a, b) => a.date.localeCompare(b.date))
 
     let running = account.initialBalance
-    const points = [{ date: account.createdAt.slice(0, 10), balance: running, isPayout: false }]
+    // Il punto di partenza è la data di creazione della riga account, TRANNE quando esistono
+    // eventi importati con data storica precedente (es. "Importa CSV conto passato"): in quel
+    // caso il grafico deve partire dalla data del primo evento reale, altrimenti il primo punto
+    // (oggi) risulterebbe più recente dei trade che lo seguono, e sull'asse X numerico del
+    // grafico (vedi EquityCharts.jsx) la linea salterebbe indietro nel tempo creando un
+    // artefatto visivo invece di una curva pulita.
+    const createdDate = account.createdAt.slice(0, 10)
+    const startDate = events.length > 0 && events[0].date < createdDate ? events[0].date : createdDate
+    const points = [{ date: startDate, balance: running, isPayout: false, isDeposit: false }]
     events.forEach((e) => {
       running += e.delta
-      points.push({ date: e.date, balance: running, isPayout: e.isPayout })
+      points.push({ date: e.date, balance: running, isPayout: e.isPayout, isDeposit: e.isDeposit })
     })
     return points
   }
@@ -1265,6 +1287,7 @@ export function useTradingData() {
     importCsvEntries,
     recordPayout,
     deletePayout,
+    addCapital,
     getAccountBalance,
     getAccountSeries,
     getAnalytics,

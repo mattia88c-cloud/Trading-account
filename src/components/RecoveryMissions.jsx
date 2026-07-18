@@ -10,7 +10,7 @@ const STATUS_LABELS = {
   failed: 'Fallita',
 }
 
-function MissionCard({ mission, entries, onDismiss, onSetOutcome, onClearOutcome }) {
+function MissionCard({ mission, entries, onDismiss }) {
   const evald = evaluateMission(mission, entries)
   const def = MISSION_TYPES[mission.type]
 
@@ -34,18 +34,8 @@ function MissionCard({ mission, entries, onDismiss, onSetOutcome, onClearOutcome
         <span>{evald.violationsCount > 0 ? `❌ ${evald.violationsCount}` : '✅ 0'}</span>
       </div>
 
-      {evald.status === 'active' && (
-        <div className={styles.outcomeActions}>
-          <button className={styles.successBtn} onClick={() => onSetOutcome(mission.id, 'completed')}>🏆 Superata</button>
-          <button className={styles.failBtn} onClick={() => onSetOutcome(mission.id, 'failed')}>💀 Fallita</button>
-        </div>
-      )}
-
       {evald.status !== 'active' && (
         <div className={styles.outcomeActions}>
-          {evald.isManual && (
-            <button className={styles.undoBtn} onClick={() => onClearOutcome(mission.id)}>↺ Annulla</button>
-          )}
           <button className={styles.dismissBtn} onClick={() => onDismiss(mission.id)}>Archivia</button>
         </div>
       )}
@@ -53,7 +43,7 @@ function MissionCard({ mission, entries, onDismiss, onSetOutcome, onClearOutcome
   )
 }
 
-export default function RecoveryMissions({ accounts, entries, missions, onGenerate, onDismiss, onSetOutcome, onClearOutcome }) {
+export default function RecoveryMissions({ accounts, entries, missions, onGenerate, onDismiss }) {
   const accountIds = useMemo(() => accounts.map((a) => a.id), [accounts])
 
   const evaluated = missions.map((m) => ({ mission: m, evald: evaluateMission(m, entries) }))
@@ -96,8 +86,6 @@ export default function RecoveryMissions({ accounts, entries, missions, onGenera
                 mission={mission}
                 entries={entries}
                 onDismiss={onDismiss}
-                onSetOutcome={onSetOutcome}
-                onClearOutcome={onClearOutcome}
               />
             ))}
           </div>
@@ -114,8 +102,6 @@ export default function RecoveryMissions({ accounts, entries, missions, onGenera
                 mission={mission}
                 entries={entries}
                 onDismiss={onDismiss}
-                onSetOutcome={onSetOutcome}
-                onClearOutcome={onClearOutcome}
               />
             ))}
           </div>

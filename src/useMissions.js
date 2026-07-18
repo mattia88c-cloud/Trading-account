@@ -155,13 +155,9 @@ export function evaluateMission(mission, entries) {
   if (violations.length > 0) status = 'failed'
   else if (isPastEnd) status = 'completed'
 
-  // L'utente può chiudere una missione manualmente (superata/fallita) prima che i dati
-  // automatici la risolvano da soli: se presente, l'esito manuale vince su quello calcolato.
-  if (mission.manualStatus) status = mission.manualStatus
-
   const percent = Math.min(100, Math.round((daysElapsed / mission.durationDays) * 100))
 
-  return { ...mission, endDate, status, violationsCount: violations.length, percent, isManual: !!mission.manualStatus }
+  return { ...mission, endDate, status, violationsCount: violations.length, percent }
 }
 
 export function useMissions(entries) {
@@ -235,26 +231,6 @@ export function useMissions(entries) {
     setMissions((prev) => prev.filter((m) => m.id !== id))
   }
 
-  async function setMissionOutcome(id, outcome) {
-    const { error } = await supabase.from('missions').update({ manual_status: outcome }).eq('id', id)
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error('Errore aggiornamento missione:', error.message)
-      return
-    }
-    setMissions((prev) => prev.map((m) => (m.id === id ? { ...m, manualStatus: outcome } : m)))
-  }
-
-  async function clearMissionOutcome(id) {
-    const { error } = await supabase.from('missions').update({ manual_status: null }).eq('id', id)
-    if (error) {
-      // eslint-disable-next-line no-console
-      console.error('Errore aggiornamento missione:', error.message)
-      return
-    }
-    setMissions((prev) => prev.map((m) => (m.id === id ? { ...m, manualStatus: null } : m)))
-  }
-
   // Cancella tutte le missioni dell'utente loggato (RLS limita già alla sua sola riga).
   async function deleteAllMissions() {
     const { error } = await supabase.from('missions').delete().not('id', 'is', null)
@@ -263,6 +239,6 @@ export function useMissions(entries) {
   }
 
   return {
-    missions, generateMissions, dismissMission, setMissionOutcome, clearMissionOutcome, deleteAllMissions,
+    missions, generateMissions, dismissMission, deleteAllMissions,
   }
 }

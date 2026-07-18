@@ -190,6 +190,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
     deleteEntry,
     importCsvEntries,
     recordPayout,
+    addCapital,
     getAccountBalance,
     getAccountSeries,
     getAnalytics,
@@ -205,7 +206,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
   } = useTradingData()
 
   const {
-    missions, generateMissions, dismissMission, setMissionOutcome, clearMissionOutcome, deleteAllMissions,
+    missions, generateMissions, dismissMission, deleteAllMissions,
   } = useMissions(entries)
   const {
     rows: leaderboardRows, loading: leaderboardLoading, publish: publishLeaderboard, remove: removeLeaderboardRow,
@@ -336,6 +337,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
                 onDelete={deleteAccount}
                 onToggleActive={toggleAccountActive}
                 onUpdateTarget={updateAccountTarget}
+                onAddCapital={addCapital}
                 selectedId={selectedAccountId}
                 onSelect={setSelectedAccountId}
               />
@@ -417,8 +419,6 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
             missions={missions}
             onGenerate={generateMissions}
             onDismiss={dismissMission}
-            onSetOutcome={setMissionOutcome}
-            onClearOutcome={clearMissionOutcome}
           />
         )}
 

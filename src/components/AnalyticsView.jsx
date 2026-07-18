@@ -285,7 +285,7 @@ export default function AnalyticsView({
                 {account.name}
               </span>
               <span className={threshold?.breached ? styles.thresholdBreachedTag : styles.thresholdValue}>
-                {threshold?.breached ? 'Bruciato' : `$${distance.toLocaleString('it-IT', { maximumFractionDigits: 2 })}`}
+                {threshold?.breached ? 'Bruciato' : distance !== null ? `$${distance.toLocaleString('it-IT', { maximumFractionDigits: 2 })}` : '—'}
               </span>
             </div>
           ))}
