@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useCollapsed } from '../useCollapsed.js'
+import { entrySignature } from '../useTradingData.js'
 import CollapseToggle from './CollapseToggle.jsx'
 import styles from './RiskBudgetCard.module.css'
 
@@ -42,16 +43,18 @@ export default function RiskBudgetCard({ entries, initialBalance, storageKey }) 
   const year = String(new Date().getFullYear())
   const yearEntries = entries.filter((e) => e.date.startsWith(year) && !e.overtradingDay)
 
-  // Un giorno in copy trading ha un'entry per conto sulla stessa data, ma i punti (rischio in
-  // punti, risultato in punti) sono gli stessi in tutte perché è lo stesso trade replicato: a
-  // differenza dei dollari (che vanno sommati su tutti i conti coinvolti, vedi pctEntries sotto),
-  // qui vanno contati una volta sola per data, altrimenti un giorno in copy su 2 conti raddoppia
-  // i punti rischiati/portati a casa.
-  const pointsByDate = new Map()
+  // Un giorno in copy trading ha un'entry per conto sulla stessa data con contenuto identico
+  // (stesso trade replicato): a differenza dei dollari (che vanno sommati su tutti i conti
+  // coinvolti, vedi pctEntries sotto), i punti vanno contati una volta sola per trade, altrimenti
+  // un giorno in copy su 2 conti raddoppia i punti rischiati/portati a casa. La dedup è per
+  // data+contenuto (non sola data): un conto può avere più trade distinti nello stesso giorno,
+  // con punti diversi, che vanno contati separatamente.
+  const pointsByKey = new Map()
   yearEntries.forEach((e) => {
-    if (e.riskPoints && !pointsByDate.has(e.date)) pointsByDate.set(e.date, e)
+    const key = `${e.date}|${entrySignature(e)}`
+    if (e.riskPoints && !pointsByKey.has(key)) pointsByKey.set(key, e)
   })
-  const pointsEntries = [...pointsByDate.values()]
+  const pointsEntries = [...pointsByKey.values()]
   const pointsRisked = pointsEntries.reduce((sum, e) => sum + e.riskPoints, 0)
   const pointsHome = pointsEntries.reduce((sum, e) => sum + (e.resultPoints || 0), 0)
   const totalBudgetPoints = settings.riskPoints * settings.maxTradesPerDay * settings.marketDays

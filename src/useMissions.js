@@ -146,18 +146,36 @@ export function evaluateMission(mission, entries) {
   const windowEntries = entries.filter((e) =>
     mission.accountIds.includes(e.accountId) && e.date >= mission.startDate && e.date <= endDate
   )
-  const violations = windowEntries.filter((e) => def.violates(e))
+
+  // L'overtrading si verifica sul totale di trade della giornata, non su una singola entry: un
+  // conto può avere più trade distinti nello stesso giorno, quindi va sommato tradesEffective
+  // per conto+data prima di confrontarlo con la soglia — altrimenti 2 entry da 2 trade ciascuna
+  // (4 in totale) sfuggirebbero al controllo perché nessuna singola riga supera 2 da sola. Gli
+  // altri tipi di missione restano un controllo per singola entry (già corretto anche con più
+  // trade/giorno: intercettano ogni trade violante invece di uno solo aggregato).
+  let violationsCount
+  if (mission.type === 'overtrading') {
+    const tradesByAccountDate = {}
+    windowEntries.forEach((e) => {
+      if (e.overtradingDay) return
+      const key = `${e.accountId}|${e.date}`
+      tradesByAccountDate[key] = (tradesByAccountDate[key] || 0) + (e.tradesEffective || 0)
+    })
+    violationsCount = Object.values(tradesByAccountDate).filter((total) => total > 2).length
+  } else {
+    violationsCount = windowEntries.filter((e) => def.violates(e)).length
+  }
 
   const daysElapsed = Math.min(Math.max(diffDays(mission.startDate, today) + 1, 0), mission.durationDays)
   const isPastEnd = today > endDate
 
   let status = 'active'
-  if (violations.length > 0) status = 'failed'
+  if (violationsCount > 0) status = 'failed'
   else if (isPastEnd) status = 'completed'
 
   const percent = Math.min(100, Math.round((daysElapsed / mission.durationDays) * 100))
 
-  return { ...mission, endDate, status, violationsCount: violations.length, percent }
+  return { ...mission, endDate, status, violationsCount, percent }
 }
 
 export function useMissions(entries) {

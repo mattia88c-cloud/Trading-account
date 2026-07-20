@@ -173,6 +173,15 @@ function modificationStats(entries, predicate) {
   }
 }
 
+// Un trade copy-tradato su più conti crea una entry per conto con campi identici (solo l'account
+// cambia, vedi saveDayEntry): la firma serve a riconoscere queste righe come "lo stesso trade" da
+// contare una volta sola nelle statistiche, distinguendole da trade realmente diversi che oggi
+// possono capitare sullo stesso conto/giorno (contenuto diverso, quindi firma diversa).
+export function entrySignature(e) {
+  const { id, accountId, createdAt, ...rest } = e
+  return JSON.stringify(rest)
+}
+
 // Shared stats computation used both for a single account and for a multi-account summary.
 function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   const allSorted = [...groupEntries].sort((a, b) => a.date.localeCompare(b.date))
@@ -260,15 +269,18 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   const allDayRecords = groupByDate(allSorted)
   const dayRecords = groupByDate(sorted)
 
-  // Un trade in copy trading su più conti genera un'entry per conto sulla stessa data, ma è
-  // UN trade solo, non N: per ogni breakdown "per categoria" (mercato, sessione, voto, tag,
-  // lato, ecc.) e per i conteggi trade/durata contiamo una volta per data, sommando il P/L e
-  // unendo i tag di tutti i conti coinvolti; per gli altri campi (mercato, voto, ecc.) usiamo
-  // il valore della prima entry di quella data, dato che un copy trade li replica identici.
+  // Un trade in copy trading su più conti genera un'entry per conto sulla stessa data con
+  // contenuto identico (vedi entrySignature): è UN trade solo, non N, quindi per ogni breakdown
+  // "per categoria" (mercato, sessione, voto, tag, lato, ecc.) e per i conteggi trade/durata lo
+  // contiamo una volta sola, sommando il P/L e unendo i tag di tutti i conti coinvolti. Trade
+  // realmente diversi sullo stesso conto/giorno hanno contenuto diverso quindi firma diversa, e
+  // restano quindi separati (non più forzatamente uno per data, dato che un conto può avere più
+  // trade distinti nello stesso giorno).
   const tradesByDate = {}
   sorted.forEach((e) => {
-    if (!tradesByDate[e.date]) tradesByDate[e.date] = { ...e, profit: 0, tags: [] }
-    const t = tradesByDate[e.date]
+    const key = `${e.date}|${entrySignature(e)}`
+    if (!tradesByDate[key]) tradesByDate[key] = { ...e, profit: 0, tags: [] }
+    const t = tradesByDate[key]
     t.profit += e.profit
     t.tags = [...new Set([...(t.tags || []), ...(e.tags || [])])]
   })
@@ -698,11 +710,12 @@ export function useTradingData() {
     }
   }
 
-  // Upsert condiviso: manda le righe a Supabase (on conflict account_id+date aggiorna invece
-  // di duplicare, grazie al vincolo unique nello schema) e fonde il risultato nello stato locale.
-  async function upsertEntries(entryObjects) {
+  // Insert condiviso: manda le righe a Supabase come nuove entry (un conto può avere più trade
+  // distinti nello stesso giorno, ognuno una riga a sé — niente upsert-by-date, altrimenti un
+  // secondo trade sovrascriverebbe silenziosamente il primo) e fonde il risultato nello stato locale.
+  async function insertEntries(entryObjects) {
     const rows = entryObjects.map(entryToDb)
-    const { data, error } = await supabase.from('entries').upsert(rows, { onConflict: 'account_id,date' }).select()
+    const { data, error } = await supabase.from('entries').insert(rows).select()
     if (error) {
       // eslint-disable-next-line no-console
       console.error('Errore salvataggio giornata:', error.message)
@@ -775,7 +788,7 @@ export function useTradingData() {
   // Upserts one entry per selected account for the given date.
   async function saveDayEntry({ date, accountIds, ...fields }) {
     const entryObjects = accountIds.map((accountId) => buildEntryFields({ date, accountId, ...fields }))
-    await upsertEntries(entryObjects)
+    await insertEntries(entryObjects)
   }
 
   // Modifica in place una entry esistente (update by id, non upsert by account_id+date): a
@@ -853,7 +866,7 @@ export function useTradingData() {
       quickNote: quickNote || null,
       tomorrowCorrection: tomorrowCorrection || null,
     }))
-    await upsertEntries(entryObjects)
+    await insertEntries(entryObjects)
   }
 
   // Imports a CSV trade history export for an account, aggregating same-day trades into
@@ -894,7 +907,7 @@ export function useTradingData() {
       riskPoints: null,
       resultPoints: null,
     }))
-    await upsertEntries(entryObjects)
+    await insertEntries(entryObjects)
     return { importedDays: days.length, skipped, totalRows }
   }
 
@@ -1240,7 +1253,7 @@ export function useTradingData() {
       .map((e) => entryToDb({ ...e, accountId: accountIdMap[e.accountId] }))
     let newEntries = []
     if (entryRows.length > 0) {
-      const { data, error } = await supabase.from('entries').upsert(entryRows, { onConflict: 'account_id,date' }).select()
+      const { data, error } = await supabase.from('entries').insert(entryRows).select()
       if (error) throw error
       newEntries = data.map(entryFromDb)
     }

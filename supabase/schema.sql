@@ -174,14 +174,19 @@ create table if not exists public.entries (
   data_quality text,
   quick_note text,
   tomorrow_correction text,
-  created_at timestamptz not null default now(),
-  unique (account_id, date)
+  created_at timestamptz not null default now()
 );
 
 -- Il progetto era già live quando è stato aggiunto chart_url: "create table if not exists" sopra
 -- non tocca una tabella già esistente, serve questa alter esplicita per chi ha già fatto il deploy.
 alter table public.entries add column if not exists chart_url text;
 alter table public.entries add column if not exists would_have_hit_tp boolean;
+
+-- Rimosso il vincolo unique(account_id, date): inizialmente un giorno = una entry, ora un conto
+-- può avere più trade distinti nello stesso giorno (ognuno una riga a sé). Vedi entrySignature in
+-- useTradingData.js per come Analytics distingue ancora i copy-trade (contenuto identico su più
+-- conti, va deduplicato) dai trade realmente distinti nello stesso giorno (non va deduplicato).
+alter table public.entries drop constraint if exists entries_account_id_date_key;
 
 create table if not exists public.payouts (
   id uuid primary key default gen_random_uuid(),
