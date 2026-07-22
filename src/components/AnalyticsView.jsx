@@ -245,6 +245,10 @@ export default function AnalyticsView({
   }
 
   const [summaryActiveOnly, setSummaryActiveOnly] = useState(true)
+  // Di default i trade con re-entry (non da programma) sono esclusi dal Riepilogo: rappresentano
+  // trade che "non avresti dovuto fare", quindi non devono incidere sull'analisi a meno che tu
+  // non li includa esplicitamente cliccando il pulsante.
+  const [excludeReEntry, setExcludeReEntry] = useState(true)
   const accountIds = accounts.map((a) => a.id)
   const overtradingData = getOvertradingAnalytics(accountIds)
 
@@ -254,8 +258,10 @@ export default function AnalyticsView({
   // disattivato non gonfia le statistiche "correnti" a meno che non lo richieda esplicitamente.
   const summaryAccounts = summaryActiveOnly ? accounts.filter((a) => a.active) : accounts
   const summaryAccountIds = summaryAccounts.map((a) => a.id)
-  const summaryStats = getSummaryAnalytics(summaryAccountIds)
-  const relevantEntries = entries.filter((e) => summaryAccountIds.includes(e.accountId))
+  const summaryStats = getSummaryAnalytics(summaryAccountIds, { excludeReEntry })
+  const relevantEntries = entries
+    .filter((e) => summaryAccountIds.includes(e.accountId))
+    .filter((e) => !excludeReEntry || !e.reEntry)
 
   // Margine residuo prima del threshold (drawdown massimo) di ogni conto: quanto puoi ancora
   // perdere, in totale e conto per conto, prima di bruciare qualcosa. Conti già bruciati non
@@ -298,6 +304,14 @@ export default function AnalyticsView({
         onClick={() => setSummaryActiveOnly((v) => !v)}
       >
         {summaryActiveOnly ? '● Riepilogo: solo conti attivi' : '○ Riepilogo: tutti i conti mostrati'}
+      </button>
+
+      <button
+        type="button"
+        className={styles.summaryFilterBtn}
+        onClick={() => setExcludeReEntry((v) => !v)}
+      >
+        {excludeReEntry ? '● Re-entry non da programma: esclusi' : '○ Re-entry non da programma: inclusi'}
       </button>
 
       <CollapsibleCard

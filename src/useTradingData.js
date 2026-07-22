@@ -65,7 +65,7 @@ const SAFE_ACCOUNT_COLORS = ACCOUNT_COLORS.filter((c) => !isNearWhite(c))
 
 export const MARKETS = ['NAS100', 'XAUUSD']
 
-export const SESSIONS = ['Asia', 'Londra', 'New York']
+export const SESSIONS = ['New York', 'Londra', 'Asia']
 
 export const CLOSE_TYPES = ['TP', 'Stop', 'BE', 'Parziale', 'Stop in profit']
 
@@ -939,9 +939,15 @@ export function useTradingData() {
     const account = accounts.find((a) => a.id === accountId)
     if (!account) return []
     const events = [
-      ...entries.filter((e) => e.accountId === accountId).map((e) => ({ date: e.date, delta: e.profit, isPayout: false })),
-      ...payouts.filter((p) => p.accountId === accountId).map((p) => ({ date: p.date, delta: -p.amount, isPayout: true, isDeposit: p.amount < 0 })),
-    ].sort((a, b) => a.date.localeCompare(b.date))
+      ...entries.filter((e) => e.accountId === accountId).map((e) => ({ date: e.date, createdAt: e.createdAt, delta: e.profit, isPayout: false })),
+      ...payouts.filter((p) => p.accountId === accountId).map((p) => ({ date: p.date, createdAt: p.createdAt, delta: -p.amount, isPayout: true, isDeposit: p.amount < 0 })),
+    ]
+      // A parità di data (più trade nello stesso giorno, ora possibile), l'ordine conta per il
+      // massimo storico del saldo (vedi getThreshold): processare per errore una vincita prima
+      // di una perdita avvenuta realmente prima crea un picco intraday mai davvero raggiunto,
+      // gonfiando la soglia trailing. createdAt (ordine di registrazione) è l'unico riferimento
+      // cronologico sempre presente su ogni riga, a differenza di entryTime che è spesso vuoto.
+      .sort((a, b) => a.date.localeCompare(b.date) || a.createdAt.localeCompare(b.createdAt))
 
     let running = account.initialBalance
     // Il punto di partenza è la data di creazione della riga account, TRANNE quando esistono
@@ -968,10 +974,15 @@ export function useTradingData() {
   }
 
   // Aggregates stats across multiple accounts (e.g. all active accounts) into one summary.
-  function getSummaryAnalytics(accountIds) {
+  // excludeReEntry: quando true, i trade con re-entry (non da programma) sono tolti del tutto
+  // dal calcolo — non contano in nessuna statistica del Riepilogo, saldo incluso, cosi l'utente
+  // può vedere l'analisi "depurata" dai trade indisciplinati senza toccare il saldo reale del conto.
+  function getSummaryAnalytics(accountIds, { excludeReEntry = false } = {}) {
     const relevantAccounts = accounts.filter((a) => accountIds.includes(a.id))
     const totalInitialBalance = relevantAccounts.reduce((sum, a) => sum + a.initialBalance, 0)
-    const groupEntries = entries.filter((e) => accountIds.includes(e.accountId))
+    const groupEntries = entries
+      .filter((e) => accountIds.includes(e.accountId))
+      .filter((e) => !excludeReEntry || !e.reEntry)
     const groupPayouts = payouts.filter((p) => accountIds.includes(p.accountId))
     return {
       ...computeStats(groupEntries, totalInitialBalance, groupPayouts),
