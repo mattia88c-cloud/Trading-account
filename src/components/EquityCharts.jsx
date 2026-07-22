@@ -93,8 +93,12 @@ function EquityChartCard({ account, index, series, threshold, isSelected, isDimm
     border: { color: GRID_COLOR },
   }
   if (threshold) {
-    yScale.suggestedMin = threshold.threshold - 1000
-    yScale.suggestedMax = account.initialBalance + 10000
+    // "Suggested", non un limite fisso: Chart.js allarga l'asse da solo se il saldo esce da
+    // questo intervallo, ma senza forzare un margine enorme di default il grafico resta
+    // compresso e la curva appiattita. -2500/+5500 dal saldo iniziale mostra bene l'oscillazione
+    // tipica del conto.
+    yScale.suggestedMin = account.initialBalance - 2500
+    yScale.suggestedMax = account.initialBalance + 5500
   }
   const options = {
     responsive: true,
