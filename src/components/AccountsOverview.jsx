@@ -26,6 +26,7 @@ export default function AccountsOverview({
   onToggleActive,
   onUpdateTarget,
   onAddCapital,
+  onResetPhase,
   selectedId,
   onSelect,
 }) {
@@ -36,6 +37,7 @@ export default function AccountsOverview({
   const [capitalEditId, setCapitalEditId] = useState(null)
   const [capitalDraft, setCapitalDraft] = useState('')
   const [capitalDateDraft, setCapitalDateDraft] = useState(today())
+  const [resetConfirm, setResetConfirm] = useState(null) // { accountId, kind }
 
   if (accounts.length === 0) {
     return <p className={styles.empty}>Nessun conto creato. Aggiungine uno per iniziare.</p>
@@ -54,8 +56,9 @@ export default function AccountsOverview({
         const sparklineColor = threshold?.breached ? 'var(--red)' : account.color
         const accountPayouts = payouts.filter((p) => p.accountId === account.id)
         // Importi negativi in payouts sono capitale aggiunto (vedi addCapital in useTradingData.js),
-        // non prelievi: vanno tenuti fuori dal totale "Payout" mostrato in card.
-        const payoutTotal = accountPayouts.filter((p) => p.amount > 0).reduce((sum, p) => sum + p.amount, 0)
+        // non prelievi, e i reset di fase (isPhaseReset) non sono soldi realmente usciti dal conto:
+        // vanno tenuti entrambi fuori dal totale "Payout" mostrato in card.
+        const payoutTotal = accountPayouts.filter((p) => p.amount > 0 && !p.isPhaseReset).reduce((sum, p) => sum + p.amount, 0)
         const capitalTotal = accountPayouts.filter((p) => p.amount < 0).reduce((sum, p) => sum - p.amount, 0)
 
         return (
@@ -75,6 +78,11 @@ export default function AccountsOverview({
                 <span className={`${styles.badge} ${account.type === 'propfirm' ? styles.badgeProp : styles.badgePersonal}`}>
                   {account.type === 'propfirm' ? 'Prop Firm' : 'Personale'}
                 </span>
+                {account.type === 'propfirm' && (
+                  <span className={`${styles.badge} ${account.accountStage === 'funded' ? styles.badgeProp : styles.badgePersonal}`}>
+                    {account.accountStage === 'funded' ? 'Funded' : 'Challenge'}
+                  </span>
+                )}
                 <button
                   className={styles.menuButton}
                   onClick={(e) => {
@@ -83,6 +91,7 @@ export default function AccountsOverview({
                     setConfirmDeleteId(null)
                     setTargetEditId(null)
                     setCapitalEditId(null)
+                    setResetConfirm(null)
                   }}
                 >
                   ⋮
@@ -179,6 +188,32 @@ export default function AccountsOverview({
                           </button>
                         </div>
                       </div>
+                    ) : resetConfirm?.accountId === account.id ? (
+                      <div className={styles.confirmBox}>
+                        <div className={styles.confirmText}>
+                          {pnl <= 0
+                            ? 'Il conto deve superare il saldo iniziale prima di poter completare la fase.'
+                            : resetConfirm.kind === 'funded'
+                              ? `Segnare il conto come Funded? Il saldo torna a $${account.initialBalance.toLocaleString('it-IT')} (i $${pnl.toLocaleString('it-IT', { maximumFractionDigits: 2 })} di profitto restano nello storico), il traguardo si azzera e potrai impostarne uno nuovo. Lo storico dei trade non viene toccato.`
+                              : `Fase completata? Il saldo torna a $${account.initialBalance.toLocaleString('it-IT')} (i $${pnl.toLocaleString('it-IT', { maximumFractionDigits: 2 })} di profitto restano nello storico), il traguardo si azzera e potrai impostarne uno nuovo per la fase successiva. Lo storico dei trade non viene toccato.`}
+                        </div>
+                        <div className={styles.confirmActions}>
+                          <button className={styles.menuItem} onClick={() => setResetConfirm(null)}>
+                            Annulla
+                          </button>
+                          <button
+                            className={styles.menuItem}
+                            disabled={pnl <= 0}
+                            onClick={() => {
+                              onResetPhase(account.id, resetConfirm.kind)
+                              setResetConfirm(null)
+                              setMenuOpenId(null)
+                            }}
+                          >
+                            Conferma
+                          </button>
+                        </div>
+                      </div>
                     ) : (
                       <>
                         <button
@@ -199,6 +234,22 @@ export default function AccountsOverview({
                         >
                           {account.targetProfit ? 'Modifica traguardo' : 'Imposta traguardo'}
                         </button>
+                        {account.type === 'propfirm' && onResetPhase && account.accountStage !== 'funded' && (
+                          <>
+                            <button
+                              className={styles.menuItem}
+                              onClick={() => setResetConfirm({ accountId: account.id, kind: 'phase' })}
+                            >
+                              Fase account completata
+                            </button>
+                            <button
+                              className={styles.menuItem}
+                              onClick={() => setResetConfirm({ accountId: account.id, kind: 'funded' })}
+                            >
+                              Diventato Funded
+                            </button>
+                          </>
+                        )}
                         {account.type === 'personal' && onAddCapital && (
                           <button
                             className={styles.menuItem}

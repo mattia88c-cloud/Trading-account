@@ -25,6 +25,10 @@
 }
 .title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
 .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+.modeToggle { display: flex; gap: 6px; margin-bottom: 20px; }
+.modeBtn { padding: 6px 12px; background: var(--card); border: 1px solid var(--card-border); border-radius: 6px; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; }
+.modeBtn:hover { color: var(--text); }
+.modeBtnActive { background: var(--accent); border-color: var(--accent-border); color: var(--bg); }
 .pppRow { display: flex; align-items: center; gap: 16px; margin-bottom: 28px; flex-wrap: wrap; }
 .pppLabel { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
 .pppInput { width: 70px; padding: 6px 10px; background: var(--card); border: 1px solid var(--card-border); border-radius: 6px; color: var(--text); font-size: 13px; outline: none; }

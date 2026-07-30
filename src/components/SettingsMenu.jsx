@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import styles from './SettingsMenu.module.css'
 
 const gearIcon = {
@@ -22,7 +22,6 @@ export default function SettingsMenu({
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [busy, setBusy] = useState(false)
-  const wrapRef = useRef(null)
 
   function resetForms() {
     setView('menu')
@@ -44,18 +43,6 @@ export default function SettingsMenu({
     setOpen(false)
     resetForms()
   }
-
-  // Il dropdown restava aperto all'infinito (anche cambiando sezione): si chiude solo cliccando
-  // di nuovo sulla rotellina. Chiudiamo anche cliccando fuori dal box, comportamento standard
-  // per un menu a tendina.
-  useEffect(() => {
-    if (!open) return
-    function handleOutsideClick(e) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target)) close()
-    }
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
-  }, [open])
 
   function goTo(nextView) {
     setView(nextView)
@@ -113,7 +100,7 @@ export default function SettingsMenu({
   }
 
   return (
-    <div className={styles.wrap} ref={wrapRef}>
+    <div className={styles.wrap}>
       <button type="button" className={styles.gearBtn} onClick={toggle} title="Impostazioni" aria-label="Impostazioni">
         <svg {...gearIcon}>
           <circle cx="12" cy="12" r="3" />

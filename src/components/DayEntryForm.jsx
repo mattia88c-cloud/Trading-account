@@ -22,6 +22,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
   const [side, setSide] = useState(initialEntry?.side || 'misto')
   const [initialSizeMicro, setInitialSizeMicro] = useState(initialEntry?.initialSizeMicro ?? '')
   const [finalSizeMicro, setFinalSizeMicro] = useState(initialEntry?.finalSizeMicro ?? '')
+  const [sizeUnit, setSizeUnit] = useState(initialEntry?.sizeUnit || 'micro')
   const [initialRisk, setInitialRisk] = useState(initialEntry?.initialRisk ?? '')
   const [finalRisk, setFinalRisk] = useState(initialEntry?.finalRisk ?? '')
   const [reEntry, setReEntry] = useState(initialEntry?.reEntry || false)
@@ -68,6 +69,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         side,
         initialSizeMicro,
         finalSizeMicro,
+        sizeUnit,
         initialRisk,
         finalRisk,
         riskPoints,
@@ -269,24 +271,32 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         <option value="misto">Misto</option>
       </select>
 
+      <label className={styles.label}>Unità size</label>
+      <select className={styles.input} value={sizeUnit} onChange={(e) => setSizeUnit(e.target.value)}>
+        <option value="micro">Micro/Mini contract (futures)</option>
+        <option value="lotti">Lotti (CFD)</option>
+      </select>
+
       <div className={styles.row}>
         <div className={styles.col}>
-          <label className={styles.label}>Size iniziale (micro)</label>
+          <label className={styles.label}>Size iniziale ({sizeUnit === 'lotti' ? 'lotti' : 'micro'})</label>
           <input
             className={styles.input}
             type="number"
             min="0"
-            placeholder="es. 10"
+            step={sizeUnit === 'lotti' ? '0.01' : '1'}
+            placeholder={sizeUnit === 'lotti' ? 'es. 0.50' : 'es. 10'}
             value={initialSizeMicro}
             onChange={(e) => setInitialSizeMicro(e.target.value)}
           />
         </div>
         <div className={styles.col}>
-          <label className={styles.label}>Size finale (micro)</label>
+          <label className={styles.label}>Size finale ({sizeUnit === 'lotti' ? 'lotti' : 'micro'})</label>
           <input
             className={styles.input}
             type="number"
             min="0"
+            step={sizeUnit === 'lotti' ? '0.01' : '1'}
             placeholder="se cambiata"
             value={finalSizeMicro}
             onChange={(e) => setFinalSizeMicro(e.target.value)}

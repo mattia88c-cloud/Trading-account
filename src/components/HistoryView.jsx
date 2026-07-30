@@ -153,8 +153,8 @@ export default function HistoryView({ accounts, entries, onDeleteEntry, onUpdate
       </div>
 
       {editingEntry && createPortal(
-        <div className={styles.modalOverlay} onClick={() => setEditingEntry(null)}>
-          <div className={styles.modalBox} onClick={(ev) => ev.stopPropagation()}>
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalBox}>
             <DayEntryForm
               accounts={accounts}
               initialEntry={editingEntry}

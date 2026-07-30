@@ -5,11 +5,38 @@ import styles from './CalculatorTab.module.css'
 // Un blocco calcolatore + tabella di riferimento per un singolo mercato (NAS100, XAUUSD, ...).
 // `presets` è una lista esplicita di { micro, ppp } invece di un solo moltiplicatore, così ogni
 // mercato può avere una tabella non lineare senza cambiare la formula del calcolatore.
-export default function MarketCalculator({ market, logo, defaultPpp, pppHint, tableTitle, tickInfo, presets }) {
-  const [ppp, setPpp] = useState(defaultPpp)
+//
+// `unitModes` (opzionale) permette più "tagli" dello stesso mercato con unità diverse (es. NAS100
+// in micro/mini contract futures oppure in lotti CFD): un selezionatore passa dall'uno all'altro,
+// ricalcolando ppp/etichette/tabella senza dover duplicare l'intero componente. Se non passato,
+// il componente si comporta come prima con un solo modo costruito dalle prop dirette.
+export default function MarketCalculator({
+  market, logo, defaultPpp, pppHint, tableTitle, tickInfo, presets,
+  title, unitLabel = 'Micro Contracts', unitShort = 'contracts', tableUnitLabel = 'Micro',
+  unitModes,
+}) {
+  const modes = unitModes || [{
+    key: 'default', label: title || market, defaultPpp, pppHint, tableTitle, tickInfo, presets, unitLabel, unitShort, tableUnitLabel,
+  }]
+  const [modeKey, setModeKey] = useState(modes[0].key)
+  const mode = modes.find((m) => m.key === modeKey) || modes[0]
+
+  const [ppp, setPpp] = useState(mode.defaultPpp)
   const [risk, setRisk] = useState('')
   const [micro, setMicro] = useState('')
   const [sl, setSl] = useState('')
+
+  function selectMode(key) {
+    const next = modes.find((m) => m.key === key)
+    if (!next) return
+    setModeKey(key)
+    setPpp(next.defaultPpp)
+    // Un numero di "5" non significa la stessa cosa in micro contract e in lotti: cambiando
+    // unità si azzerano i campi invece di reinterpretare un valore che avrebbe un altro ordine
+    // di grandezza, per non far leggere un risultato calcolato sull'unità sbagliata.
+    setMicro('')
+    setSl('')
+  }
 
   function compute(field, val) {
     const r = field === 'risk' ? parseFloat(val) : parseFloat(risk)
@@ -73,6 +100,21 @@ export default function MarketCalculator({ market, logo, defaultPpp, pppHint, ta
         <div className={styles.title}>Position Size Calculator — {market}</div>
         <p className={styles.subtitle}>Inserisci 2 valori, premi Enter per calcolare il terzo</p>
 
+        {modes.length > 1 && (
+          <div className={styles.modeToggle}>
+            {modes.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                className={`${styles.modeBtn} ${m.key === modeKey ? styles.modeBtnActive : ''}`}
+                onClick={() => selectMode(m.key)}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className={styles.pppRow}>
           <label className={styles.pppLabel}>
             $ per punto
@@ -80,10 +122,10 @@ export default function MarketCalculator({ market, logo, defaultPpp, pppHint, ta
               type="number"
               className={styles.pppInput}
               value={ppp}
-              onChange={e => setPpp(parseFloat(e.target.value) || defaultPpp)}
+              onChange={e => setPpp(parseFloat(e.target.value) || mode.defaultPpp)}
             />
           </label>
-          <span className={styles.pppHint}>{pppHint}</span>
+          <span className={styles.pppHint}>{mode.pppHint}</span>
         </div>
 
         <div className={styles.fields}>
@@ -104,7 +146,7 @@ export default function MarketCalculator({ market, logo, defaultPpp, pppHint, ta
           <div className={styles.fieldSep}>÷</div>
 
           <div className={styles.field}>
-            <label className={styles.fieldLabel}>Micro Contracts</label>
+            <label className={styles.fieldLabel}>{mode.unitLabel}</label>
             <input
               type="number"
               className={styles.fieldInput}
@@ -114,7 +156,7 @@ export default function MarketCalculator({ market, logo, defaultPpp, pppHint, ta
               onKeyDown={e => handleKey(e, 'sl')}
               onBlur={() => recalcAll('sl')}
             />
-            <span className={styles.fieldUnit}>contracts</span>
+            <span className={styles.fieldUnit}>{mode.unitShort}</span>
           </div>
 
           <div className={styles.fieldSep}>=</div>
@@ -136,7 +178,7 @@ export default function MarketCalculator({ market, logo, defaultPpp, pppHint, ta
 
         <div className={styles.formula}>
           <span className={styles.formulaText}>
-            Formula: <code>SL punti = Risk $ ÷ (Micro × ${ppp}/punto)</code>
+            Formula: <code>SL punti = Risk $ ÷ ({mode.tableUnitLabel} × ${ppp}/punto)</code>
           </span>
         </div>
 
@@ -150,20 +192,20 @@ export default function MarketCalculator({ market, logo, defaultPpp, pppHint, ta
 
       <Card>
         <div className={styles.tableTitleRow}>
-          <div className={styles.tableTitle}>{tableTitle}</div>
-          {tickInfo && <span className={styles.tickInfo}>{tickInfo}</span>}
+          <div className={styles.tableTitle}>{mode.tableTitle}</div>
+          {mode.tickInfo && <span className={styles.tickInfo}>{mode.tickInfo}</span>}
         </div>
         <div className={styles.tableCardBody}>
           <div className={styles.tableFrame}>
             <table className={styles.refTable}>
               <thead>
                 <tr>
-                  <th>Micro</th>
+                  <th>{mode.tableUnitLabel}</th>
                   <th>$ per punto</th>
                 </tr>
               </thead>
               <tbody>
-                {presets.map(preset => {
+                {mode.presets.map(preset => {
                   const isActive = parseFloat(micro) === preset.micro && ppp === preset.ppp
                   return (
                     <tr
@@ -181,10 +223,10 @@ export default function MarketCalculator({ market, logo, defaultPpp, pppHint, ta
           </div>
           <div className={styles.sideNote}>
             <b>Promemoria formula</b>
-            SL punti = Risk $ ÷ (Micro × ${ppp}/punto)
+            SL punti = Risk $ ÷ ({mode.tableUnitLabel} × ${ppp}/punto)
           </div>
         </div>
-        <p className={styles.tableNote}>Clicca su una riga per usare quel numero di micro nel calcolatore</p>
+        <p className={styles.tableNote}>Clicca su una riga per usare quel valore di {mode.tableUnitLabel.toLowerCase()} nel calcolatore</p>
       </Card>
     </>
   )

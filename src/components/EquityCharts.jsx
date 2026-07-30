@@ -47,8 +47,10 @@ function EquityChartCard({ account, index, series, threshold, isSelected, isDimm
   const TICK_COLOR = colors.tick
 
   const lineColor = threshold?.breached ? BREACHED_COLOR : account.color
-  const hasPayout = series.some((p) => p.isPayout && !p.isDeposit)
-  const hasDeposit = series.some((p) => p.isPayout && p.isDeposit)
+  const hasPayout = series.some((p) => p.isPayout && !p.isDeposit && !p.isPhaseReset)
+  const hasDeposit = series.some((p) => p.isPayout && p.isDeposit && !p.isPhaseReset)
+  const hasPhaseComplete = series.some((p) => p.isPhaseReset && p.resetKind === 'phase')
+  const hasFunded = series.some((p) => p.isPhaseReset && p.resetKind === 'funded')
 
   // Asse X a indice (un punto = uno slot, spaziatura uniforme): un asse temporale vero
   // comprimerebbe tutti gli eventi di uno stesso giorno (comune su un conto appena creato:
@@ -158,6 +160,8 @@ function EquityChartCard({ account, index, series, threshold, isSelected, isDimm
         {threshold?.breached && <span className={styles.breachedTag}>BRUCIATO</span>}
         {!threshold?.breached && hasPayout && <span className={styles.payoutTag}>● payout</span>}
         {!threshold?.breached && hasDeposit && <span className={styles.payoutTag}>● capitale aggiunto</span>}
+        {!threshold?.breached && hasPhaseComplete && <span className={styles.payoutTag}>● fase completata</span>}
+        {!threshold?.breached && hasFunded && <span className={styles.payoutTag}>● diventato funded</span>}
         <CollapseToggle open={open} onToggle={toggle} />
       </div>
       {open && <Line data={data} options={options} />}

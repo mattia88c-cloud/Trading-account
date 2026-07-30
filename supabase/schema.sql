@@ -130,6 +130,12 @@ alter table public.accounts add column if not exists threshold_value numeric;
 -- nella card del conto in Dashboard, insieme alla distanza dal threshold.
 alter table public.accounts add column if not exists target_profit numeric;
 
+-- Fase di un conto Prop Firm: 'challenge' (default, anche se NULL) o 'funded'. Cambia quando
+-- l'utente clicca "Diventato Funded" nel menu del conto (vedi resetAccountPhase in
+-- useTradingData.js); usata anche per separare i dati Challenge/Funded in Analytics insieme al
+-- payout con reset_kind='funded' che segna la data esatta del passaggio.
+alter table public.accounts add column if not exists account_stage text;
+
 create table if not exists public.entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
@@ -145,6 +151,7 @@ create table if not exists public.entries (
   market text,
   initial_size_micro numeric,
   final_size_micro numeric,
+  size_unit text,
   initial_risk numeric,
   final_risk numeric,
   re_entry boolean default false,
@@ -181,6 +188,9 @@ create table if not exists public.entries (
 -- non tocca una tabella già esistente, serve questa alter esplicita per chi ha già fatto il deploy.
 alter table public.entries add column if not exists chart_url text;
 alter table public.entries add column if not exists would_have_hit_tp boolean;
+-- Unità della size (initial/final_size_micro): 'micro' (futures MNQ/MGC, comportamento storico)
+-- o 'lotti' (CFD prop firm). NULL sulle righe vecchie = trattato come 'micro' in app.
+alter table public.entries add column if not exists size_unit text;
 
 -- Rimosso il vincolo unique(account_id, date): inizialmente un giorno = una entry, ora un conto
 -- può avere più trade distinti nello stesso giorno (ognuno una riga a sé). Vedi entrySignature in
@@ -196,6 +206,14 @@ create table if not exists public.payouts (
   amount numeric not null,
   created_at timestamptz not null default now()
 );
+
+-- Reset di fase (Fase account completata / Diventato Funded): un payout "finto" che riporta il
+-- saldo al saldo iniziale senza toccare lo storico dei trade, riusando lo stesso meccanismo di
+-- addCapital/recordPayout. is_phase_reset lo esclude dai totali "prelievi reali"; reset_kind
+-- 'funded' è lo spartiacque usato per separare Challenge/Funded in Analytics, 'phase' (fase 1 →
+-- fase 2 ecc.) fa ripartire solo il massimo storico usato per la soglia trailing.
+alter table public.payouts add column if not exists is_phase_reset boolean not null default false;
+alter table public.payouts add column if not exists reset_kind text;
 
 create table if not exists public.missions (
   id uuid primary key default gen_random_uuid(),

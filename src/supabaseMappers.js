@@ -11,6 +11,7 @@ export function accountFromDb(row) {
     fixedThreshold: row.fixed_threshold || false,
     thresholdValue: row.threshold_value !== null && row.threshold_value !== undefined ? Number(row.threshold_value) : null,
     targetProfit: row.target_profit !== null && row.target_profit !== undefined ? Number(row.target_profit) : null,
+    accountStage: row.account_stage || 'challenge',
     color: row.color,
     active: row.active,
     createdAt: row.created_at,
@@ -25,6 +26,7 @@ export function accountToDb(a) {
     max_drawdown: a.maxDrawdown ? Number(a.maxDrawdown) : 0,
     fixed_threshold: !!a.fixedThreshold,
     threshold_value: a.thresholdValue !== null && a.thresholdValue !== undefined && a.thresholdValue !== '' ? Number(a.thresholdValue) : null,
+    account_stage: a.accountStage || 'challenge',
     color: a.color,
     active: a.active,
   }
@@ -45,6 +47,7 @@ export function entryFromDb(row) {
     market: row.market,
     initialSizeMicro: row.initial_size_micro,
     finalSizeMicro: row.final_size_micro,
+    sizeUnit: row.size_unit || 'micro',
     initialRisk: row.initial_risk,
     finalRisk: row.final_risk,
     reEntry: row.re_entry,
@@ -91,6 +94,7 @@ export function entryToDb(e) {
     market: e.market,
     initial_size_micro: e.initialSizeMicro,
     final_size_micro: e.finalSizeMicro,
+    size_unit: e.sizeUnit || 'micro',
     initial_risk: e.initialRisk,
     final_risk: e.finalRisk,
     re_entry: e.reEntry,
@@ -128,6 +132,8 @@ export function payoutFromDb(row) {
     accountId: row.account_id,
     date: row.date,
     amount: Number(row.amount),
+    isPhaseReset: row.is_phase_reset || false,
+    resetKind: row.reset_kind || null,
     createdAt: row.created_at,
   }
 }
@@ -137,6 +143,8 @@ export function payoutToDb(p) {
     account_id: p.accountId,
     date: p.date,
     amount: Number(p.amount),
+    is_phase_reset: !!p.isPhaseReset,
+    reset_kind: p.resetKind || null,
   }
 }
 

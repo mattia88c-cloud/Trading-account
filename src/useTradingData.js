@@ -193,8 +193,9 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   // può avere un'entry per conto sulla stessa data.
   const overtradingDaysCount = new Set(allSorted.filter((e) => e.overtradingDay).map((e) => e.date)).size
   // Importi negativi in groupPayouts sono capitale aggiunto (vedi addCapital in useTradingData.js),
-  // non prelievi: la statistica "payouts" mostrata all'utente conta solo i prelievi veri.
-  const withdrawalPayouts = groupPayouts.filter((p) => p.amount > 0)
+  // non prelievi, e i reset di fase (isPhaseReset) non sono soldi realmente usciti dal conto:
+  // la statistica "payouts" mostrata all'utente conta solo i prelievi veri.
+  const withdrawalPayouts = groupPayouts.filter((p) => p.amount > 0 && !p.isPhaseReset)
 
   const empty = {
     totalPnl: 0,
@@ -565,10 +566,10 @@ export function useTradingData() {
     return () => { active = false }
   }, [])
 
-  async function recordPayout({ accountId, date, amount }) {
+  async function recordPayout({ accountId, date, amount, isPhaseReset, resetKind }) {
     const { data, error } = await supabase
       .from('payouts')
-      .insert(payoutToDb({ accountId, date, amount: Number(amount) }))
+      .insert(payoutToDb({ accountId, date, amount: Number(amount), isPhaseReset, resetKind }))
       .select()
       .single()
     if (error) {
@@ -599,7 +600,7 @@ export function useTradingData() {
     setPayouts((prev) => prev.filter((p) => p.id !== id))
   }
 
-  async function addAccount({ name, type, initialBalance, maxDrawdown, fixedThreshold, thresholdValue }) {
+  async function addAccount({ name, type, initialBalance, maxDrawdown, fixedThreshold, thresholdValue, accountStage }) {
     const payload = accountToDb({
       name,
       type,
@@ -607,6 +608,7 @@ export function useTradingData() {
       maxDrawdown: fixedThreshold ? 0 : (maxDrawdown ? Number(maxDrawdown) : 0),
       fixedThreshold: !!fixedThreshold,
       thresholdValue: fixedThreshold ? thresholdValue : null,
+      accountStage: type === 'propfirm' ? (accountStage || 'challenge') : null,
       color: SAFE_ACCOUNT_COLORS[accounts.length % SAFE_ACCOUNT_COLORS.length],
       active: true,
     })
@@ -658,6 +660,38 @@ export function useTradingData() {
     setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, targetProfit: value } : a)))
   }
 
+  // "Fase account completata" / "Diventato Funded": riporta il saldo al saldo iniziale SENZA
+  // toccare lo storico dei trade, registrando un payout speciale (stesso meccanismo di
+  // addCapital, ma con importo positivo che riporta il saldo giù invece che su) marcato
+  // isPhaseReset così viene escluso dai "prelievi reali" e fa ripartire da zero il massimo
+  // storico usato per la soglia trailing (vedi getThreshold). kind='funded' aggiorna anche
+  // account_stage e diventa lo spartiacque usato per separare Challenge/Funded in Analytics.
+  async function resetAccountPhase(accountId, kind) {
+    const account = accounts.find((a) => a.id === accountId)
+    if (!account) return null
+    const resetAmount = getAccountBalance(accountId) - account.initialBalance
+    if (resetAmount <= 0) return null
+    const payout = await recordPayout({
+      accountId,
+      date: todayStr(),
+      amount: resetAmount,
+      isPhaseReset: true,
+      resetKind: kind,
+    })
+    if (!payout) return null
+    await updateAccountTarget(accountId, null)
+    if (kind === 'funded') {
+      const { error } = await supabase.from('accounts').update({ account_stage: 'funded' }).eq('id', accountId)
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error('Errore aggiornamento fase conto:', error.message)
+      } else {
+        setAccounts((prev) => prev.map((a) => (a.id === accountId ? { ...a, accountStage: 'funded' } : a)))
+      }
+    }
+    return payout
+  }
+
   // Trailing drawdown threshold: rises with new balance highs (high water mark - maxDrawdown),
   // never falls, and locks permanently once it reaches the account's initial balance.
   // Conti CFD con "threshold fisso" saltano tutta questa logica: il floor è un numero fisso
@@ -683,7 +717,17 @@ export function useTradingData() {
 
     if (!account.maxDrawdown) return null
 
-    const series = getAccountSeries(accountId)
+    let series = getAccountSeries(accountId)
+    // Dopo un reset di fase (Fase completata / Diventato Funded) il massimo storico pre-reset
+    // non deve più contare: il conto riparte da initialBalance come se fosse appena aperto da lì.
+    // Cerchiamo l'ultimo reset (data+createdAt, non solo data, per restare coerenti con l'ordine
+    // usato per costruire la series) e ignoriamo tutto ciò che viene prima.
+    const resets = series.filter((p) => p.isPhaseReset)
+    if (resets.length > 0) {
+      const lastReset = resets[resets.length - 1]
+      series = series.filter((p) => p.date > lastReset.date || (p.date === lastReset.date && p.createdAt >= lastReset.createdAt))
+    }
+
     let highWaterMark = account.initialBalance
     let threshold = account.initialBalance - account.maxDrawdown
     let locked = false
@@ -742,7 +786,7 @@ export function useTradingData() {
   // in place una singola riga esistente).
   function buildEntryFields({
     date, accountId, profit, tradesOpened, tradesEffective, side,
-    market, initialSizeMicro, finalSizeMicro, initialRisk, finalRisk, reEntry,
+    market, initialSizeMicro, finalSizeMicro, sizeUnit, initialRisk, finalRisk, reEntry,
     hasNews, openSession, closeSession, entryTime, exitTime, followedStrategy, wouldHaveHitTP,
     riskReward, outcome, closeType, grade,
     emotionalState, confidenceLevel, mistake, whatWentWell, lesson, tags,
@@ -761,6 +805,7 @@ export function useTradingData() {
       market: market || null,
       initialSizeMicro: initialSizeMicro ? Number(initialSizeMicro) : null,
       finalSizeMicro: finalSizeMicro ? Number(finalSizeMicro) : (initialSizeMicro ? Number(initialSizeMicro) : null),
+      sizeUnit: sizeUnit || 'micro',
       initialRisk: initialRisk ? Number(initialRisk) : null,
       finalRisk: finalRisk ? Number(finalRisk) : (initialRisk ? Number(initialRisk) : null),
       reEntry: !!reEntry,
@@ -940,7 +985,10 @@ export function useTradingData() {
     if (!account) return []
     const events = [
       ...entries.filter((e) => e.accountId === accountId).map((e) => ({ date: e.date, createdAt: e.createdAt, delta: e.profit, isPayout: false })),
-      ...payouts.filter((p) => p.accountId === accountId).map((p) => ({ date: p.date, createdAt: p.createdAt, delta: -p.amount, isPayout: true, isDeposit: p.amount < 0 })),
+      ...payouts.filter((p) => p.accountId === accountId).map((p) => ({
+        date: p.date, createdAt: p.createdAt, delta: -p.amount, isPayout: true, isDeposit: p.amount < 0,
+        isPhaseReset: p.isPhaseReset, resetKind: p.resetKind,
+      })),
     ]
       // A parità di data (più trade nello stesso giorno, ora possibile), l'ordine conta per il
       // massimo storico del saldo (vedi getThreshold): processare per errore una vincita prima
@@ -958,10 +1006,13 @@ export function useTradingData() {
     // artefatto visivo invece di una curva pulita.
     const createdDate = account.createdAt.slice(0, 10)
     const startDate = events.length > 0 && events[0].date < createdDate ? events[0].date : createdDate
-    const points = [{ date: startDate, balance: running, isPayout: false, isDeposit: false }]
+    const points = [{ date: startDate, createdAt: account.createdAt, balance: running, isPayout: false, isDeposit: false }]
     events.forEach((e) => {
       running += e.delta
-      points.push({ date: e.date, balance: running, isPayout: e.isPayout, isDeposit: e.isDeposit })
+      points.push({
+        date: e.date, createdAt: e.createdAt, balance: running, isPayout: e.isPayout, isDeposit: e.isDeposit,
+        isPhaseReset: e.isPhaseReset, resetKind: e.resetKind,
+      })
     })
     return points
   }
@@ -977,13 +1028,36 @@ export function useTradingData() {
   // excludeReEntry: quando true, i trade con re-entry (non da programma) sono tolti del tutto
   // dal calcolo — non contano in nessuna statistica del Riepilogo, saldo incluso, cosi l'utente
   // può vedere l'analisi "depurata" dai trade indisciplinati senza toccare il saldo reale del conto.
-  function getSummaryAnalytics(accountIds, { excludeReEntry = false } = {}) {
+  // Il payout con reset_kind='funded' di un conto (se esiste) è la data esatta del passaggio da
+  // Challenge a Funded: tutto ciò che viene prima resta "Challenge" nelle statistiche anche dopo
+  // che il conto è diventato Funded, tutto ciò che viene dopo è "Funded". Un conto può avere al
+  // più una transizione così (il pulsante sparisce dal menu una volta diventato Funded).
+  function getFundedTransition(accountId) {
+    return payouts.find((p) => p.accountId === accountId && p.resetKind === 'funded') || null
+  }
+
+  function getEntryStage(row, account, transition) {
+    if (transition) {
+      const isBefore = row.date < transition.date || (row.date === transition.date && row.createdAt < transition.createdAt)
+      return isBefore ? 'challenge' : 'funded'
+    }
+    return account?.accountStage || 'challenge'
+  }
+
+  function getSummaryAnalytics(accountIds, { excludeReEntry = false, stageFilter = 'all' } = {}) {
     const relevantAccounts = accounts.filter((a) => accountIds.includes(a.id))
     const totalInitialBalance = relevantAccounts.reduce((sum, a) => sum + a.initialBalance, 0)
+    const accountById = Object.fromEntries(relevantAccounts.map((a) => [a.id, a]))
+    const transitionByAccount = Object.fromEntries(accountIds.map((id) => [id, getFundedTransition(id)]))
+    const matchesStage = (row) => stageFilter === 'all'
+      || getEntryStage(row, accountById[row.accountId], transitionByAccount[row.accountId]) === stageFilter
     const groupEntries = entries
       .filter((e) => accountIds.includes(e.accountId))
       .filter((e) => !excludeReEntry || !e.reEntry)
-    const groupPayouts = payouts.filter((p) => accountIds.includes(p.accountId))
+      .filter(matchesStage)
+    const groupPayouts = payouts
+      .filter((p) => accountIds.includes(p.accountId))
+      .filter(matchesStage)
     return {
       ...computeStats(groupEntries, totalInitialBalance, groupPayouts),
       accountCount: relevantAccounts.length,
@@ -1304,6 +1378,9 @@ export function useTradingData() {
     deleteAccount,
     toggleAccountActive,
     updateAccountTarget,
+    resetAccountPhase,
+    getFundedTransition,
+    getEntryStage,
     saveDayEntry,
     updateEntry,
     saveOvertradingDay,

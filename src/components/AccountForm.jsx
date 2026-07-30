@@ -12,27 +12,42 @@ export default function AccountForm({ onCreate }) {
   const [customDrawdown, setCustomDrawdown] = useState('')
   const [fixedThreshold, setFixedThreshold] = useState(false)
   const [thresholdValue, setThresholdValue] = useState('')
+  const [accountStage, setAccountStage] = useState('challenge')
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     const initialBalance = useCustom ? customBalance : preset
     if (!name.trim() || !initialBalance || Number(initialBalance) <= 0) return
     if (useCustom && fixedThreshold && (!thresholdValue || Number(thresholdValue) <= 0)) return
     const maxDrawdown = useCustom ? customDrawdown : DRAWDOWN_BY_PRESET[preset]
-    onCreate({
+    setSaveError('')
+    setSaving(true)
+    const created = await onCreate({
       name: name.trim(),
       type,
       initialBalance,
       maxDrawdown,
       fixedThreshold: useCustom && fixedThreshold,
       thresholdValue: useCustom && fixedThreshold ? thresholdValue : null,
+      accountStage: type === 'propfirm' ? accountStage : null,
     })
+    setSaving(false)
+    // onCreate torna null se il salvataggio è fallito (es. colonna non ancora migrata sul
+    // database): senza questo controllo il form si chiudeva comunque, dando l'impressione che
+    // il conto fosse stato creato quando in realtà non esisteva da nessuna parte.
+    if (!created) {
+      setSaveError('Salvataggio fallito. Controlla la connessione o riprova.')
+      return
+    }
     setName('')
     setCustomBalance('')
     setUseCustom(false)
     setCustomDrawdown('')
     setFixedThreshold(false)
     setThresholdValue('')
+    setAccountStage('challenge')
     setOpen(false)
   }
 
@@ -69,6 +84,25 @@ export default function AccountForm({ onCreate }) {
           Personale
         </button>
       </div>
+
+      {type === 'propfirm' && (
+        <div className={styles.toggleGroup}>
+          <button
+            type="button"
+            className={`${styles.toggle} ${accountStage === 'challenge' ? styles.active : ''}`}
+            onClick={() => setAccountStage('challenge')}
+          >
+            Challenge
+          </button>
+          <button
+            type="button"
+            className={`${styles.toggle} ${accountStage === 'funded' ? styles.active : ''}`}
+            onClick={() => setAccountStage('funded')}
+          >
+            Funded
+          </button>
+        </div>
+      )}
 
       <input
         className={styles.input}
@@ -146,8 +180,10 @@ export default function AccountForm({ onCreate }) {
         </div>
       )}
 
-      <button type="submit" className={styles.submit}>
-        Crea conto
+      {saveError && <div className={styles.saveError}>{saveError}</div>}
+
+      <button type="submit" className={styles.submit} disabled={saving}>
+        {saving ? 'Salvataggio…' : 'Crea conto'}
       </button>
     </form>
   )

@@ -184,6 +184,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
     deleteAccount,
     toggleAccountActive,
     updateAccountTarget,
+    resetAccountPhase,
     saveDayEntry,
     updateEntry,
     saveOvertradingDay,
@@ -195,6 +196,8 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
     getAccountSeries,
     getAnalytics,
     getSummaryAnalytics,
+    getFundedTransition,
+    getEntryStage,
     getOvertradingAnalytics,
     getBehaviorProgress,
     getWeeklyAnalytics,
@@ -338,6 +341,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
                 onToggleActive={toggleAccountActive}
                 onUpdateTarget={updateAccountTarget}
                 onAddCapital={addCapital}
+                onResetPhase={resetAccountPhase}
                 selectedId={selectedAccountId}
                 onSelect={setSelectedAccountId}
               />
@@ -369,6 +373,8 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
               entries={entries}
               getAnalytics={getAnalytics}
               getSummaryAnalytics={getSummaryAnalytics}
+              getFundedTransition={getFundedTransition}
+              getEntryStage={getEntryStage}
               getOvertradingAnalytics={getOvertradingAnalytics}
               getAccountBalance={getAccountBalance}
               getThreshold={getThreshold}
@@ -423,7 +429,10 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
         )}
 
         {tab === 'behavior' && (
-          <BehaviorProgress data={getBehaviorProgress(analyticsAccounts.map((a) => a.id))} />
+          // A differenza delle altre sezioni, Progress mostra sempre lo storico di TUTTI i conti,
+          // anche disattivati: lo score disciplina e gli altri dati comportamentali hanno senso
+          // solo se guardano l'intero percorso, non solo i conti ancora aperti in questo momento.
+          <BehaviorProgress data={getBehaviorProgress(accounts.map((a) => a.id))} />
         )}
 
         {tab === 'friends' && (

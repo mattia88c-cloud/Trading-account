@@ -238,7 +238,8 @@ function AccountAnalyticsCard({ account, stats, entries }) {
 }
 
 export default function AnalyticsView({
-  accounts, entries, getAnalytics, getSummaryAnalytics, getOvertradingAnalytics, getAccountBalance, getThreshold,
+  accounts, entries, getAnalytics, getSummaryAnalytics, getFundedTransition, getEntryStage,
+  getOvertradingAnalytics, getAccountBalance, getThreshold,
 }) {
   if (accounts.length === 0) {
     return <p className={styles.empty}>Crea un conto per vedere le statistiche.</p>
@@ -249,6 +250,9 @@ export default function AnalyticsView({
   // trade che "non avresti dovuto fare", quindi non devono incidere sull'analisi a meno che tu
   // non li includa esplicitamente cliccando il pulsante.
   const [excludeReEntry, setExcludeReEntry] = useState(true)
+  // Separa i dati Challenge/Funded per DATA del passaggio, non per conto intero: un conto
+  // diventato Funded mantiene i trade fatti prima della transizione classificati come Challenge.
+  const [stageFilter, setStageFilter] = useState('all')
   const accountIds = accounts.map((a) => a.id)
   const overtradingData = getOvertradingAnalytics(accountIds)
 
@@ -258,10 +262,12 @@ export default function AnalyticsView({
   // disattivato non gonfia le statistiche "correnti" a meno che non lo richieda esplicitamente.
   const summaryAccounts = summaryActiveOnly ? accounts.filter((a) => a.active) : accounts
   const summaryAccountIds = summaryAccounts.map((a) => a.id)
-  const summaryStats = getSummaryAnalytics(summaryAccountIds, { excludeReEntry })
+  const summaryStats = getSummaryAnalytics(summaryAccountIds, { excludeReEntry, stageFilter })
+  const accountById = Object.fromEntries(summaryAccounts.map((a) => [a.id, a]))
   const relevantEntries = entries
     .filter((e) => summaryAccountIds.includes(e.accountId))
     .filter((e) => !excludeReEntry || !e.reEntry)
+    .filter((e) => stageFilter === 'all' || getEntryStage(e, accountById[e.accountId], getFundedTransition(e.accountId)) === stageFilter)
 
   // Margine residuo prima del threshold (drawdown massimo) di ogni conto: quanto puoi ancora
   // perdere, in totale e conto per conto, prima di bruciare qualcosa. Conti già bruciati non
@@ -312,6 +318,16 @@ export default function AnalyticsView({
         onClick={() => setExcludeReEntry((v) => !v)}
       >
         {excludeReEntry ? '● Re-entry non da programma: esclusi' : '○ Re-entry non da programma: inclusi'}
+      </button>
+
+      <button type="button" className={styles.summaryFilterBtn} onClick={() => setStageFilter('all')}>
+        {stageFilter === 'all' ? '● Fase: tutte' : '○ Fase: tutte'}
+      </button>
+      <button type="button" className={styles.summaryFilterBtn} onClick={() => setStageFilter('challenge')}>
+        {stageFilter === 'challenge' ? '● Fase: solo Challenge' : '○ Fase: solo Challenge'}
+      </button>
+      <button type="button" className={styles.summaryFilterBtn} onClick={() => setStageFilter('funded')}>
+        {stageFilter === 'funded' ? '● Fase: solo Funded' : '○ Fase: solo Funded'}
       </button>
 
       <CollapsibleCard
