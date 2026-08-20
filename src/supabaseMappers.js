@@ -14,6 +14,8 @@ export function accountFromDb(row) {
     accountStage: row.account_stage || 'challenge',
     color: row.color,
     active: row.active,
+    burned: row.burned || false,
+    burnedAt: row.burned_at || null,
     createdAt: row.created_at,
   }
 }
@@ -69,6 +71,7 @@ export function entryFromDb(row) {
     riskPoints: row.risk_points,
     resultPoints: row.result_points,
     chartUrl: row.chart_url,
+    strategy: row.strategy || null,
     overtradingDay: row.overtrading_day,
     estimatedTradeCount: row.estimated_trade_count,
     lostControlAtTrade: row.lost_control_at_trade,
@@ -116,6 +119,7 @@ export function entryToDb(e) {
     risk_points: e.riskPoints,
     result_points: e.resultPoints,
     chart_url: e.chartUrl || null,
+    strategy: e.strategy || null,
     overtrading_day: e.overtradingDay || false,
     estimated_trade_count: e.estimatedTradeCount,
     lost_control_at_trade: e.lostControlAtTrade,
@@ -145,33 +149,5 @@ export function payoutToDb(p) {
     amount: Number(p.amount),
     is_phase_reset: !!p.isPhaseReset,
     reset_kind: p.resetKind || null,
-  }
-}
-
-export function missionFromDb(row) {
-  return {
-    id: row.id,
-    type: row.type,
-    accountIds: row.account_ids || [],
-    startDate: row.start_date,
-    durationDays: row.duration_days,
-    problemDescription: row.problem_description,
-    goal: row.goal,
-    rulesText: row.rules_text,
-    manualStatus: row.manual_status,
-    createdAt: row.created_at,
-  }
-}
-
-export function missionToDb(m) {
-  return {
-    type: m.type,
-    account_ids: m.accountIds,
-    start_date: m.startDate,
-    duration_days: m.durationDays,
-    problem_description: m.problemDescription,
-    goal: m.goal,
-    rules_text: m.rulesText,
-    manual_status: m.manualStatus ?? null,
   }
 }

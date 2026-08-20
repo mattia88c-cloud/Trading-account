@@ -2,7 +2,7 @@ import { useCollapsed } from '../useCollapsed.js'
 import CollapseToggle from './CollapseToggle.jsx'
 import styles from './BreakdownBars.module.css'
 
-export default function BreakdownBars({ title, entries, formatLabel, compact, boxKey }) {
+export default function BreakdownBars({ title, entries, formatLabel, compact, boxKey, hideMoney }) {
   const [open, toggle] = useCollapsed(boxKey || title)
   if (!entries || entries.length === 0) return null
 
@@ -16,16 +16,20 @@ export default function BreakdownBars({ title, entries, formatLabel, compact, bo
       </div>
       {open && <div className={compact ? styles.rowsGrid : undefined}>
       {entries.map(([key, v]) => {
-        const widthPct = Math.max((Math.abs(v.pnl) / maxAbs) * 100, 3)
-        const isPositive = v.pnl >= 0
+        const isPositive = hideMoney ? (v.winRate === undefined || v.winRate >= 50) : v.pnl >= 0
+        const widthPct = hideMoney
+          ? Math.max((v.winRate !== undefined ? v.winRate : 50), 3)
+          : Math.max((Math.abs(v.pnl) / maxAbs) * 100, 3)
         return (
           <div key={key} className={styles.row}>
             <div className={styles.rowHeader}>
               <span className={styles.label}>{formatLabel ? formatLabel(key) : key}</span>
               <span className={styles.meta}>{v.days} trade{v.winRate !== undefined ? ` · ${v.winRate.toFixed(0)}% win` : ''}</span>
-              <span className={isPositive ? styles.valuePositive : styles.valueNegative}>
-                {isPositive ? '+' : ''}{v.pnl.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
-              </span>
+              {!hideMoney && (
+                <span className={isPositive ? styles.valuePositive : styles.valueNegative}>
+                  {isPositive ? '+' : ''}{v.pnl.toLocaleString('it-IT', { maximumFractionDigits: 0 })}
+                </span>
+              )}
             </div>
             <div className={styles.track}>
               <div

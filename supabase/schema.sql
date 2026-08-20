@@ -136,6 +136,12 @@ alter table public.accounts add column if not exists target_profit numeric;
 -- payout con reset_kind='funded' che segna la data esatta del passaggio.
 alter table public.accounts add column if not exists account_stage text;
 
+-- Conto marcato manualmente come bruciato dall'utente ("Ho bruciato l'account" nel menu),
+-- indipendente dal breach automatico della soglia trailing/fissa (che è solo un calcolo a
+-- runtime su balance/threshold, non persistito). burned_at registra quando è avvenuto.
+alter table public.accounts add column if not exists burned boolean not null default false;
+alter table public.accounts add column if not exists burned_at timestamptz;
+
 create table if not exists public.entries (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
@@ -191,6 +197,11 @@ alter table public.entries add column if not exists would_have_hit_tp boolean;
 -- Unità della size (initial/final_size_micro): 'micro' (futures MNQ/MGC, comportamento storico)
 -- o 'lotti' (CFD prop firm). NULL sulle righe vecchie = trattato come 'micro' in app.
 alter table public.entries add column if not exists size_unit text;
+
+-- Nome della strategia usata per il trade (testo libero, mostrato come suggerimento/datalist
+-- lato UI a partire dalle strategie già usate in precedenza) — usata per il breakdown
+-- performance-per-strategia in Analytics.
+alter table public.entries add column if not exists strategy text;
 
 -- Rimosso il vincolo unique(account_id, date): inizialmente un giorno = una entry, ora un conto
 -- può avere più trade distinti nello stesso giorno (ognuno una riga a sé). Vedi entrySignature in

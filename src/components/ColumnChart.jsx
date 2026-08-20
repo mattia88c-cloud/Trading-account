@@ -6,12 +6,12 @@ import styles from './ColumnChart.module.css'
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip)
 
-export default function ColumnChart({ title, entries, formatLabel, boxKey }) {
+export default function ColumnChart({ title, entries, formatLabel, boxKey, hideMoney }) {
   const [open, toggle] = useCollapsed(boxKey || title)
   if (!entries || entries.length === 0) return null
 
   const labels = entries.map(([key]) => (formatLabel ? formatLabel(key) : key))
-  const values = entries.map(([, v]) => v.pnl)
+  const values = hideMoney ? entries.map(([, v]) => (v.winRate ?? 50) - 50) : entries.map(([, v]) => v.pnl)
 
   const data = {
     labels,
@@ -34,7 +34,9 @@ export default function ColumnChart({ title, entries, formatLabel, boxKey }) {
         callbacks: {
           label: (ctx) => {
             const v = entries[ctx.dataIndex][1]
-            return `${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toLocaleString('it-IT')} · ${v.days} trade · ${v.winRate !== undefined ? v.winRate.toFixed(0) + '% win' : ''}`
+            const winPart = v.winRate !== undefined ? `${v.winRate.toFixed(0)}% win` : ''
+            if (hideMoney) return `${v.days} trade · ${winPart}`
+            return `${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toLocaleString('it-IT')} · ${v.days} trade · ${winPart}`
           },
         },
       },

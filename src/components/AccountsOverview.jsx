@@ -24,6 +24,9 @@ export default function AccountsOverview({
   payouts,
   onDelete,
   onToggleActive,
+  onMarkBurned,
+  onUnmarkBurned,
+  onSetStage,
   onUpdateTarget,
   onAddCapital,
   onResetPhase,
@@ -32,6 +35,7 @@ export default function AccountsOverview({
 }) {
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [confirmDeleteId, setConfirmDeleteId] = useState(null)
+  const [confirmBurnId, setConfirmBurnId] = useState(null)
   const [targetEditId, setTargetEditId] = useState(null)
   const [targetDraft, setTargetDraft] = useState('')
   const [capitalEditId, setCapitalEditId] = useState(null)
@@ -64,7 +68,7 @@ export default function AccountsOverview({
         return (
           <div
             key={account.id}
-            className={`${styles.card} ${pnl >= 0 ? styles.cardPositive : styles.cardNegative} ${isSelected ? styles.cardSelected : ''} ${threshold?.breached ? styles.cardBreached : ''} ${!account.active ? styles.cardInactive : ''}`}
+            className={`${styles.card} ${pnl >= 0 ? styles.cardPositive : styles.cardNegative} ${isSelected ? styles.cardSelected : ''} ${threshold?.breached ? styles.cardBreached : ''} ${!account.active ? styles.cardInactive : ''} ${account.burned ? styles.cardBreached : ''}`}
             style={{ borderLeftColor: account.color }}
             onClick={() => onSelect(isSelected ? null : account.id)}
           >
@@ -73,6 +77,7 @@ export default function AccountsOverview({
                 <span className={styles.dot} style={{ background: account.color }} />
                 {account.name}
                 {!account.active && <span className={styles.inactiveTag}>Disattivato</span>}
+                {account.burned && <span className={styles.inactiveTag}>Bruciato</span>}
               </span>
               <div className={styles.headerRight}>
                 <span className={`${styles.badge} ${account.type === 'propfirm' ? styles.badgeProp : styles.badgePersonal}`}>
@@ -89,6 +94,7 @@ export default function AccountsOverview({
                     e.stopPropagation()
                     setMenuOpenId(isMenuOpen ? null : account.id)
                     setConfirmDeleteId(null)
+                    setConfirmBurnId(null)
                     setTargetEditId(null)
                     setCapitalEditId(null)
                     setResetConfirm(null)
@@ -115,6 +121,30 @@ export default function AccountsOverview({
                             onClick={() => {
                               onDelete(account.id)
                               setConfirmDeleteId(null)
+                              setMenuOpenId(null)
+                            }}
+                          >
+                            Conferma
+                          </button>
+                        </div>
+                      </div>
+                    ) : confirmBurnId === account.id ? (
+                      <div className={styles.confirmBox}>
+                        <div className={styles.confirmText}>
+                          {account.burned
+                            ? `Rimuovere la marcatura "bruciato" da ${account.name}?`
+                            : `Segnare ${account.name} come bruciato? Verrà trattato come gli altri conti bruciati, indipendentemente dal saldo attuale.`}
+                        </div>
+                        <div className={styles.confirmActions}>
+                          <button className={styles.menuItem} onClick={() => setConfirmBurnId(null)}>
+                            Annulla
+                          </button>
+                          <button
+                            className={`${styles.menuItem} ${styles.menuItemDanger}`}
+                            onClick={() => {
+                              if (account.burned) onUnmarkBurned(account.id)
+                              else onMarkBurned(account.id)
+                              setConfirmBurnId(null)
                               setMenuOpenId(null)
                             }}
                           >
@@ -227,6 +257,12 @@ export default function AccountsOverview({
                         </button>
                         <button
                           className={styles.menuItem}
+                          onClick={() => setConfirmBurnId(account.id)}
+                        >
+                          {account.burned ? 'Rimuovi marcatura bruciato' : "Ho bruciato l'account"}
+                        </button>
+                        <button
+                          className={styles.menuItem}
                           onClick={() => {
                             setTargetDraft(account.targetProfit ? String(account.targetProfit) : '')
                             setTargetEditId(account.id)
@@ -234,6 +270,17 @@ export default function AccountsOverview({
                         >
                           {account.targetProfit ? 'Modifica traguardo' : 'Imposta traguardo'}
                         </button>
+                        {account.type === 'propfirm' && onSetStage && (
+                          <button
+                            className={styles.menuItem}
+                            onClick={() => {
+                              onSetStage(account.id, account.accountStage === 'funded' ? 'challenge' : 'funded')
+                              setMenuOpenId(null)
+                            }}
+                          >
+                            {account.accountStage === 'funded' ? 'Segna come Challenge' : 'Segna come Funded'}
+                          </button>
+                        )}
                         {account.type === 'propfirm' && onResetPhase && account.accountStage !== 'funded' && (
                           <>
                             <button

@@ -12,6 +12,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
   const [selectedIds, setSelectedIds] = useState(initialEntry ? [initialEntry.accountId] : [])
   const [market, setMarket] = useState(initialEntry?.market || MARKETS[0])
   const [hasNews, setHasNews] = useState(initialEntry?.hasNews || false)
+  const [strategy, setStrategy] = useState(initialEntry?.strategy || '')
   const [openSession, setOpenSession] = useState(initialEntry?.openSession || SESSIONS[0])
   const [closeSession, setCloseSession] = useState(initialEntry?.closeSession || SESSIONS[0])
   const [entryTime, setEntryTime] = useState(initialEntry?.entryTime || '')
@@ -59,6 +60,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         accountIds: selectedIds,
         market,
         hasNews,
+        strategy,
         openSession,
         closeSession,
         entryTime,
@@ -112,6 +114,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
     setResultPoints('')
     setReEntry(false)
     setHasNews(false)
+    setStrategy('')
     setEntryTime('')
     setExitTime('')
     setFollowedStrategy(true)
@@ -190,6 +193,15 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         <input type="checkbox" checked={hasNews} onChange={(e) => setHasNews(e.target.checked)} />
         C'era notizia quel giorno
       </label>
+
+      <label className={styles.label}>Strategia</label>
+      <input
+        className={styles.input}
+        type="text"
+        placeholder="Nome strategia (es. Breakout NY, Pullback EMA…)"
+        value={strategy}
+        onChange={(e) => setStrategy(e.target.value)}
+      />
 
       <div className={styles.row}>
         <div className={styles.col}>

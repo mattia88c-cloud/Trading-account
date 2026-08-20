@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useTradingData } from './useTradingData'
-import { useMissions, evaluateMission, MISSION_TYPES } from './useMissions'
 import { useAuth } from './useAuth'
 import { useLeaderboard } from './useLeaderboard'
 import LoginPage from './components/LoginPage.jsx'
@@ -22,7 +21,6 @@ import CsvImportForm from './components/CsvImportForm.jsx'
 import OvertradingForm from './components/OvertradingForm.jsx'
 import OvertradingBanner from './components/OvertradingBanner.jsx'
 import LegacyImportBanner from './components/LegacyImportBanner.jsx'
-import RecoveryMissions from './components/RecoveryMissions.jsx'
 import BehaviorProgress from './components/BehaviorProgress.jsx'
 import AdminPanel from './components/AdminPanel.jsx'
 import SettingsMenu from './components/SettingsMenu.jsx'
@@ -39,7 +37,6 @@ const TABS = [
   { id: 'calendar', label: 'Calendario' },
   { id: 'history', label: 'Cronologia' },
   { id: 'weekly', label: 'Weekly Review' },
-  { id: 'missions', label: 'Missions' },
   { id: 'behavior', label: 'Progress' },
   { id: 'friends', label: 'Friends' },
   { id: 'calculator', label: 'Calculator' },
@@ -183,6 +180,9 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
     addAccount,
     deleteAccount,
     toggleAccountActive,
+    markAccountBurned,
+    unmarkAccountBurned,
+    setAccountStage,
     updateAccountTarget,
     resetAccountPhase,
     saveDayEntry,
@@ -209,18 +209,14 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
   } = useTradingData()
 
   const {
-    missions, generateMissions, dismissMission, deleteAllMissions,
-  } = useMissions(entries)
-  const {
     rows: leaderboardRows, loading: leaderboardLoading, publish: publishLeaderboard, remove: removeLeaderboardRow,
   } = useLeaderboard()
 
   // Reset completo su richiesta dell'utente da Impostazioni: cancella conti (+ entries/payout a
-  // cascata), missioni, e la propria riga nella classifica condivisa. NON tocca login/profilo:
-  // l'account resta valido, riparte solo con il journal vuoto.
+  // cascata) e la propria riga nella classifica condivisa. NON tocca login/profilo: l'account
+  // resta valido, riparte solo con il journal vuoto.
   async function handleDeleteAllData() {
     await deleteAllAccounts()
-    await deleteAllMissions()
     if (profile) await removeLeaderboardRow(profile.id)
   }
 
@@ -233,10 +229,6 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
       balance, accountCount, dailyPct, weeklyProfit, monthlyProfit, monthlyPct, quarterlyProfit, quarterlyPct,
     } = getFriendsSnapshot(activeAccountIds)
     const disciplineScore = getBehaviorProgress(activeAccountIds).disciplineScore
-    const missionsSummary = missions
-      .map((m) => ({ ...evaluateMission(m, entries), type: m.type }))
-      .filter((m) => m.status === 'failed' || m.status === 'completed')
-      .map((m) => ({ type: m.type, label: MISSION_TYPES[m.type].label, date: m.startDate, status: m.status }))
 
     publishLeaderboard({
       userId: profile.id,
@@ -250,15 +242,18 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
       quarterlyProfit,
       quarterlyPct,
       disciplineScore,
-      missionsSummary,
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab])
 
-  const dashboardAccounts = accounts.filter((a) => a.active || showInactiveDashboard)
+  // Paper Trading è un conto senza saldo reale: vive solo nel Journal trade (per registrarci le
+  // operazioni non legate a un conto vero) e in Analytics (dove i suoi dati non mostrano mai
+  // importi in denaro, vedi AnalyticsView) — mai in Dashboard/Calendario/Cronologia, che parlano
+  // tutte di saldo/soglie reali.
+  const dashboardAccounts = accounts.filter((a) => a.type !== 'paper' && (a.active || showInactiveDashboard))
   const analyticsAccounts = accounts.filter((a) => a.active || showInactiveAnalytics)
-  const calendarAccounts = accounts.filter((a) => a.active || showInactiveCalendar)
-  const historyAccounts = accounts.filter((a) => a.active || showInactiveHistory)
+  const calendarAccounts = accounts.filter((a) => a.type !== 'paper' && (a.active || showInactiveCalendar))
+  const historyAccounts = accounts.filter((a) => a.type !== 'paper' && (a.active || showInactiveHistory))
 
   return (
     <div className={styles.app}>
@@ -318,8 +313,8 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
             <div className={styles.content}>
               <div className={styles.toolbar}>
                 <DataBackup exportData={exportData} importData={importData} />
-                <PayoutForm accounts={accounts.filter((a) => a.active)} onSave={recordPayout} />
-                <CsvImportForm accounts={accounts} onImport={importCsvEntries} />
+                <PayoutForm accounts={accounts.filter((a) => a.active && a.type !== 'paper')} onSave={recordPayout} />
+                <CsvImportForm accounts={accounts.filter((a) => a.type !== 'paper')} onImport={importCsvEntries} />
               </div>
               <LegacyImportBanner importData={importData} />
               <OvertradingBanner accounts={accounts} entries={entries} />
@@ -339,6 +334,9 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
                 payouts={payouts}
                 onDelete={deleteAccount}
                 onToggleActive={toggleAccountActive}
+                onMarkBurned={markAccountBurned}
+                onUnmarkBurned={unmarkAccountBurned}
+                onSetStage={setAccountStage}
                 onUpdateTarget={updateAccountTarget}
                 onAddCapital={addCapital}
                 onResetPhase={resetAccountPhase}
@@ -417,16 +415,6 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
         )}
 
         {tab === 'weekly' && <WeeklyReview accounts={analyticsAccounts} getWeeklyAnalytics={getWeeklyAnalytics} />}
-
-        {tab === 'missions' && (
-          <RecoveryMissions
-            accounts={analyticsAccounts}
-            entries={entries}
-            missions={missions}
-            onGenerate={generateMissions}
-            onDismiss={dismissMission}
-          />
-        )}
 
         {tab === 'behavior' && (
           // A differenza delle altre sezioni, Progress mostra sempre lo storico di TUTTI i conti,

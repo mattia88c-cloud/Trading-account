@@ -48,13 +48,6 @@ export const TAB_ICONS = {
       <polyline points="15,5 21,5 21,11" />
     </svg>
   ),
-  missions: (
-    <svg {...common}>
-      <circle cx="12" cy="12" r="8.5" />
-      <circle cx="12" cy="12" r="4.5" />
-      <circle cx="12" cy="12" r="0.8" fill="currentColor" />
-    </svg>
-  ),
   behavior: (
     <svg {...common}>
       <polyline points="3,12 8,12 10,6 14,18 16,12 21,12" />

@@ -222,6 +222,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
     byOpenSession: {},
     byNews: {},
     byStrategy: {},
+    byStrategyName: {},
     disciplineCost: { offPlanCount: 0, missedTPCount: 0, missedTPPct: null, missedTPPnl: 0 },
     byCloseType: {},
     byGrade: {},
@@ -379,6 +380,19 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
   })
   Object.values(byStrategy).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
 
+  // Performance per strategia con nome (campo libero "Strategia" nel Journal trade), separato
+  // da byStrategy sopra che misura invece se il piano è stato seguito o no.
+  const byStrategyName = {}
+  trades.forEach((e) => {
+    if (!e.strategy) return
+    const key = e.strategy
+    if (!byStrategyName[key]) byStrategyName[key] = { pnl: 0, days: 0, wins: 0 }
+    byStrategyName[key].pnl += e.profit
+    byStrategyName[key].days += 1
+    if (e.profit > 0) byStrategyName[key].wins += 1
+  })
+  Object.values(byStrategyName).forEach((v) => { v.winRate = (v.wins / v.days) * 100 })
+
   // Costo dell'indisciplina: tra i giorni in cui NON hai seguito il piano, quanti avresti
   // comunque preso TP se lo avessi seguito — quantifica il P/L "regalato" per non aver
   // rispettato la strategia, non solo quante volte è successo.
@@ -508,6 +522,7 @@ function computeStats(groupEntries, initialBalance, groupPayouts = []) {
     byOpenSession,
     byNews,
     byStrategy,
+    byStrategyName,
     disciplineCost,
     byCloseType,
     byGrade,
@@ -649,6 +664,49 @@ export function useTradingData() {
     setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, active: !a.active } : a)))
   }
 
+  // Marcatura manuale "Ho bruciato l'account": a differenza del breach di soglia (solo un
+  // calcolo a runtime, vedi getThreshold), questo è un flag persistito che tratta il conto come
+  // bruciato indipendentemente dal saldo attuale — anche se il conto viene poi riattivato o il
+  // saldo torna sopra la soglia. Non tocca active/storico: resta visibile ovunque com'era.
+  async function markAccountBurned(id) {
+    const { error } = await supabase
+      .from('accounts')
+      .update({ burned: true, burned_at: todayStr() })
+      .eq('id', id)
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Errore marcatura conto bruciato:', error.message)
+      return
+    }
+    setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, burned: true, burnedAt: todayStr() } : a)))
+  }
+
+  async function unmarkAccountBurned(id) {
+    const { error } = await supabase
+      .from('accounts')
+      .update({ burned: false, burned_at: null })
+      .eq('id', id)
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Errore rimozione marcatura bruciato:', error.message)
+      return
+    }
+    setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, burned: false, burnedAt: null } : a)))
+  }
+
+  // Cambio diretto di fase Challenge/Funded dal menu del conto, senza il reset del saldo che fa
+  // invece resetAccountPhase (per correggere una fase impostata male in creazione, o per un conto
+  // che è già Funded senza dover passare dal flusso "traguardo raggiunto").
+  async function setAccountStage(id, stage) {
+    const { error } = await supabase.from('accounts').update({ account_stage: stage }).eq('id', id)
+    if (error) {
+      // eslint-disable-next-line no-console
+      console.error('Errore aggiornamento fase conto:', error.message)
+      return
+    }
+    setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, accountStage: stage } : a)))
+  }
+
   async function updateAccountTarget(id, targetProfit) {
     const value = targetProfit ? Number(targetProfit) : null
     const { error } = await supabase.from('accounts').update({ target_profit: value }).eq('id', id)
@@ -788,7 +846,7 @@ export function useTradingData() {
     date, accountId, profit, tradesOpened, tradesEffective, side,
     market, initialSizeMicro, finalSizeMicro, sizeUnit, initialRisk, finalRisk, reEntry,
     hasNews, openSession, closeSession, entryTime, exitTime, followedStrategy, wouldHaveHitTP,
-    riskReward, outcome, closeType, grade,
+    strategy, riskReward, outcome, closeType, grade,
     emotionalState, confidenceLevel, mistake, whatWentWell, lesson, tags,
     riskPoints, resultPoints, chartUrl,
   }) {
@@ -803,6 +861,7 @@ export function useTradingData() {
       entryTime: entryTime || null,
       exitTime: exitTime || null,
       market: market || null,
+      strategy: strategy ? strategy.trim() : null,
       initialSizeMicro: initialSizeMicro ? Number(initialSizeMicro) : null,
       finalSizeMicro: finalSizeMicro ? Number(finalSizeMicro) : (initialSizeMicro ? Number(initialSizeMicro) : null),
       sizeUnit: sizeUnit || 'micro',
@@ -1377,6 +1436,9 @@ export function useTradingData() {
     addAccount,
     deleteAccount,
     toggleAccountActive,
+    markAccountBurned,
+    unmarkAccountBurned,
+    setAccountStage,
     updateAccountTarget,
     resetAccountPhase,
     getFundedTransition,

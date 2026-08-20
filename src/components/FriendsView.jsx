@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import Card from './Card'
-import { MISSION_TYPES } from '../useMissions'
 import styles from './FriendsView.module.css'
 
 const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven']
@@ -41,24 +40,6 @@ function fmtMoneySigned(n) {
 function fmtPct(n) {
   if (n === null || n === undefined) return null
   return `${n >= 0 ? '+' : ''}${n.toFixed(1)}%`
-}
-
-// Il "punto debole" è il tipo di missione fallita più frequente nello storico condiviso
-// dell'amico (a parità di conteggio vince la più recente). Usa solo missions_summary, già
-// aggregato e già pubblicato sulla classifica — nessun nuovo dato grezzo esposto tra amici.
-function getTopStruggle(missionsSummary) {
-  const failed = (missionsSummary || []).filter((m) => m.status === 'failed')
-  if (failed.length === 0) return null
-  const byType = {}
-  failed.forEach((m) => {
-    if (!byType[m.type]) byType[m.type] = { count: 0, lastDate: m.date }
-    byType[m.type].count += 1
-    if (m.date > byType[m.type].lastDate) byType[m.type].lastDate = m.date
-  })
-  const [topType] = Object.entries(byType).sort((a, b) => (
-    b[1].count - a[1].count || b[1].lastDate.localeCompare(a[1].lastDate)
-  ))[0]
-  return MISSION_TYPES[topType] || null
 }
 
 export default function FriendsView({ rows, currentUserId, loading }) {
@@ -107,7 +88,6 @@ export default function FriendsView({ rows, currentUserId, loading }) {
         <p className={styles.subtitle}>{periodLabel(period)}</p>
         <div className={styles.grid}>
           {rankedByPeriod.map((r, i) => {
-            const struggle = getTopStruggle(r.missions_summary)
             return (
             <div key={r.user_id} className={styles.boxWrap}>
               {i === 0 && <Crown />}
@@ -119,16 +99,6 @@ export default function FriendsView({ rows, currentUserId, loading }) {
               <div className={styles.boxMeta}>
                 <span>{fmtMoney(r.balance)}</span>
                 <span>{r.account_count ?? 0} {r.account_count === 1 ? 'conto' : 'conti'}</span>
-              </div>
-              <div
-                className={`${styles.struggleTag} ${!struggle ? styles.struggleTagEmpty : ''}`}
-                style={struggle ? { '--struggle-color': struggle.color } : undefined}
-              >
-                {struggle ? (
-                  <><span aria-hidden="true">{struggle.icon}</span> Punto debole: {struggle.label}</>
-                ) : (
-                  <>Nessun punto debole rilevato</>
-                )}
               </div>
               {period === 'weekly' && (
                 <div className={styles.cubes}>
@@ -164,12 +134,10 @@ export default function FriendsView({ rows, currentUserId, loading }) {
 
       <Card>
         <div className={styles.title}>Classifica disciplina</div>
-        <p className={styles.subtitle}>Score comportamentale e missioni concluse</p>
+        <p className={styles.subtitle}>Score comportamentale</p>
         <div className={styles.list}>
           {rankedByDiscipline.length === 0 && <p className={styles.empty}>Nessun dato ancora.</p>}
           {rankedByDiscipline.map((r, i) => {
-            const completed = (r.missions_summary || []).filter((m) => m.status === 'completed')
-            const failed = (r.missions_summary || []).filter((m) => m.status === 'failed')
             return (
               <div key={r.user_id} className={styles.boxWrap}>
                 {i === 0 && <Crown />}
@@ -182,32 +150,6 @@ export default function FriendsView({ rows, currentUserId, loading }) {
                 <div className={styles.scoreTrack}>
                   <div className={styles.scoreFill} style={{ width: `${r.discipline_score}%` }} />
                 </div>
-                {completed.length === 0 && failed.length === 0 ? (
-                  <div className={styles.noMissions}>Nessuna missione conclusa</div>
-                ) : (
-                  <div className={styles.missionGroups}>
-                    {completed.length > 0 && (
-                      <div className={styles.missionRow}>
-                        <span className={styles.missionRowLabel}>Superate</span>
-                        <div className={styles.missionBadges}>
-                          {completed.map((m, idx) => (
-                            <span key={idx} className={styles.missionBadgeSuccess}>✓ {m.label}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    {failed.length > 0 && (
-                      <div className={styles.missionRow}>
-                        <span className={styles.missionRowLabel}>Fallite</span>
-                        <div className={styles.missionBadges}>
-                          {failed.map((m, idx) => (
-                            <span key={idx} className={styles.missionBadgeFail}>✕ {m.label}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
                 </div>
               </div>
             )

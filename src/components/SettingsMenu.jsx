@@ -232,7 +232,7 @@ export default function SettingsMenu({
           {view === 'deleteData' && (
             <div className={styles.form}>
               <p className={styles.hint}>
-                Cancella per sempre tutti i tuoi conti, giornate, payout e missioni. Il tuo login resta valido,
+                Cancella per sempre tutti i tuoi conti, giornate e payout. Il tuo login resta valido,
                 riparti solo con il journal vuoto. Non si può annullare.
               </p>
               {success ? (

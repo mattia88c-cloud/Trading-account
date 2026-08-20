@@ -22,6 +22,10 @@ function Breakdown({ kind, compact, ...props }) {
   return <BreakdownBars {...props} />
 }
 
+// KPI ed etichette che rivelano importi assoluti in denaro (a differenza di win rate, R:R,
+// profit factor, conteggi ecc. che sono percentuali/rapporti/numeri di trade): esclusi dalle
+// card con hideMoney (Paper Trading), dove i dati contano ma "quanti soldi" no.
+
 function fmt(n, digits = 2) {
   if (n === null || n === undefined) return '—'
   if (n === Infinity) return '∞'
@@ -44,7 +48,7 @@ function fmtDuration(min) {
 const SIDE_LABELS = { long: 'Long', short: 'Short', misto: 'Misto' }
 const WEEKDAY_ORDER = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom']
 
-function StatsBlock({ stats, compact, entries, storageKey }) {
+function StatsBlock({ stats, compact, entries, storageKey, hideMoney }) {
   const monthEntries = Object.entries(stats.byMonth).sort((a, b) => a[0].localeCompare(b[0]))
   const weekdayEntries = WEEKDAY_ORDER.filter((w) => stats.byWeekday[w]).map((w) => [w, stats.byWeekday[w]])
   const sideEntries = Object.entries(stats.bySide).map(([k, v]) => [SIDE_LABELS[k] || k, v])
@@ -52,6 +56,7 @@ function StatsBlock({ stats, compact, entries, storageKey }) {
   const sessionEntries = Object.entries(stats.byOpenSession)
   const newsEntries = Object.entries(stats.byNews)
   const strategyEntries = Object.entries(stats.byStrategy)
+  const strategyNameEntries = Object.entries(stats.byStrategyName).sort((a, b) => b[1].days - a[1].days)
   const closeTypeEntries = Object.entries(stats.byCloseType)
   const gradeEntries = ['A', 'B', 'C', 'D'].filter((g) => stats.byGrade[g]).map((g) => [g, stats.byGrade[g]])
   const emotionalStateEntries = Object.entries(stats.byEmotionalState)
@@ -59,26 +64,36 @@ function StatsBlock({ stats, compact, entries, storageKey }) {
   const mods = stats.modifications
   const payouts = stats.payouts
 
-  const kpis = [
+  const kpis = hideMoney ? [] : [
     { label: 'Saldo attuale', value: `$${fmt(stats.currentBalance)}` },
     { label: 'P/L totale', value: fmtSigned(stats.totalPnl), tone: stats.totalPnl >= 0 ? 'positive' : 'negative' },
     { label: 'Crescita', value: `${stats.growthPct >= 0 ? '+' : ''}${stats.growthPct.toFixed(2)}%`, tone: stats.growthPct >= 0 ? 'positive' : 'negative' },
+  ]
+  kpis.push(
     { label: 'Win rate', value: `${stats.winRate.toFixed(1)}%` },
     { label: 'Giorni tradati', value: stats.daysTraded, sub: `${stats.winningDays}W / ${stats.losingDays}L` },
     { label: 'Trade', value: stats.totalTradesEffective },
     { label: 'Freq. media trade/g', value: stats.avgTradeFrequency.toFixed(2) },
-    { label: 'Expectancy', value: fmtSigned(stats.expectancy), tone: stats.expectancy >= 0 ? 'positive' : 'negative' },
+  )
+  if (!hideMoney) {
+    kpis.push(
+      { label: 'Expectancy', value: fmtSigned(stats.expectancy), tone: stats.expectancy >= 0 ? 'positive' : 'negative' },
+      { label: 'Rischio medio (% conto)', value: stats.avgRiskPct !== null ? `${stats.avgRiskPct.toFixed(2)}%` : '—' },
+    )
+  }
+  kpis.push(
     { label: 'Profit factor', value: fmt(stats.profitFactor), tone: stats.profitFactor >= 1 ? 'positive' : 'negative' },
     { label: 'R:R medio', value: stats.avgRiskReward !== null ? stats.avgRiskReward.toFixed(2) : '—' },
-    { label: 'Rischio medio (% conto)', value: stats.avgRiskPct !== null ? `${stats.avgRiskPct.toFixed(2)}%` : '—' },
     { label: 'Fiducia media', value: stats.avgConfidence !== null ? `${stats.avgConfidence.toFixed(1)}/10` : '—' },
-  ]
+  )
 
   if (stats.disciplineCost.offPlanCount > 0) {
     kpis.push({
       label: 'TP mancati per indisciplina',
       value: `${stats.disciplineCost.missedTPCount}/${stats.disciplineCost.offPlanCount}`,
-      sub: `${stats.disciplineCost.missedTPPct.toFixed(0)}% dei trade fuori piano · P/L reale in quei trade: ${fmtSigned(stats.disciplineCost.missedTPPnl)}`,
+      sub: hideMoney
+        ? `${stats.disciplineCost.missedTPPct.toFixed(0)}% dei trade fuori piano`
+        : `${stats.disciplineCost.missedTPPct.toFixed(0)}% dei trade fuori piano · P/L reale in quei trade: ${fmtSigned(stats.disciplineCost.missedTPPnl)}`,
       tone: stats.disciplineCost.missedTPCount > 0 ? 'negative' : undefined,
     })
   }
@@ -91,15 +106,15 @@ function StatsBlock({ stats, compact, entries, storageKey }) {
     <>
       <MetricsGrid metrics={kpis} />
 
-      <RiskBudgetCard entries={entries} initialBalance={stats.initialBalance} storageKey={storageKey} />
+      {!hideMoney && <RiskBudgetCard entries={entries} initialBalance={stats.initialBalance} storageKey={storageKey} />}
 
       <div className={styles.winLoseGrid}>
         <div className={styles.winBox}>
           <div className={styles.winLoseTitle}><span>Winners</span><CollapseToggle open={winOpen} onToggle={toggleWin} /></div>
           {winOpen && <>
             <div className={styles.miniRow}><span>Totale</span><span>{stats.winners.total}</span></div>
-            <div className={styles.miniRow}><span>Best win</span><span>{fmtSigned(stats.winners.best)}</span></div>
-            <div className={styles.miniRow}><span>Media</span><span>{fmtSigned(stats.winners.average)}</span></div>
+            {!hideMoney && <div className={styles.miniRow}><span>Best win</span><span>{fmtSigned(stats.winners.best)}</span></div>}
+            {!hideMoney && <div className={styles.miniRow}><span>Media</span><span>{fmtSigned(stats.winners.average)}</span></div>}
             <div className={styles.miniRow}><span>Durata media</span><span>{fmtDuration(stats.winners.avgDuration)}</span></div>
             <div className={styles.miniRow}><span>Streak max/media</span><span>{stats.winners.maxStreak} / {stats.winners.avgStreak.toFixed(1)}</span></div>
           </>}
@@ -108,15 +123,15 @@ function StatsBlock({ stats, compact, entries, storageKey }) {
           <div className={styles.winLoseTitle}><span>Losers</span><CollapseToggle open={loseOpen} onToggle={toggleLose} /></div>
           {loseOpen && <>
             <div className={styles.miniRow}><span>Totale</span><span>{stats.losers.total}</span></div>
-            <div className={styles.miniRow}><span>Best loss</span><span>{fmtSigned(stats.losers.best)}</span></div>
-            <div className={styles.miniRow}><span>Media</span><span>{fmtSigned(stats.losers.average)}</span></div>
+            {!hideMoney && <div className={styles.miniRow}><span>Best loss</span><span>{fmtSigned(stats.losers.best)}</span></div>}
+            {!hideMoney && <div className={styles.miniRow}><span>Media</span><span>{fmtSigned(stats.losers.average)}</span></div>}
             <div className={styles.miniRow}><span>Durata media</span><span>{fmtDuration(stats.losers.avgDuration)}</span></div>
             <div className={styles.miniRow}><span>Streak max/media</span><span>{stats.losers.maxStreak} / {stats.losers.avgStreak.toFixed(1)}</span></div>
           </>}
         </div>
       </div>
 
-      {payouts.count > 0 && (
+      {!hideMoney && payouts.count > 0 && (
         <div className={styles.payoutBlock}>
           <div className={styles.payoutTitle}><span>Payout</span><CollapseToggle open={payoutOpen} onToggle={togglePayout} /></div>
           {payoutOpen && <>
@@ -136,17 +151,20 @@ function StatsBlock({ stats, compact, entries, storageKey }) {
       )}
 
       <BreakdownWrap compact={compact}>
-        <Breakdown kind="ranked" title="Performance by market" entries={marketEntries} compact={compact} boxKey={`${storageKey}:market`} />
-        <Breakdown kind="ranked" title="Performance by session" entries={sessionEntries} compact={compact} boxKey={`${storageKey}:session`} />
-        <Breakdown kind="ranked" title="Performance con/senza notizie" entries={newsEntries} compact={compact} boxKey={`${storageKey}:news`} />
-        <Breakdown kind="ranked" title="Aderenza alla strategia" entries={strategyEntries} compact={compact} boxKey={`${storageKey}:strategy`} />
-        <Breakdown kind="table" title="Performance by close type" entries={closeTypeEntries} compact={compact} boxKey={`${storageKey}:closeType`} />
-        <Breakdown kind="table" title="Performance by grade" entries={gradeEntries} compact={compact} boxKey={`${storageKey}:grade`} />
-        <Breakdown kind="ranked" title="Performance by stato emotivo" entries={emotionalStateEntries} compact={compact} boxKey={`${storageKey}:emotion`} />
-        <Breakdown kind="ranked" title="Performance by tag" entries={tagEntries} formatLabel={(k) => `#${k}`} compact={compact} boxKey={`${storageKey}:tag`} />
-        <Breakdown kind="ranked" title="Performance by side" entries={sideEntries} compact={compact} boxKey={`${storageKey}:side`} />
-        <Breakdown kind="ranked" title="Performance by day" entries={weekdayEntries} compact={compact} boxKey={`${storageKey}:weekday`} />
-        <Breakdown kind="ranked" title="Performance by month" entries={monthEntries} compact={compact} boxKey={`${storageKey}:month`} />
+        <Breakdown kind="ranked" title="Performance by market" entries={marketEntries} compact={compact} boxKey={`${storageKey}:market`} hideMoney={hideMoney} />
+        <Breakdown kind="ranked" title="Performance by session" entries={sessionEntries} compact={compact} boxKey={`${storageKey}:session`} hideMoney={hideMoney} />
+        <Breakdown kind="ranked" title="Performance con/senza notizie" entries={newsEntries} compact={compact} boxKey={`${storageKey}:news`} hideMoney={hideMoney} />
+        <Breakdown kind="ranked" title="Aderenza alla strategia" entries={strategyEntries} compact={compact} boxKey={`${storageKey}:strategy`} hideMoney={hideMoney} />
+        {strategyNameEntries.length > 0 && (
+          <Breakdown kind="ranked" title="Performance per strategia" entries={strategyNameEntries} compact={compact} boxKey={`${storageKey}:strategyName`} hideMoney={hideMoney} />
+        )}
+        <Breakdown kind="table" title="Performance by close type" entries={closeTypeEntries} compact={compact} boxKey={`${storageKey}:closeType`} hideMoney={hideMoney} />
+        <Breakdown kind="table" title="Performance by grade" entries={gradeEntries} compact={compact} boxKey={`${storageKey}:grade`} hideMoney={hideMoney} />
+        <Breakdown kind="ranked" title="Performance by stato emotivo" entries={emotionalStateEntries} compact={compact} boxKey={`${storageKey}:emotion`} hideMoney={hideMoney} />
+        <Breakdown kind="ranked" title="Performance by tag" entries={tagEntries} formatLabel={(k) => `#${k}`} compact={compact} boxKey={`${storageKey}:tag`} hideMoney={hideMoney} />
+        <Breakdown kind="ranked" title="Performance by side" entries={sideEntries} compact={compact} boxKey={`${storageKey}:side`} hideMoney={hideMoney} />
+        <Breakdown kind="ranked" title="Performance by day" entries={weekdayEntries} compact={compact} boxKey={`${storageKey}:weekday`} hideMoney={hideMoney} />
+        <Breakdown kind="ranked" title="Performance by month" entries={monthEntries} compact={compact} boxKey={`${storageKey}:month`} hideMoney={hideMoney} />
 
         {(mods.reEntry.count > 0 || mods.stopWidened.count > 0 || mods.lotIncreased.count > 0) && (
           <Breakdown
@@ -154,6 +172,7 @@ function StatsBlock({ stats, compact, entries, storageKey }) {
             title="Modifiche al trade"
             compact={compact}
             boxKey={`${storageKey}:mods`}
+            hideMoney={hideMoney}
             entries={[
               mods.reEntry.count > 0 ? ['Re-entry', mods.reEntry] : null,
               mods.stopWidened.count > 0 ? ['Stop allungato', mods.stopWidened] : null,
@@ -218,6 +237,7 @@ function CollapsibleCard({ storageKey, className, style, headerContent, children
 }
 
 function AccountAnalyticsCard({ account, stats, entries }) {
+  const hideMoney = account.type === 'paper'
   return (
     <CollapsibleCard
       storageKey={account.id}
@@ -227,11 +247,12 @@ function AccountAnalyticsCard({ account, stats, entries }) {
         <>
           <span className={styles.dot} style={{ background: account.color }} />
           {account.name}
+          {hideMoney && <span className={styles.inactiveTag}>Paper Trading</span>}
           {!account.active && <span className={styles.inactiveTag}>Disattivato</span>}
         </>
       )}
     >
-      <StatsBlock stats={stats} entries={entries.filter((e) => e.accountId === account.id)} storageKey={account.id} />
+      <StatsBlock stats={stats} entries={entries.filter((e) => e.accountId === account.id)} storageKey={account.id} hideMoney={hideMoney} />
       <NotesList entries={entries} accountId={account.id} storageKey={account.id} />
     </CollapsibleCard>
   )
@@ -260,7 +281,11 @@ export default function AnalyticsView({
   // disattivati" in cima alla pagina (quella controlla cos'altro è visibile, es. le card per
   // conto e Margine dal threshold): di default somma solo i conti attivi, cosi un conto vecchio
   // disattivato non gonfia le statistiche "correnti" a meno che non lo richieda esplicitamente.
-  const summaryAccounts = summaryActiveOnly ? accounts.filter((a) => a.active) : accounts
+  // Paper Trading non ha un saldo reale: mescolarlo nel Riepilogo aggregato falserebbe i $ totali
+  // dei conti veri, quindi resta fuori qui (e dal margine soglia sotto) — i suoi dati restano
+  // visibili solo nella sua card dedicata più in basso, con gli importi in denaro nascosti.
+  const realAccounts = accounts.filter((a) => a.type !== 'paper')
+  const summaryAccounts = summaryActiveOnly ? realAccounts.filter((a) => a.active) : realAccounts
   const summaryAccountIds = summaryAccounts.map((a) => a.id)
   const summaryStats = getSummaryAnalytics(summaryAccountIds, { excludeReEntry, stageFilter })
   const accountById = Object.fromEntries(summaryAccounts.map((a) => [a.id, a]))
@@ -272,7 +297,7 @@ export default function AnalyticsView({
   // Margine residuo prima del threshold (drawdown massimo) di ogni conto: quanto puoi ancora
   // perdere, in totale e conto per conto, prima di bruciare qualcosa. Conti già bruciati non
   // hanno margine (0), non un numero negativo che confonderebbe la somma.
-  const thresholdRows = accounts.map((account) => {
+  const thresholdRows = realAccounts.map((account) => {
     const threshold = getThreshold(account.id)
     const balance = getAccountBalance(account.id)
     const distance = threshold ? Math.max(0, balance - threshold.threshold) : null

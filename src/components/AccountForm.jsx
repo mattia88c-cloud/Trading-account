@@ -18,6 +18,28 @@ export default function AccountForm({ onCreate }) {
 
   async function handleSubmit(e) {
     e.preventDefault()
+    if (type === 'paper') {
+      if (!name.trim()) return
+      setSaveError('')
+      setSaving(true)
+      const created = await onCreate({
+        name: name.trim(),
+        type,
+        initialBalance: 0,
+        maxDrawdown: 0,
+        fixedThreshold: false,
+        thresholdValue: null,
+        accountStage: null,
+      })
+      setSaving(false)
+      if (!created) {
+        setSaveError('Salvataggio fallito. Controlla la connessione o riprova.')
+        return
+      }
+      setName('')
+      setOpen(false)
+      return
+    }
     const initialBalance = useCustom ? customBalance : preset
     if (!name.trim() || !initialBalance || Number(initialBalance) <= 0) return
     if (useCustom && fixedThreshold && (!thresholdValue || Number(thresholdValue) <= 0)) return
@@ -83,6 +105,13 @@ export default function AccountForm({ onCreate }) {
         >
           Personale
         </button>
+        <button
+          type="button"
+          className={`${styles.toggle} ${type === 'paper' ? styles.active : ''}`}
+          onClick={() => setType('paper')}
+        >
+          Paper Trading
+        </button>
       </div>
 
       {type === 'propfirm' && (
@@ -112,72 +141,82 @@ export default function AccountForm({ onCreate }) {
         onChange={(e) => setName(e.target.value)}
       />
 
-      <div className={styles.balanceRow}>
-        {BALANCE_PRESETS.map((p) => (
-          <button
-            key={p}
-            type="button"
-            className={`${styles.preset} ${!useCustom && preset === p ? styles.active : ''}`}
-            onClick={() => {
-              setPreset(p)
-              setUseCustom(false)
-            }}
-          >
-            {(p / 1000).toFixed(0)}k
-          </button>
-        ))}
-        <button
-          type="button"
-          className={`${styles.preset} ${useCustom ? styles.active : ''}`}
-          onClick={() => setUseCustom(true)}
-        >
-          Custom
-        </button>
-      </div>
-
-      {useCustom ? (
+      {type === 'paper' ? (
+        <p className={styles.drawdownInfo}>
+          Conto senza saldo: visibile solo nel Journal trade (per registrarci le operazioni non
+          legate a un conto reale) e in Analytics, mai in Dashboard/Calendario/Cronologia — e i
+          suoi dati non mostrano mai importi in denaro.
+        </p>
+      ) : (
         <>
-          <input
-            className={styles.input}
-            type="number"
-            placeholder="Saldo iniziale ($)"
-            value={customBalance}
-            onChange={(e) => setCustomBalance(e.target.value)}
-          />
+          <div className={styles.balanceRow}>
+            {BALANCE_PRESETS.map((p) => (
+              <button
+                key={p}
+                type="button"
+                className={`${styles.preset} ${!useCustom && preset === p ? styles.active : ''}`}
+                onClick={() => {
+                  setPreset(p)
+                  setUseCustom(false)
+                }}
+              >
+                {(p / 1000).toFixed(0)}k
+              </button>
+            ))}
+            <button
+              type="button"
+              className={`${styles.preset} ${useCustom ? styles.active : ''}`}
+              onClick={() => setUseCustom(true)}
+            >
+              Custom
+            </button>
+          </div>
 
-          <label className={styles.checkboxRow}>
-            <input
-              type="checkbox"
-              checked={fixedThreshold}
-              onChange={(e) => setFixedThreshold(e.target.checked)}
-            />
-            Threshold fisso (non insegue il saldo che cresce) — per conti CFD
-          </label>
+          {useCustom ? (
+            <>
+              <input
+                className={styles.input}
+                type="number"
+                placeholder="Saldo iniziale ($)"
+                value={customBalance}
+                onChange={(e) => setCustomBalance(e.target.value)}
+              />
 
-          {fixedThreshold ? (
-            <input
-              className={styles.input}
-              type="number"
-              min="0"
-              placeholder="Valore threshold fisso ($)"
-              value={thresholdValue}
-              onChange={(e) => setThresholdValue(e.target.value)}
-            />
+              <label className={styles.checkboxRow}>
+                <input
+                  type="checkbox"
+                  checked={fixedThreshold}
+                  onChange={(e) => setFixedThreshold(e.target.checked)}
+                />
+                Threshold fisso (non insegue il saldo che cresce) — per conti CFD
+              </label>
+
+              {fixedThreshold ? (
+                <input
+                  className={styles.input}
+                  type="number"
+                  min="0"
+                  placeholder="Valore threshold fisso ($)"
+                  value={thresholdValue}
+                  onChange={(e) => setThresholdValue(e.target.value)}
+                />
+              ) : (
+                <input
+                  className={styles.input}
+                  type="number"
+                  min="0"
+                  placeholder="Drawdown massimo ($) - opzionale"
+                  value={customDrawdown}
+                  onChange={(e) => setCustomDrawdown(e.target.value)}
+                />
+              )}
+            </>
           ) : (
-            <input
-              className={styles.input}
-              type="number"
-              min="0"
-              placeholder="Drawdown massimo ($) - opzionale"
-              value={customDrawdown}
-              onChange={(e) => setCustomDrawdown(e.target.value)}
-            />
+            <div className={styles.drawdownInfo}>
+              Drawdown massimo: ${DRAWDOWN_BY_PRESET[preset].toLocaleString('it-IT')}
+            </div>
           )}
         </>
-      ) : (
-        <div className={styles.drawdownInfo}>
-          Drawdown massimo: ${DRAWDOWN_BY_PRESET[preset].toLocaleString('it-IT')}
-        </div>
       )}
 
       {saveError && <div className={styles.saveError}>{saveError}</div>}
