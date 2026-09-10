@@ -203,6 +203,11 @@ alter table public.entries add column if not exists size_unit text;
 -- performance-per-strategia in Analytics.
 alter table public.entries add column if not exists strategy text;
 
+-- Conteggio trade vinti/persi della giornata, usato dal Registro rapido (che non registra un
+-- P/L per singolo trade, solo il totale giornaliero) al posto dei punti TP/SL del Journal completo.
+alter table public.entries add column if not exists trades_won integer;
+alter table public.entries add column if not exists trades_lost integer;
+
 -- Rimosso il vincolo unique(account_id, date): inizialmente un giorno = una entry, ora un conto
 -- può avere più trade distinti nello stesso giorno (ognuno una riga a sé). Vedi entrySignature in
 -- useTradingData.js per come Analytics distingue ancora i copy-trade (contenuto identico su più
@@ -240,16 +245,65 @@ create table if not exists public.missions (
   created_at timestamptz not null default now()
 );
 
+-- Pagina "ROI prop": tiene traccia di quanto spendi comprando conti/valutazioni dalle prop firm
+-- e di quanto incassi in payout, aggregato per firm (es. "Topstep", "The5%ers") — non per singolo
+-- conto (un conto in accounts può essere già stato eliminato, ma la spesa/incasso storico resta).
+create table if not exists public.prop_purchases (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  firm_name text not null,
+  size numeric,
+  cost numeric not null,
+  activation_fee numeric,
+  reset_cost numeric,
+  currency text not null default 'EUR',
+  date date not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.prop_payouts (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  firm_name text not null,
+  gross_amount numeric not null,
+  tax_eur numeric,
+  net_amount_eur numeric,
+  date date not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.prop_purchases add column if not exists activation_fee numeric;
+alter table public.prop_purchases add column if not exists reset_cost numeric;
+alter table public.prop_purchases add column if not exists currency text not null default 'EUR';
+alter table public.prop_payouts add column if not exists tax_eur numeric;
+
+-- Nomi delle prop firm salvati come opzioni riutilizzabili nel picker (FirmPicker): prima erano
+-- solo in localStorage, quindi invisibili su un browser diverso da quello con cui erano stati
+-- aggiunti; qui sono condivisi come il resto dei dati dell'utente.
+create table if not exists public.prop_firm_names (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  name text not null,
+  funded_count integer,
+  created_at timestamptz not null default now(),
+  unique (user_id, name)
+);
+
+alter table public.prop_firm_names add column if not exists funded_count integer;
+
 alter table public.accounts enable row level security;
 alter table public.entries enable row level security;
 alter table public.payouts enable row level security;
 alter table public.missions enable row level security;
+alter table public.prop_purchases enable row level security;
+alter table public.prop_payouts enable row level security;
+alter table public.prop_firm_names enable row level security;
 
 do $$
 declare
   t text;
 begin
-  foreach t in array array['accounts', 'entries', 'payouts', 'missions']
+  foreach t in array array['accounts', 'entries', 'payouts', 'missions', 'prop_purchases', 'prop_payouts', 'prop_firm_names']
   loop
     execute format('drop policy if exists "%1$s_owner_all" on public.%1$s', t);
     execute format(

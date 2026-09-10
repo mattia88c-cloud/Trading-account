@@ -1,5 +1,8 @@
 import { useState } from 'react'
 import Card from './Card'
+import { useCollapsed } from '../useCollapsed.js'
+import { useHints } from '../useHints.jsx'
+import CollapseToggle from './CollapseToggle.jsx'
 import styles from './CalculatorTab.module.css'
 
 // Un blocco calcolatore + tabella di riferimento per un singolo mercato (NAS100, XAUUSD, ...).
@@ -25,6 +28,12 @@ export default function MarketCalculator({
   const [risk, setRisk] = useState('')
   const [micro, setMicro] = useState('')
   const [sl, setSl] = useState('')
+  // Il campo appena calcolato dal pulsante "Calcola" (per evidenziarlo in azzurro come risultato,
+  // finché non lo si modifica di nuovo a mano).
+  const [lastComputed, setLastComputed] = useState(null)
+  const { hintsEnabled } = useHints()
+  const [calcOpen, toggleCalc] = useCollapsed(`calculator:${market}:calc`)
+  const [tableOpen, toggleTable] = useCollapsed(`calculator:${market}:table`)
 
   function selectMode(key) {
     const next = modes.find((m) => m.key === key)
@@ -36,58 +45,54 @@ export default function MarketCalculator({
     // di grandezza, per non far leggere un risultato calcolato sull'unità sbagliata.
     setMicro('')
     setSl('')
+    setLastComputed(null)
   }
 
-  function compute(field, val) {
-    const r = field === 'risk' ? parseFloat(val) : parseFloat(risk)
-    const m = field === 'micro' ? parseFloat(val) : parseFloat(micro)
-    const s = field === 'sl' ? parseFloat(val) : parseFloat(sl)
-
-    if (field === 'risk') {
-      setRisk(val)
-      if (m > 0 && s > 0) { }
-      else if (m > 0 && !(s > 0) && r > 0) setSl((r / (m * ppp)).toFixed(1))
-      else if (!(m > 0) && s > 0 && r > 0) setMicro((r / (ppp * s)).toFixed(1))
-    } else if (field === 'micro') {
-      setMicro(val)
-      if (r > 0 && s > 0) { }
-      else if (r > 0 && !(s > 0) && m > 0) setSl((r / (m * ppp)).toFixed(1))
-      else if (!(r > 0) && s > 0 && m > 0) setRisk((m * ppp * s).toFixed(2))
-    } else {
-      setSl(val)
-      if (r > 0 && m > 0) { }
-      else if (r > 0 && !(m > 0) && s > 0) setMicro((r / (ppp * s)).toFixed(1))
-      else if (!(r > 0) && m > 0 && s > 0) setRisk((m * ppp * s).toFixed(2))
-    }
+  function handleFieldChange(field, val) {
+    const setters = { risk: setRisk, micro: setMicro, sl: setSl }
+    setters[field](val)
+    if (lastComputed === field) setLastComputed(null)
   }
 
-  function recalcAll(field) {
+  // Tutti e 3 i campi sono intercambiabili: lascia esattamente 1 campo vuoto (gli altri 2
+  // compilati) e premi "Calcola" per riempirlo — non serve più decidere in anticipo quale
+  // sia l'input e quale il risultato.
+  function handleCalculate() {
     const r = parseFloat(risk)
     const m = parseFloat(micro)
     const s = parseFloat(sl)
-    if (field === 'sl' || (!sl && r > 0 && m > 0)) {
-      if (r > 0 && m > 0) setSl((r / (m * ppp)).toFixed(1))
-    } else if (field === 'micro' || (!micro && r > 0 && s > 0)) {
-      if (r > 0 && s > 0) setMicro((r / (ppp * s)).toFixed(1))
-    } else if (field === 'risk' || (!risk && m > 0 && s > 0)) {
-      if (m > 0 && s > 0) setRisk((m * ppp * s).toFixed(2))
+    const filled = [risk !== '' && r > 0, micro !== '' && m > 0, sl !== '' && s > 0]
+    const filledCount = filled.filter(Boolean).length
+    if (filledCount !== 2) return
+    if (!filled[2] && r > 0 && m > 0) {
+      setSl((r / (m * ppp)).toFixed(1))
+      setLastComputed('sl')
+    } else if (!filled[1] && r > 0 && s > 0) {
+      setMicro((r / (ppp * s)).toFixed(1))
+      setLastComputed('micro')
+    } else if (!filled[0] && m > 0 && s > 0) {
+      setRisk((m * ppp * s).toFixed(2))
+      setLastComputed('risk')
     }
-  }
-
-  function handleKey(e, field) {
-    if (e.key === 'Enter' || e.key === 'Tab') recalcAll(field)
   }
 
   function applyPreset(preset) {
     setMicro(String(preset.micro))
     setPpp(preset.ppp)
+    setLastComputed(null)
     const r = parseFloat(risk)
-    if (r > 0) setSl((r / (preset.micro * preset.ppp)).toFixed(1))
+    const s = parseFloat(sl)
+    if (r > 0 && !(s > 0)) {
+      setSl((r / (preset.micro * preset.ppp)).toFixed(1))
+      setLastComputed('sl')
+    } else if (s > 0 && !(r > 0)) {
+      setRisk((preset.micro * preset.ppp * s).toFixed(2))
+      setLastComputed('risk')
+    }
   }
 
-  const calculatedSl = parseFloat(risk) > 0 && parseFloat(micro) > 0
-    ? parseFloat(risk) / (parseFloat(micro) * ppp)
-    : null
+  const canCalculate = [risk !== '' && parseFloat(risk) > 0, micro !== '' && parseFloat(micro) > 0, sl !== '' && parseFloat(sl) > 0]
+    .filter(Boolean).length === 2
 
   return (
     <>
@@ -97,136 +102,151 @@ export default function MarketCalculator({
         ) : (
           <span className={styles.marketBadge}>{market}</span>
         )}
-        <div className={styles.title}>Position Size Calculator — {market}</div>
-        <p className={styles.subtitle}>Inserisci 2 valori, premi Enter per calcolare il terzo</p>
-
-        {modes.length > 1 && (
-          <div className={styles.modeToggle}>
-            {modes.map((m) => (
-              <button
-                key={m.key}
-                type="button"
-                className={`${styles.modeBtn} ${m.key === modeKey ? styles.modeBtnActive : ''}`}
-                onClick={() => selectMode(m.key)}
-              >
-                {m.label}
-              </button>
-            ))}
-          </div>
-        )}
-
-        <div className={styles.pppRow}>
-          <label className={styles.pppLabel}>
-            $ per punto
-            <input
-              type="number"
-              className={styles.pppInput}
-              value={ppp}
-              onChange={e => setPpp(parseFloat(e.target.value) || mode.defaultPpp)}
-            />
-          </label>
-          <span className={styles.pppHint}>{mode.pppHint}</span>
+        <div className={styles.cardHeaderRow}>
+          <div className={styles.title}>Position Size Calculator — {market}</div>
+          <CollapseToggle open={calcOpen} onToggle={toggleCalc} />
         </div>
 
-        <div className={styles.fields}>
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>Risk $</label>
-            <input
-              type="number"
-              className={styles.fieldInput}
-              placeholder="es. 250"
-              value={risk}
-              onChange={e => compute('risk', e.target.value)}
-              onKeyDown={e => handleKey(e, 'sl')}
-              onBlur={() => recalcAll('sl')}
-            />
-            <span className={styles.fieldUnit}>USD</span>
-          </div>
+        {calcOpen && (
+          <>
+            {hintsEnabled && <p className={styles.subtitle}>Inserisci 2 valori qualsiasi e premi "Calcola" per il terzo</p>}
 
-          <div className={styles.fieldSep}>÷</div>
+            {modes.length > 1 && (
+              <div className={styles.modeToggle}>
+                {modes.map((m) => (
+                  <button
+                    key={m.key}
+                    type="button"
+                    className={`${styles.modeBtn} ${m.key === modeKey ? styles.modeBtnActive : ''}`}
+                    onClick={() => selectMode(m.key)}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>{mode.unitLabel}</label>
-            <input
-              type="number"
-              className={styles.fieldInput}
-              placeholder="es. 5"
-              value={micro}
-              onChange={e => compute('micro', e.target.value)}
-              onKeyDown={e => handleKey(e, 'sl')}
-              onBlur={() => recalcAll('sl')}
-            />
-            <span className={styles.fieldUnit}>{mode.unitShort}</span>
-          </div>
+            <div className={styles.pppRow}>
+              <label className={styles.pppLabel}>
+                $ per punto
+                <input
+                  type="number"
+                  className={styles.pppInput}
+                  value={ppp}
+                  onChange={e => setPpp(parseFloat(e.target.value) || mode.defaultPpp)}
+                />
+              </label>
+              {hintsEnabled && <span className={styles.pppHint}>{mode.pppHint}</span>}
+            </div>
 
-          <div className={styles.fieldSep}>=</div>
+            <div className={styles.fields}>
+              <div className={styles.field}>
+                <label className={styles.fieldLabel}>Risk $</label>
+                <input
+                  type="number"
+                  className={`${styles.fieldInput} ${lastComputed === 'risk' ? styles.fieldOutput : ''}`}
+                  placeholder={hintsEnabled ? 'es. 250' : ''}
+                  value={risk}
+                  onChange={e => handleFieldChange('risk', e.target.value)}
+                />
+                <span className={styles.fieldUnit}>USD</span>
+              </div>
 
-          <div className={styles.field}>
-            <label className={styles.fieldLabel}>SL Points</label>
-            <input
-              type="number"
-              className={`${styles.fieldInput} ${calculatedSl ? styles.fieldOutput : ''}`}
-              placeholder="es. 25"
-              value={sl}
-              onChange={e => compute('sl', e.target.value)}
-              onKeyDown={e => handleKey(e, 'risk')}
-              onBlur={() => recalcAll('risk')}
-            />
-            <span className={styles.fieldUnit}>punti</span>
-          </div>
-        </div>
+              <div className={styles.fieldSep}>÷</div>
 
-        <div className={styles.formula}>
-          <span className={styles.formulaText}>
-            Formula: <code>SL punti = Risk $ ÷ ({mode.tableUnitLabel} × ${ppp}/punto)</code>
-          </span>
-        </div>
+              <div className={styles.field}>
+                <label className={styles.fieldLabel}>{mode.unitLabel}</label>
+                <input
+                  type="number"
+                  className={`${styles.fieldInput} ${lastComputed === 'micro' ? styles.fieldOutput : ''}`}
+                  placeholder={hintsEnabled ? 'es. 5' : ''}
+                  value={micro}
+                  onChange={e => handleFieldChange('micro', e.target.value)}
+                />
+                <span className={styles.fieldUnit}>{mode.unitShort}</span>
+              </div>
 
-        {calculatedSl && (
-          <div className={styles.result}>
-            <span className={styles.resultLabel}>SL calcolato:</span>
-            <span className={styles.resultVal}>{calculatedSl.toFixed(1)} punti</span>
-          </div>
+              <div className={styles.fieldSep}>=</div>
+
+              <div className={styles.field}>
+                <label className={styles.fieldLabel}>SL Points</label>
+                <input
+                  type="number"
+                  className={`${styles.fieldInput} ${lastComputed === 'sl' ? styles.fieldOutput : ''}`}
+                  placeholder={hintsEnabled ? 'es. 25' : ''}
+                  value={sl}
+                  onChange={e => handleFieldChange('sl', e.target.value)}
+                />
+                <span className={styles.fieldUnit}>punti</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className={styles.calcBtn}
+              onClick={handleCalculate}
+              disabled={!canCalculate}
+            >
+              Calcola
+            </button>
+
+            {hintsEnabled && (
+              <div className={styles.formula}>
+                <span className={styles.formulaText}>
+                  Formula: <code>SL punti = Risk $ ÷ ({mode.tableUnitLabel} × ${ppp}/punto)</code>
+                </span>
+              </div>
+            )}
+          </>
         )}
       </Card>
 
       <Card>
         <div className={styles.tableTitleRow}>
           <div className={styles.tableTitle}>{mode.tableTitle}</div>
-          {mode.tickInfo && <span className={styles.tickInfo}>{mode.tickInfo}</span>}
+          {hintsEnabled && mode.tickInfo && <span className={styles.tickInfo}>{mode.tickInfo}</span>}
+          <CollapseToggle open={tableOpen} onToggle={toggleTable} />
         </div>
-        <div className={styles.tableCardBody}>
-          <div className={styles.tableFrame}>
-            <table className={styles.refTable}>
-              <thead>
-                <tr>
-                  <th>{mode.tableUnitLabel}</th>
-                  <th>$ per punto</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mode.presets.map(preset => {
-                  const isActive = parseFloat(micro) === preset.micro && ppp === preset.ppp
-                  return (
-                    <tr
-                      key={preset.micro}
-                      className={`${styles.refRow} ${isActive ? styles.refRowActive : ''}`}
-                      onClick={() => applyPreset(preset)}
-                    >
-                      <td>{preset.micro}</td>
-                      <td>${preset.ppp}</td>
+        {tableOpen && (
+          <>
+            <div className={styles.tableCardBody}>
+              <div className={styles.tableFrame}>
+                <table className={styles.refTable}>
+                  <thead>
+                    <tr>
+                      <th>{mode.tableUnitLabel}</th>
+                      <th>$ per punto</th>
                     </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
-          <div className={styles.sideNote}>
-            <b>Promemoria formula</b>
-            SL punti = Risk $ ÷ ({mode.tableUnitLabel} × ${ppp}/punto)
-          </div>
-        </div>
-        <p className={styles.tableNote}>Clicca su una riga per usare quel valore di {mode.tableUnitLabel.toLowerCase()} nel calcolatore</p>
+                  </thead>
+                  <tbody>
+                    {mode.presets.map(preset => {
+                      const isActive = parseFloat(micro) === preset.micro && ppp === preset.ppp
+                      return (
+                        <tr
+                          key={preset.micro}
+                          className={`${styles.refRow} ${isActive ? styles.refRowActive : ''}`}
+                          onClick={() => applyPreset(preset)}
+                        >
+                          <td>{preset.micro}</td>
+                          <td>${preset.ppp}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              {hintsEnabled && (
+                <div className={styles.sideNote}>
+                  <b>Promemoria formula</b>
+                  SL punti = Risk $ ÷ ({mode.tableUnitLabel} × ${ppp}/punto)
+                </div>
+              )}
+            </div>
+            {hintsEnabled && (
+              <p className={styles.tableNote}>Clicca su una riga per usare quel valore di {mode.tableUnitLabel.toLowerCase()} nel calcolatore</p>
+            )}
+          </>
+        )}
       </Card>
     </>
   )

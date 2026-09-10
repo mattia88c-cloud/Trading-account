@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Card from './Card'
+import { useHints } from '../useHints.jsx'
 import styles from './FriendsView.module.css'
 
 const WEEKDAY_LABELS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven']
@@ -43,6 +44,7 @@ function fmtPct(n) {
 }
 
 export default function FriendsView({ rows, currentUserId, loading }) {
+  const { hintsEnabled } = useHints()
   const [period, setPeriod] = useState('weekly')
 
   if (loading) return <p className={styles.empty}>Caricamento…</p>
@@ -134,7 +136,7 @@ export default function FriendsView({ rows, currentUserId, loading }) {
 
       <Card>
         <div className={styles.title}>Classifica disciplina</div>
-        <p className={styles.subtitle}>Score comportamentale</p>
+        {hintsEnabled && <p className={styles.subtitle}>Score comportamentale</p>}
         <div className={styles.list}>
           {rankedByDiscipline.length === 0 && <p className={styles.empty}>Nessun dato ancora.</p>}
           {rankedByDiscipline.map((r, i) => {

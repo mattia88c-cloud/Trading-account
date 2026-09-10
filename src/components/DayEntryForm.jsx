@@ -1,13 +1,27 @@
 import { useState } from 'react'
 import { MARKETS, SESSIONS, CLOSE_TYPES, OUTCOMES, GRADES, GRADE_LEGEND, EMOTIONAL_STATES } from '../useTradingData'
+import StrategyPicker from './StrategyPicker.jsx'
+import { useHints } from '../useHints.jsx'
+import LandingActionButton from './LandingActionButton.jsx'
 import styles from './DayEntryForm.module.css'
+
+const journalIcon = (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5H7.5A1.5 1.5 0 0 1 6 19V3.5z" />
+    <path d="M6 3.5A1.5 1.5 0 0 0 4.5 5v14A1.5 1.5 0 0 0 6 20.5" />
+    <line x1="9" y1="8" x2="14.5" y2="8" />
+    <line x1="9" y1="12" x2="14.5" y2="12" />
+  </svg>
+)
 
 function today() {
   return new Date().toISOString().slice(0, 10)
 }
 
 export default function DayEntryForm({ accounts, onSave, initialEntry, accountName, onClose }) {
+  const { hintsEnabled } = useHints()
   const isEdit = Boolean(initialEntry)
+  const [open, setOpen] = useState(isEdit)
   const [date, setDate] = useState(initialEntry?.date || today())
   const [selectedIds, setSelectedIds] = useState(initialEntry ? [initialEntry.accountId] : [])
   const [market, setMarket] = useState(initialEntry?.market || MARKETS[0])
@@ -131,10 +145,23 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
     setTags('')
     setChartUrl('')
     setSelectedIds([])
+    setOpen(false)
   }
 
   if (accounts.length === 0) {
     return <p className={styles.empty}>Crea prima almeno un conto per registrare una giornata.</p>
+  }
+
+  if (!isEdit && !open) {
+    return (
+      <LandingActionButton
+        icon={journalIcon}
+        title="Journal trade"
+        subtitle="Il log completo della giornata, per analytics migliori"
+        tone="accent"
+        onClick={() => setOpen(true)}
+      />
+    )
   }
 
   return (
@@ -145,7 +172,10 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
           <button type="button" className={styles.closeBtn} onClick={onClose} title="Annulla e torna indietro">✕</button>
         </div>
       ) : (
-        <h3 className={styles.title}>Journal trade</h3>
+        <div className={styles.editHeader}>
+          <h3 className={styles.title}>Journal trade</h3>
+          <button type="button" className={styles.closeBtn} onClick={() => setOpen(false)} title="Chiudi">✕</button>
+        </div>
       )}
 
       <label className={styles.label}>Data</label>
@@ -175,33 +205,32 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
           )
         })}
       </div>
-      {isEdit && (
+      {isEdit && hintsEnabled && (
         <p className={styles.hint}>
           {accountName} resta il conto di questa entry. I conti in più che spunti diventano nuove entry con
           gli stessi dati, per registrare che il trade era in copy trading.
         </p>
       )}
 
-      <label className={styles.label}>Mercato</label>
-      <select className={styles.input} value={market} onChange={(e) => setMarket(e.target.value)}>
-        {MARKETS.map((m) => (
-          <option key={m} value={m}>{m}</option>
-        ))}
-      </select>
+      <div className={styles.row}>
+        <div className={styles.col}>
+          <label className={styles.label}>Mercato</label>
+          <select className={styles.input} value={market} onChange={(e) => setMarket(e.target.value)}>
+            {MARKETS.map((m) => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Strategia</label>
+          <StrategyPicker value={strategy} onChange={setStrategy} />
+        </div>
+      </div>
 
       <label className={styles.checkboxRow}>
         <input type="checkbox" checked={hasNews} onChange={(e) => setHasNews(e.target.checked)} />
         C'era notizia quel giorno
       </label>
-
-      <label className={styles.label}>Strategia</label>
-      <input
-        className={styles.input}
-        type="text"
-        placeholder="Nome strategia (es. Breakout NY, Pullback EMA…)"
-        value={strategy}
-        onChange={(e) => setStrategy(e.target.value)}
-      />
 
       <div className={styles.row}>
         <div className={styles.col}>
@@ -220,9 +249,6 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
             ))}
           </select>
         </div>
-      </div>
-
-      <div className={styles.row}>
         <div className={styles.col}>
           <label className={styles.label}>Ora di entrata</label>
           <input
@@ -243,17 +269,29 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         </div>
       </div>
 
-      <label className={styles.label}>Profitto / Perdita ($)</label>
-      <input
-        className={styles.input}
-        type="number"
-        step="0.01"
-        placeholder="es. 250 o -120"
-        value={profit}
-        onChange={(e) => setProfit(e.target.value)}
-      />
-
       <div className={styles.row}>
+        <div className={styles.col}>
+          <label className={styles.label}>Profitto / Perdita ($)</label>
+          <input
+            className={styles.input}
+            type="number"
+            step="0.01"
+            placeholder={hintsEnabled ? 'es. 250 o -120' : ''}
+            value={profit}
+            onChange={(e) => setProfit(e.target.value)}
+          />
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Rischio/Rendimento (R)</label>
+          <input
+            className={styles.input}
+            type="number"
+            step="0.1"
+            placeholder={hintsEnabled ? 'es. 2.5' : ''}
+            value={riskReward}
+            onChange={(e) => setRiskReward(e.target.value)}
+          />
+        </div>
         <div className={styles.col}>
           <label className={styles.label}>Trade aperti</label>
           <input
@@ -276,20 +314,22 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
         </div>
       </div>
 
-      <label className={styles.label}>Lato</label>
-      <select className={styles.input} value={side} onChange={(e) => setSide(e.target.value)}>
-        <option value="long">Long</option>
-        <option value="short">Short</option>
-        <option value="misto">Misto</option>
-      </select>
-
-      <label className={styles.label}>Unità size</label>
-      <select className={styles.input} value={sizeUnit} onChange={(e) => setSizeUnit(e.target.value)}>
-        <option value="micro">Micro/Mini contract (futures)</option>
-        <option value="lotti">Lotti (CFD)</option>
-      </select>
-
       <div className={styles.row}>
+        <div className={styles.col}>
+          <label className={styles.label}>Lato</label>
+          <select className={styles.input} value={side} onChange={(e) => setSide(e.target.value)}>
+            <option value="long">Long</option>
+            <option value="short">Short</option>
+            <option value="misto">Misto</option>
+          </select>
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Unità size</label>
+          <select className={styles.input} value={sizeUnit} onChange={(e) => setSizeUnit(e.target.value)}>
+            <option value="micro">Micro/Mini contract (futures)</option>
+            <option value="lotti">Lotti (CFD)</option>
+          </select>
+        </div>
         <div className={styles.col}>
           <label className={styles.label}>Size iniziale ({sizeUnit === 'lotti' ? 'lotti' : 'micro'})</label>
           <input
@@ -297,7 +337,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
             type="number"
             min="0"
             step={sizeUnit === 'lotti' ? '0.01' : '1'}
-            placeholder={sizeUnit === 'lotti' ? 'es. 0.50' : 'es. 10'}
+            placeholder={hintsEnabled ? (sizeUnit === 'lotti' ? 'es. 0.50' : 'es. 10') : ''}
             value={initialSizeMicro}
             onChange={(e) => setInitialSizeMicro(e.target.value)}
           />
@@ -309,7 +349,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
             type="number"
             min="0"
             step={sizeUnit === 'lotti' ? '0.01' : '1'}
-            placeholder="se cambiata"
+            placeholder={hintsEnabled ? 'se cambiata' : ''}
             value={finalSizeMicro}
             onChange={(e) => setFinalSizeMicro(e.target.value)}
           />
@@ -323,7 +363,7 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
             className={styles.input}
             type="number"
             min="0"
-            placeholder="es. 200"
+            placeholder={hintsEnabled ? 'es. 200' : ''}
             value={initialRisk}
             onChange={(e) => setInitialRisk(e.target.value)}
           />
@@ -334,21 +374,18 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
             className={styles.input}
             type="number"
             min="0"
-            placeholder="se stop allungato"
+            placeholder={hintsEnabled ? 'se stop allungato' : ''}
             value={finalRisk}
             onChange={(e) => setFinalRisk(e.target.value)}
           />
         </div>
-      </div>
-
-      <div className={styles.row}>
         <div className={styles.col}>
           <label className={styles.label}>Punti rischiati (SL)</label>
           <input
             className={styles.input}
             type="number"
             min="0"
-            placeholder="es. 20"
+            placeholder={hintsEnabled ? 'es. 20' : ''}
             value={riskPoints}
             onChange={(e) => setRiskPoints(e.target.value)}
           />
@@ -358,49 +395,44 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
           <input
             className={styles.input}
             type="number"
-            placeholder="es. 45 o -20"
+            placeholder={hintsEnabled ? 'es. 45 o -20' : ''}
             value={resultPoints}
             onChange={(e) => setResultPoints(e.target.value)}
           />
         </div>
       </div>
 
-      <label className={styles.label}>Rischio/Rendimento (R)</label>
-      <input
-        className={styles.input}
-        type="number"
-        step="0.1"
-        placeholder="es. 2.5"
-        value={riskReward}
-        onChange={(e) => setRiskReward(e.target.value)}
-      />
-
-      <label className={styles.label}>Esito del trade</label>
-      <div className={styles.toggleGroup}>
-        {OUTCOMES.map((o) => (
-          <button
-            key={o}
-            type="button"
-            className={`${styles.toggleOption} ${outcome === o ? styles.toggleOptionActive : ''}`}
-            onClick={() => setOutcome(outcome === o ? '' : o)}
-          >
-            {o}
-          </button>
-        ))}
-      </div>
-
-      <label className={styles.label}>Chiusura trade</label>
-      <div className={styles.toggleGroup}>
-        {CLOSE_TYPES.map((ct) => (
-          <button
-            key={ct}
-            type="button"
-            className={`${styles.toggleOption} ${closeType === ct ? styles.toggleOptionActive : ''}`}
-            onClick={() => setCloseType(closeType === ct ? '' : ct)}
-          >
-            {ct}
-          </button>
-        ))}
+      <div className={styles.row}>
+        <div className={styles.col}>
+          <label className={styles.label}>Esito del trade</label>
+          <div className={styles.toggleGroup}>
+            {OUTCOMES.map((o) => (
+              <button
+                key={o}
+                type="button"
+                className={`${styles.toggleOption} ${outcome === o ? styles.toggleOptionActive : ''}`}
+                onClick={() => setOutcome(outcome === o ? '' : o)}
+              >
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Chiusura trade</label>
+          <div className={styles.toggleGroup}>
+            {CLOSE_TYPES.map((ct) => (
+              <button
+                key={ct}
+                type="button"
+                className={`${styles.toggleOption} ${closeType === ct ? styles.toggleOptionActive : ''}`}
+                onClick={() => setCloseType(closeType === ct ? '' : ct)}
+              >
+                {ct}
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <label className={styles.checkboxRow}>
@@ -450,77 +482,92 @@ export default function DayEntryForm({ accounts, onSave, initialEntry, accountNa
           </button>
         ))}
       </div>
-      <div className={styles.gradeLegend}>
-        {GRADES.map((g) => (
-          <div key={g} className={styles.gradeLegendRow}>
-            <span className={styles.gradeLegendLetter}>{g}</span>
-            <span>{GRADE_LEGEND[g]}</span>
-          </div>
-        ))}
+      {hintsEnabled && (
+        <div className={styles.gradeLegend}>
+          {GRADES.map((g) => (
+            <div key={g} className={styles.gradeLegendRow}>
+              <span className={styles.gradeLegendLetter}>{g}</span>
+              <span>{GRADE_LEGEND[g]}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className={styles.row}>
+        <div className={styles.col}>
+          <label className={styles.label}>Stato emotivo</label>
+          <select className={styles.input} value={emotionalState} onChange={(e) => setEmotionalState(e.target.value)}>
+            <option value="">Non specificato</option>
+            {EMOTIONAL_STATES.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Fiducia ({confidenceLevel}/10)</label>
+          <input
+            className={styles.rangeInput}
+            type="range"
+            min="1"
+            max="10"
+            value={confidenceLevel}
+            onChange={(e) => setConfidenceLevel(e.target.value)}
+          />
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Tag (separati da virgola)</label>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder={hintsEnabled ? 'es. fomo, breakout, revenge' : ''}
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+          />
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Link screenshot (TradingView)</label>
+          <input
+            className={styles.input}
+            type="url"
+            placeholder={hintsEnabled ? 'incolla qui il link «Get chart image» di TradingView' : ''}
+            value={chartUrl}
+            onChange={(e) => setChartUrl(e.target.value)}
+          />
+        </div>
       </div>
 
-      <label className={styles.label}>Stato emotivo</label>
-      <select className={styles.input} value={emotionalState} onChange={(e) => setEmotionalState(e.target.value)}>
-        <option value="">Non specificato</option>
-        {EMOTIONAL_STATES.map((s) => (
-          <option key={s} value={s}>{s}</option>
-        ))}
-      </select>
-
-      <label className={styles.label}>Fiducia ({confidenceLevel}/10)</label>
-      <input
-        className={styles.rangeInput}
-        type="range"
-        min="1"
-        max="10"
-        value={confidenceLevel}
-        onChange={(e) => setConfidenceLevel(e.target.value)}
-      />
-
-      <label className={styles.label}>Tag (separati da virgola)</label>
-      <input
-        className={styles.input}
-        type="text"
-        placeholder="es. fomo, breakout, revenge"
-        value={tags}
-        onChange={(e) => setTags(e.target.value)}
-      />
-
-      <label className={styles.label}>Link screenshot (TradingView)</label>
-      <input
-        className={styles.input}
-        type="url"
-        placeholder="incolla qui il link «Get chart image» di TradingView"
-        value={chartUrl}
-        onChange={(e) => setChartUrl(e.target.value)}
-      />
-
-      <label className={styles.label}>Errore principale</label>
-      <input
-        className={styles.input}
-        type="text"
-        placeholder="es. entrata anticipata senza conferma"
-        value={mistake}
-        onChange={(e) => setMistake(e.target.value)}
-      />
-
-      <label className={styles.label}>Cosa ho fatto bene</label>
-      <input
-        className={styles.input}
-        type="text"
-        placeholder="es. rispettato lo stop"
-        value={whatWentWell}
-        onChange={(e) => setWhatWentWell(e.target.value)}
-      />
-
-      <label className={styles.label}>Lezione del trade</label>
-      <input
-        className={styles.input}
-        type="text"
-        placeholder="es. aspettare sempre la conferma su M15"
-        value={lesson}
-        onChange={(e) => setLesson(e.target.value)}
-      />
+      <div className={styles.row}>
+        <div className={styles.col}>
+          <label className={styles.label}>Errore principale</label>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder={hintsEnabled ? 'es. entrata anticipata senza conferma' : ''}
+            value={mistake}
+            onChange={(e) => setMistake(e.target.value)}
+          />
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Cosa ho fatto bene</label>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder={hintsEnabled ? 'es. rispettato lo stop' : ''}
+            value={whatWentWell}
+            onChange={(e) => setWhatWentWell(e.target.value)}
+          />
+        </div>
+        <div className={styles.col}>
+          <label className={styles.label}>Lezione del trade</label>
+          <input
+            className={styles.input}
+            type="text"
+            placeholder={hintsEnabled ? 'es. aspettare sempre la conferma su M15' : ''}
+            value={lesson}
+            onChange={(e) => setLesson(e.target.value)}
+          />
+        </div>
+      </div>
 
       {saveError && <p className={styles.error}>Salvataggio fallito: {saveError}</p>}
 

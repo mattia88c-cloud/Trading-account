@@ -1,4 +1,5 @@
 import { useCollapsed } from '../useCollapsed.js'
+import { useHints } from '../useHints.jsx'
 import CollapseToggle from './CollapseToggle.jsx'
 import styles from './IdealTradeCard.module.css'
 
@@ -17,6 +18,7 @@ function worstOf(dict, minDays = 1) {
 const SIDE_LABELS = { long: 'Long', short: 'Short', misto: 'Misto' }
 
 export default function IdealTradeCard({ stats, storageKey }) {
+  const { hintsEnabled } = useHints()
   const [open, toggle] = useCollapsed(`${storageKey}:idealTrade`)
   const bestMarket = bestOf(stats.byMarket)
   const bestSession = bestOf(stats.byOpenSession)
@@ -47,7 +49,7 @@ export default function IdealTradeCard({ stats, storageKey }) {
         <CollapseToggle open={open} onToggle={toggle} />
       </div>
       {open && <>
-      <div className={styles.subtitle}>Basato sullo storico: le condizioni che hanno reso di più finora</div>
+      {hintsEnabled && <div className={styles.subtitle}>Basato sullo storico: le condizioni che hanno reso di più finora</div>}
 
       <div className={styles.compareGrid}>
         <div className={styles.goodCol}>

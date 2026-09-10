@@ -1,0 +1,36 @@
+.switch {
+  position: relative;
+  width: 52px;
+  height: 28px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.switch[data-on="true"] { background: var(--accent-dim); border-color: var(--accent-border); }
+
+.thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  color: var(--text-muted);
+  transition: transform 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+}
+
+.switch[data-on="true"] .thumb {
+  background: var(--accent);
+  color: var(--on-accent);
+  transform: translateX(24px);
+}

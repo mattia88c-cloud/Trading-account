@@ -9,6 +9,7 @@ import OvertradingImpact from './OvertradingImpact.jsx'
 import RiskBudgetCard from './RiskBudgetCard.jsx'
 import CollapseToggle from './CollapseToggle.jsx'
 import { useCollapsed } from '../useCollapsed.js'
+import { useHints } from '../useHints.jsx'
 import styles from './AnalyticsView.module.css'
 
 // In the compact (summary) view, pick the chart type best suited to each data shape:
@@ -262,6 +263,7 @@ export default function AnalyticsView({
   accounts, entries, getAnalytics, getSummaryAnalytics, getFundedTransition, getEntryStage,
   getOvertradingAnalytics, getAccountBalance, getThreshold,
 }) {
+  const { hintsEnabled } = useHints()
   if (accounts.length === 0) {
     return <p className={styles.empty}>Crea un conto per vedere le statistiche.</p>
   }
@@ -313,7 +315,7 @@ export default function AnalyticsView({
         <div className={styles.thresholdTotal}>
           ${totalThresholdDistance.toLocaleString('it-IT', { maximumFractionDigits: 2 })}
         </div>
-        <p className={styles.thresholdSub}>quanto puoi ancora perdere in totale prima di bruciare un conto</p>
+        {hintsEnabled && <p className={styles.thresholdSub}>quanto puoi ancora perdere in totale prima di bruciare un conto</p>}
         <div className={styles.thresholdList}>
           {thresholdRows.map(({ account, threshold, distance }) => (
             <div key={account.id} className={styles.thresholdRow}>

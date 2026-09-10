@@ -76,14 +76,51 @@
   animation: none;
 }
 
+/* position:fixed invece di sticky: questo layout ha sia <html> che <body> con overflow-y:auto
+   (conseguenza di overflow-x:hidden su entrambi, che per spec forza l'altro asse a "auto"), e a
+   seconda del browser lo scroll reale finisce sull'uno o sull'altro — sticky si aggancia solo
+   all'antenato "giusto", fixed invece si ancora sempre al viewport indipendentemente da quale dei
+   due sta davvero scrollando, quindi qui è la scelta robusta. */
 .header {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   z-index: 50;
-  display: flex;
+  max-width: 2200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) auto minmax(240px, 1fr);
   align-items: center;
-  flex-wrap: nowrap;
   gap: 12px;
-  margin-bottom: 20px;
+  padding: 20px clamp(16px, 3vw, 56px);
+  background: color-mix(in srgb, var(--bg-elevated) 35%, transparent);
+  backdrop-filter: blur(32px) saturate(140%);
+  -webkit-backdrop-filter: blur(32px) saturate(140%);
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
+}
+
+.headerSpacer {
+  height: var(--header-height, 84px);
+}
+
+/* Zona di transizione appena sotto l'header fisso: il contenuto qui sotto si sfoca
+   progressivamente MAN MANO che si avvicina all'header (non un taglio netto sfocato/nitido)
+   grazie a una maschera che fa sparire l'effetto backdrop-filter verso il basso — lo stesso
+   trucco delle barre di navigazione iOS con "scroll edge fade" progressivo. */
+.headerFade {
+  position: fixed;
+  top: var(--header-height, 84px);
+  left: 0;
+  right: 0;
+  height: 54px;
+  pointer-events: none;
+  z-index: 49;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, transparent 100%);
 }
 
 .title {
@@ -93,6 +130,10 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .logo {
@@ -109,9 +150,10 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 4px;
-  flex: 0 1 auto;
   min-width: 0;
+  max-width: 100%;
   overflow-x: auto;
+  justify-self: center;
 }
 
 .userBadge {
@@ -119,10 +161,12 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 14px;
 }
 
 .userName {
-  font-size: 13px;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -237,15 +281,89 @@
 
 .dashboardGrid {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
   align-items: start;
 }
 
-.side {
+.journalGrid {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Il "palco" della pagina Journal: quando i 3 pulsanti sono chiusi, occupano tutta l'altezza
+   disponibile centrati come una sola cosa (orizzontale + verticale) sotto un fascio di luce
+   dall'alto — quando uno di loro si espande (Journal trade verso il basso, Overtrading/Registro
+   rapido come modal sopra tutto), il contenuto extra spinge normalmente la pagina, perdendo la
+   centratura verticale fissa (voluto: uno stage fisso alto quanto la pagina non avrebbe senso
+   una volta che c'è un form lungo da compilare sotto). */
+.landingWrap {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 160px);
+  padding: 40px 0;
+}
+
+/* Bagliore centrato dietro le card, non più un fascio che scende dall'alto: una luce calda che
+   sembra emanare da dietro i pulsanti stessi, più larga che alta per restare dietro l'intero
+   gruppo (le 2 card in alto + quella sotto) invece di illuminare solo un punto. */
+.spotlight {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 900px;
+  height: 560px;
+  background: radial-gradient(ellipse at center, rgba(255, 253, 245, 0.28), rgba(255, 253, 245, 0.1) 45%, transparent 72%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.greeting {
+  font-family: 'Fraunces', Georgia, 'Times New Roman', serif;
+  font-weight: 500;
+  font-size: clamp(32px, 4.5vw, 52px);
+  letter-spacing: 0.01em;
+  color: var(--text);
+  margin: 0 0 8px;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.landingContent {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+.triggerRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.triggerRowBottom {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.triggerRow > *,
+.triggerRowBottom > * {
+  min-width: 0;
 }
 
 .content {

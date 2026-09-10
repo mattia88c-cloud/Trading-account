@@ -1,9 +1,11 @@
 import { useRef, useState } from 'react'
+import { useHints } from '../useHints.jsx'
 import styles from './CsvImportForm.module.css'
 
 const TEMPLATE_CSV = 'Date,Profit,Symbol,Side\n2026-06-01,150.50,XAUUSD,Buy\n2026-06-01,-40,XAUUSD,Sell\n2026-06-02,220,NAS100,Buy\n'
 
 export default function CsvImportForm({ accounts, onImport }) {
+  const { hintsEnabled } = useHints()
   const [open, setOpen] = useState(false)
   const [accountId, setAccountId] = useState('')
   const [message, setMessage] = useState(null)
@@ -56,10 +58,12 @@ export default function CsvImportForm({ accounts, onImport }) {
         <button type="button" className={styles.closeButton} onClick={() => setOpen(false)}>✕</button>
       </div>
 
-      <p className={styles.hint}>
-        1. Seleziona il conto (creane uno prima se non esiste già). 2. Carica il CSV con lo storico dei trade —
-        i giorni verranno riempiti con data e profitto; i campi non presenti nel file (sessione, emozioni, ecc.) resteranno vuoti.
-      </p>
+      {hintsEnabled && (
+        <p className={styles.hint}>
+          1. Seleziona il conto (creane uno prima se non esiste già). 2. Carica il CSV con lo storico dei trade —
+          i giorni verranno riempiti con data e profitto; i campi non presenti nel file (sessione, emozioni, ecc.) resteranno vuoti.
+        </p>
+      )}
 
       <label className={styles.label}>Conto</label>
       <select className={styles.input} value={accountId} onChange={(e) => setAccountId(e.target.value)}>

@@ -848,7 +848,7 @@ export function useTradingData() {
     hasNews, openSession, closeSession, entryTime, exitTime, followedStrategy, wouldHaveHitTP,
     strategy, riskReward, outcome, closeType, grade,
     emotionalState, confidenceLevel, mistake, whatWentWell, lesson, tags,
-    riskPoints, resultPoints, chartUrl,
+    riskPoints, resultPoints, tradesWon, tradesLost, chartUrl,
   }) {
     return {
       date,
@@ -885,6 +885,8 @@ export function useTradingData() {
       tags: parseTags(tags),
       riskPoints: riskPoints ? Number(riskPoints) : null,
       resultPoints: resultPoints ? Number(resultPoints) : null,
+      tradesWon: tradesWon !== '' && tradesWon !== undefined && tradesWon !== null ? Number(tradesWon) : null,
+      tradesLost: tradesLost !== '' && tradesLost !== undefined && tradesLost !== null ? Number(tradesLost) : null,
       chartUrl: chartUrl || null,
     }
   }

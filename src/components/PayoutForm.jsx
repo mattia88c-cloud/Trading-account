@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useHints } from '../useHints.jsx'
 import styles from './PayoutForm.module.css'
 
 function today() {
@@ -6,6 +7,7 @@ function today() {
 }
 
 export default function PayoutForm({ accounts, onSave }) {
+  const { hintsEnabled } = useHints()
   const [open, setOpen] = useState(false)
   const [accountId, setAccountId] = useState('')
   const [date, setDate] = useState(today())
@@ -52,7 +54,7 @@ export default function PayoutForm({ accounts, onSave }) {
         className={styles.input}
         type="number"
         min="0"
-        placeholder="es. 2000"
+        placeholder={hintsEnabled ? 'es. 2000' : ''}
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
       />

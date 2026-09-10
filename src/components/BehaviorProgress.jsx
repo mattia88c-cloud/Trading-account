@@ -1,4 +1,5 @@
 import Card from './Card'
+import { useHints } from '../useHints.jsx'
 import styles from './BehaviorProgress.module.css'
 
 function fmt(n, digits = 0) {
@@ -123,6 +124,7 @@ function ScoreRing({ score }) {
 }
 
 export default function BehaviorProgress({ data }) {
+  const { hintsEnabled } = useHints()
   if (!data) return null
 
   const chips = [
@@ -141,7 +143,7 @@ export default function BehaviorProgress({ data }) {
     <div className={styles.wrap}>
       <Card>
         <div className={styles.title}>Behavior Progress</div>
-        <p className={styles.subtitle}>Non solo P&amp;L: qui misuriamo la disciplina.</p>
+        {hintsEnabled && <p className={styles.subtitle}>Non solo P&amp;L: qui misuriamo la disciplina.</p>}
 
         <div className={styles.scoreRow}>
           <ScoreRing score={data.disciplineScore ?? 0} />
@@ -214,7 +216,7 @@ export default function BehaviorProgress({ data }) {
             </div>
           </div>
         </div>
-        <p className={styles.compareNote}>Un comportamento migliore riduce il rischio nel tempo, anche se il P&amp;L non lo mostra subito.</p>
+        {hintsEnabled && <p className={styles.compareNote}>Un comportamento migliore riduce il rischio nel tempo, anche se il P&amp;L non lo mostra subito.</p>}
       </Card>
 
       {timeline.length > 0 && (

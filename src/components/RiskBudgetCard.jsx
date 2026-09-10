@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useCollapsed } from '../useCollapsed.js'
 import { entrySignature } from '../useTradingData.js'
+import { useHints } from '../useHints.jsx'
 import CollapseToggle from './CollapseToggle.jsx'
 import styles from './RiskBudgetCard.module.css'
 
@@ -31,6 +32,7 @@ function fmt(n, digits = 0) {
 // di quell'anno. I giorni non tradati non consumano budget, quindi restano automaticamente
 // nel "rimanente" (budget totale - già rischiato), senza bisogno di un calcolo a parte.
 export default function RiskBudgetCard({ entries, initialBalance, storageKey }) {
+  const { hintsEnabled } = useHints()
   const [open, toggle] = useCollapsed(`${storageKey}:riskBudget`)
   const [settings, setSettings] = useState(() => loadSettings(storageKey))
 
@@ -78,7 +80,7 @@ export default function RiskBudgetCard({ entries, initialBalance, storageKey }) 
         <CollapseToggle open={open} onToggle={toggle} />
       </div>
       {open && <>
-      <p className={styles.subtitle}>In base alla tua strategia: quanto puoi rischiare in un anno e quanto hai già usato nei trade reali</p>
+      {hintsEnabled && <p className={styles.subtitle}>In base alla tua strategia: quanto puoi rischiare in un anno e quanto hai già usato nei trade reali</p>}
 
       <div className={styles.settingsRow}>
         <label className={styles.settingField}>
@@ -106,7 +108,7 @@ export default function RiskBudgetCard({ entries, initialBalance, storageKey }) 
           <div className={styles.statRow}><span>Già rischiati</span><b>{fmt(pointsRisked)} pt</b></div>
           <div className={styles.statRow}><span>Portati a casa</span><b className={pointsHome >= 0 ? styles.positive : styles.negative}>{pointsHome >= 0 ? '+' : ''}{fmt(pointsHome)} pt</b></div>
           <div className={styles.statRowStrong}>
-            <span>Rimanenti dal budget iniziale<br /><small>Budget totale − già rischiati</small></span>
+            <span>Rimanenti dal budget iniziale{hintsEnabled && <><br /><small>Budget totale − già rischiati</small></>}</span>
             <b className={remainingPoints >= 0 ? styles.positive : styles.negative}>{fmt(remainingPoints)} pt</b>
           </div>
         </div>
@@ -116,13 +118,15 @@ export default function RiskBudgetCard({ entries, initialBalance, storageKey }) 
           <div className={styles.statRow}><span>Già rischiato</span><b>{fmt(pctRisked, 2)}%</b></div>
           <div className={styles.statRow}><span>Portato a casa</span><b className={pctHome >= 0 ? styles.positive : styles.negative}>{pctHome >= 0 ? '+' : ''}{fmt(pctHome, 2)}%</b></div>
           <div className={styles.statRowStrong}>
-            <span>Rimanente dal budget iniziale<br /><small>Budget totale − già rischiato</small></span>
+            <span>Rimanente dal budget iniziale{hintsEnabled && <><br /><small>Budget totale − già rischiato</small></>}</span>
             <b className={remainingPct >= 0 ? styles.positive : styles.negative}>{fmt(remainingPct, 2)}%</b>
           </div>
         </div>
       </div>
 
-      <p className={styles.footNote}>{daysTraded} giorni tradati su {settings.marketDays} disponibili nel {year} ({daysLeft} ancora liberi) — i giorni non tradati non consumano budget e restano già inclusi nel "rimanente".</p>
+      {hintsEnabled && (
+        <p className={styles.footNote}>{daysTraded} giorni tradati su {settings.marketDays} disponibili nel {year} ({daysLeft} ancora liberi) — i giorni non tradati non consumano budget e restano già inclusi nel "rimanente".</p>
+      )}
       </>}
     </div>
   )

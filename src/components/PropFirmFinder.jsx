@@ -8,6 +8,7 @@ import {
   computeChallengeDifficulty, computePayoutDifficulty,
 } from '../propFirms'
 import { usePropFirmOverrides } from '../usePropFirmOverrides'
+import { useHints } from '../useHints.jsx'
 import styles from './PropFirmFinder.module.css'
 
 function formatMoney(v) {
@@ -21,6 +22,7 @@ function formatPct(v) {
 }
 
 export default function PropFirmFinder() {
+  const { hintsEnabled } = useHints()
   const { overrides, setDiscountPercent, setManualPrice, clearOverride } = usePropFirmOverrides()
   const [firmFilter, setFirmFilter] = useState(() => new Set(FIRM_LIST.map((f) => f.id)))
   const [sizeFilter, setSizeFilter] = useState(() => new Set(ACCOUNT_SIZES))
@@ -135,10 +137,12 @@ export default function PropFirmFinder() {
 
       <Card>
         <div className={styles.title}>Confronto Prop Firm</div>
-        <p className={styles.subtitle}>
-          Dati regole raccolti manualmente (luglio 2026), fermi finché non li aggiorni. Il prezzo di listino non riflette
-          le promo attive: inserisci tu lo sconto % o il prezzo che vedi oggi sul sito per calcolare il prezzo effettivo.
-        </p>
+        {hintsEnabled && (
+          <p className={styles.subtitle}>
+            Dati regole raccolti manualmente (luglio 2026), fermi finché non li aggiorni. Il prezzo di listino non riflette
+            le promo attive: inserisci tu lo sconto % o il prezzo che vedi oggi sul sito per calcolare il prezzo effettivo.
+          </p>
+        )}
 
         <div className={styles.filters}>
           <div className={styles.filterGroup}>

@@ -1,5 +1,15 @@
 import { useState } from 'react'
+import { useHints } from '../useHints.jsx'
+import LandingActionButton from './LandingActionButton.jsx'
 import styles from './OvertradingForm.module.css'
+
+const overtradingIcon = (
+  <svg width="27" height="27" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10.3 3.9 1.9 18.3a1.5 1.5 0 0 0 1.3 2.2h17.6a1.5 1.5 0 0 0 1.3-2.2L13.7 3.9a1.5 1.5 0 0 0-2.6 0z" />
+    <line x1="12" y1="9.5" x2="12" y2="13.5" />
+    <circle cx="12" cy="16.5" r="0.4" fill="currentColor" />
+  </svg>
+)
 
 const TRIGGERS = [
   'Loss iniziale', 'Revenge trading', 'FOMO', 'Noia', 'Rabbia',
@@ -22,6 +32,7 @@ const EMPTY = {
 }
 
 export default function OvertradingForm({ accounts, onSave }) {
+  const { hintsEnabled } = useHints()
   const [open, setOpen] = useState(false)
   const [form, setForm] = useState(EMPTY)
   const [saveError, setSaveError] = useState('')
@@ -75,9 +86,13 @@ export default function OvertradingForm({ accounts, onSave }) {
 
   if (!open) {
     return (
-      <button type="button" className={styles.triggerButton} onClick={() => setOpen(true)}>
-        Ho fatto overtrading
-      </button>
+      <LandingActionButton
+        icon={overtradingIcon}
+        title="Ho fatto overtrading"
+        subtitle="Registra i danni di una giornata fuori controllo"
+        tone="danger"
+        onClick={() => setOpen(true)}
+      />
     )
   }
 
@@ -88,7 +103,7 @@ export default function OvertradingForm({ accounts, onSave }) {
 
         <div className={styles.header}>
           <div className={styles.title}>Overtrading Mode</div>
-          <p className={styles.subtitle}>Non serve ricostruire tutto. Salviamo almeno i dati essenziali.</p>
+          {hintsEnabled && <p className={styles.subtitle}>Non serve ricostruire tutto. Salviamo almeno i dati essenziali.</p>}
         </div>
 
         <label className={styles.label}>Data</label>
@@ -119,7 +134,7 @@ export default function OvertradingForm({ accounts, onSave }) {
             <input
               className={styles.input}
               type="number"
-              placeholder="Es. 8, 12, 16"
+              placeholder={hintsEnabled ? 'Es. 8, 12, 16' : ''}
               value={form.estimatedTradeCount}
               onChange={(e) => update('estimatedTradeCount', e.target.value)}
             />
@@ -130,7 +145,7 @@ export default function OvertradingForm({ accounts, onSave }) {
               className={styles.input}
               type="number"
               step="0.01"
-              placeholder="Es. -450"
+              placeholder={hintsEnabled ? 'Es. -450' : ''}
               value={form.dailyPnL}
               onChange={(e) => update('dailyPnL', e.target.value)}
             />
@@ -141,7 +156,7 @@ export default function OvertradingForm({ accounts, onSave }) {
         <input
           className={styles.input}
           type="number"
-          placeholder="Es. dal terzo trade"
+          placeholder={hintsEnabled ? 'Es. dal terzo trade' : ''}
           value={form.lostControlAtTrade}
           onChange={(e) => update('lostControlAtTrade', e.target.value)}
         />
@@ -160,7 +175,9 @@ export default function OvertradingForm({ accounts, onSave }) {
           ))}
         </div>
 
-        <div className={styles.qualityNote}>Qualità dei dati della giornata: <strong>Bassa affidabilità</strong> — questo giorno non peserà nelle statistiche tecniche normali.</div>
+        {hintsEnabled && (
+          <div className={styles.qualityNote}>Qualità dei dati della giornata: <strong>Bassa affidabilità</strong> — questo giorno non peserà nelle statistiche tecniche normali.</div>
+        )}
 
         <label className={styles.label}>Cosa è successo oggi?</label>
         <textarea

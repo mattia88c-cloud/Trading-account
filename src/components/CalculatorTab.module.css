@@ -1,5 +1,24 @@
-.layout { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; gap: 24px; }
-.marketGroup { display: flex; flex-direction: column; gap: 16px; flex: 1 1 420px; min-width: 420px; }
+/* Griglia 2x2: le 2 card calcolatrice allineate sulla stessa riga (stessa altezza), le 2 card
+   tabella sulla riga sotto (stessa altezza) — invece di 2 colonne indipendenti, dove una card
+   calcolatrice più alta (es. NAS100 con il selettore Micro/Lotti in più) sfalsava la tabella
+   sotto rispetto a quella dell'altro mercato. marketGroup è display:contents: scompare come box,
+   le sue 2 card diventano item diretti di questa griglia, posizionati per riga tramite nth-child. */
+.layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+.consistencyWrap { margin-top: 24px; }
+.marketGroup { display: contents; }
+.layout > .marketGroup:nth-child(1) > *:nth-child(1) { grid-column: 1; grid-row: 1; }
+.layout > .marketGroup:nth-child(1) > *:nth-child(2) { grid-column: 1; grid-row: 2; }
+.layout > .marketGroup:nth-child(2) > *:nth-child(1) { grid-column: 2; grid-row: 1; }
+.layout > .marketGroup:nth-child(2) > *:nth-child(2) { grid-column: 2; grid-row: 2; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; }
+  .layout > .marketGroup > * { grid-column: 1 !important; }
+  .layout > .marketGroup:nth-child(1) > *:nth-child(1) { grid-row: 1; }
+  .layout > .marketGroup:nth-child(1) > *:nth-child(2) { grid-row: 2; }
+  .layout > .marketGroup:nth-child(2) > *:nth-child(1) { grid-row: 3; }
+  .layout > .marketGroup:nth-child(2) > *:nth-child(2) { grid-row: 4; }
+}
 .calcCard { position: relative; }
 .marketLogo {
   position: absolute;
@@ -24,6 +43,8 @@
   padding: 4px 8px;
 }
 .title { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.cardHeaderRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; padding-right: 44px; margin-bottom: 6px; }
+.cardHeaderRow .title { margin-bottom: 0; }
 .subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
 .modeToggle { display: flex; gap: 6px; margin-bottom: 20px; }
 .modeBtn { padding: 6px 12px; background: var(--card); border: 1px solid var(--card-border); border-radius: 6px; color: var(--text-muted); font-size: 12px; font-weight: 600; cursor: pointer; }
@@ -57,6 +78,18 @@
 .fieldOutput { border-color: var(--accent-border); background: var(--accent-dim); color: var(--accent); }
 .fieldUnit { font-size: 11px; color: var(--text-muted); }
 .fieldSep { font-size: 24px; color: var(--text-muted); padding-bottom: 20px; flex-shrink: 0; }
+.calcBtn {
+  width: 100%;
+  background: var(--accent);
+  border: none;
+  color: var(--on-accent);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+.calcBtn:disabled { opacity: 0.4; cursor: not-allowed; }
 .formula { padding: 10px 14px; background: rgba(255,255,255,0.03); border-radius: 8px; margin-bottom: 16px; }
 .formulaText { font-size: 12px; color: var(--text-muted); }
 .formulaText code { color: var(--accent); background: var(--accent-dim); padding: 2px 6px; border-radius: 4px; font-size: 12px; }

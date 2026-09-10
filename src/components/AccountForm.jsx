@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { BALANCE_PRESETS, DRAWDOWN_BY_PRESET } from '../useTradingData'
+import { useHints } from '../useHints.jsx'
 import styles from './AccountForm.module.css'
 
 export default function AccountForm({ onCreate }) {
+  const { hintsEnabled } = useHints()
   const [open, setOpen] = useState(false)
   const [type, setType] = useState('propfirm')
   const [name, setName] = useState('')
@@ -142,11 +144,13 @@ export default function AccountForm({ onCreate }) {
       />
 
       {type === 'paper' ? (
-        <p className={styles.drawdownInfo}>
-          Conto senza saldo: visibile solo nel Journal trade (per registrarci le operazioni non
-          legate a un conto reale) e in Analytics, mai in Dashboard/Calendario/Cronologia — e i
-          suoi dati non mostrano mai importi in denaro.
-        </p>
+        hintsEnabled && (
+          <p className={styles.drawdownInfo}>
+            Conto senza saldo: visibile solo nel Journal trade (per registrarci le operazioni non
+            legate a un conto reale) e in Analytics, mai in Dashboard/Calendario/Cronologia — e i
+            suoi dati non mostrano mai importi in denaro.
+          </p>
+        )
       ) : (
         <>
           <div className={styles.balanceRow}>

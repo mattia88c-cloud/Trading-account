@@ -1,0 +1,268 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.formCard {
+  flex: 1 1 320px;
+  min-width: 280px;
+}
+
+.statsCard, .historyCard {
+  width: 100%;
+}
+
+.historyRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.historyCard {
+  flex: 1 1 320px;
+  min-width: 280px;
+}
+
+.title {
+  margin: 0 0 6px;
+  font-size: 15px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cardHeader .title {
+  margin: 0;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin: 0 0 10px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.input {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.toggleGroup {
+  display: flex;
+  gap: 6px;
+}
+
+.toggleBtn {
+  flex: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.toggleBtnActive {
+  border-color: var(--accent);
+  color: var(--text);
+  background: var(--accent-dim);
+}
+
+.col {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.submit {
+  background: var(--accent);
+  border: none;
+  color: var(--on-accent);
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.error {
+  font-size: 12px;
+  color: var(--red);
+  background: rgba(217, 99, 92, 0.12);
+  border: 1px solid rgba(217, 99, 92, 0.4);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 0;
+}
+
+.empty {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  white-space: nowrap;
+}
+
+.table tfoot td {
+  border-top: 1px solid var(--border-strong);
+  border-bottom: none;
+  font-weight: 700;
+}
+
+.firmCell {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.positive {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.negative {
+  color: var(--red);
+  font-weight: 600;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.historyDate {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.historySize {
+  color: var(--text-muted);
+}
+
+.deleteBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 4px;
+}
+.deleteBtn:hover { color: var(--red); }
+
+.historyCard .tableWrap {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.chartCard {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.finalCard {
+  width: 100%;
+  border: 1px solid var(--border-strong);
+}
+
+.finalGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.finalItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.finalResult {
+  border: 1px solid var(--accent);
+  background: var(--accent-dim);
+}
+
+.finalLabel {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.finalValuePositive {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.finalValueNegative {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--red);
+}

@@ -35,6 +35,15 @@
   transform: translateY(-1px);
 }
 
+/* Il menu ⋮ è position:absolute dentro la card: quando è aperto, la card deve stare sopra le
+   sezioni successive (es. i grafici equity sotto la griglia), altrimenti il loro contesto di
+   sovrapposizione (hanno anch'essi una transform in animazione) le disegna sopra al menu,
+   tagliandolo visivamente a metà. z-index funziona qui anche senza position perché .card è un
+   grid item (vedi .grid sopra). */
+.cardMenuOpen {
+  z-index: 30;
+}
+
 [data-theme="light"] .cardPositive {
   background: linear-gradient(135deg, #eafaf0, #ffffff);
 }
@@ -54,15 +63,19 @@
 
 .cardHeader {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  row-gap: 4px;
   position: relative;
 }
 
 .headerRight {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  row-gap: 4px;
   position: relative;
 }
 
@@ -213,8 +226,10 @@
   font-weight: 600;
   font-size: 14px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  min-width: 0;
 }
 
 .dot {

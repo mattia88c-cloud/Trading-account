@@ -4,6 +4,7 @@ import DifficultyGauge from './DifficultyGauge'
 import {
   PROP_FIRM_OFFERS, ACCOUNT_SIZES, DRAWDOWN_TYPES, FIRM_BY_ID, computeChallengeDifficulty, computePayoutDifficulty, computeEffectivePrice,
 } from '../propFirms'
+import { useHints } from '../useHints.jsx'
 import styles from './PropFirmMatcher.module.css'
 
 const DEFAULT_PREFS = {
@@ -97,6 +98,7 @@ function attachConvenienza(scoredResults, overrides) {
 }
 
 export default function PropFirmMatcher({ overrides }) {
+  const { hintsEnabled } = useHints()
   const [prefs, setPrefs] = useState(DEFAULT_PREFS)
 
   function update(field, value) {
@@ -122,11 +124,13 @@ export default function PropFirmMatcher({ overrides }) {
   return (
     <Card>
       <div className={styles.title}>Trova la prop ideale</div>
-      <p className={styles.subtitle}>
-        Imposta le regole che ti interessano (il match è calcolato solo sulle regole, non sul prezzo): confronto le
-        offerte raccolte e ti mostro le più simili alle tue preferenze. Il prezzo che vedi nel risultato riflette lo
-        sconto/prezzo manuale che eventualmente hai impostato nella tabella sotto.
-      </p>
+      {hintsEnabled && (
+        <p className={styles.subtitle}>
+          Imposta le regole che ti interessano (il match è calcolato solo sulle regole, non sul prezzo): confronto le
+          offerte raccolte e ti mostro le più simili alle tue preferenze. Il prezzo che vedi nel risultato riflette lo
+          sconto/prezzo manuale che eventualmente hai impostato nella tabella sotto.
+        </p>
+      )}
 
       <div className={styles.form}>
         <label className={styles.field}>

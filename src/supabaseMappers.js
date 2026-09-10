@@ -70,6 +70,8 @@ export function entryFromDb(row) {
     tags: row.tags || [],
     riskPoints: row.risk_points,
     resultPoints: row.result_points,
+    tradesWon: row.trades_won,
+    tradesLost: row.trades_lost,
     chartUrl: row.chart_url,
     strategy: row.strategy || null,
     overtradingDay: row.overtrading_day,
@@ -118,6 +120,8 @@ export function entryToDb(e) {
     tags: e.tags || [],
     risk_points: e.riskPoints,
     result_points: e.resultPoints,
+    trades_won: e.tradesWon,
+    trades_lost: e.tradesLost,
     chart_url: e.chartUrl || null,
     strategy: e.strategy || null,
     overtrading_day: e.overtradingDay || false,
@@ -149,5 +153,53 @@ export function payoutToDb(p) {
     amount: Number(p.amount),
     is_phase_reset: !!p.isPhaseReset,
     reset_kind: p.resetKind || null,
+  }
+}
+
+export function propPurchaseFromDb(row) {
+  return {
+    id: row.id,
+    firmName: row.firm_name,
+    size: row.size !== null && row.size !== undefined ? Number(row.size) : null,
+    cost: Number(row.cost),
+    activationFee: row.activation_fee !== null && row.activation_fee !== undefined ? Number(row.activation_fee) : null,
+    resetCost: row.reset_cost !== null && row.reset_cost !== undefined ? Number(row.reset_cost) : null,
+    currency: row.currency || 'EUR',
+    date: row.date,
+    createdAt: row.created_at,
+  }
+}
+
+export function propPurchaseToDb(p) {
+  return {
+    firm_name: p.firmName,
+    size: p.size !== null && p.size !== undefined && p.size !== '' ? Number(p.size) : null,
+    cost: p.cost !== null && p.cost !== undefined && p.cost !== '' ? Number(p.cost) : 0,
+    activation_fee: p.activationFee !== null && p.activationFee !== undefined && p.activationFee !== '' ? Number(p.activationFee) : null,
+    reset_cost: p.resetCost !== null && p.resetCost !== undefined && p.resetCost !== '' ? Number(p.resetCost) : null,
+    currency: p.currency === 'USD' ? 'USD' : 'EUR',
+    date: p.date,
+  }
+}
+
+export function propPayoutFromDb(row) {
+  return {
+    id: row.id,
+    firmName: row.firm_name,
+    grossAmount: Number(row.gross_amount),
+    taxEur: row.tax_eur !== null && row.tax_eur !== undefined ? Number(row.tax_eur) : null,
+    netAmountEur: row.net_amount_eur !== null && row.net_amount_eur !== undefined ? Number(row.net_amount_eur) : null,
+    date: row.date,
+    createdAt: row.created_at,
+  }
+}
+
+export function propPayoutToDb(p) {
+  return {
+    firm_name: p.firmName,
+    gross_amount: Number(p.grossAmount),
+    tax_eur: p.taxEur !== null && p.taxEur !== undefined && p.taxEur !== '' ? Number(p.taxEur) : null,
+    net_amount_eur: p.netAmountEur !== null && p.netAmountEur !== undefined && p.netAmountEur !== '' ? Number(p.netAmountEur) : null,
+    date: p.date,
   }
 }

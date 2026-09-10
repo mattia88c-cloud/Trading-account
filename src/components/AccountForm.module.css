@@ -9,6 +9,8 @@
   flex-direction: column;
   gap: 10px;
   box-shadow: var(--card-shadow);
+  width: 100%;
+  max-width: 340px;
 }
 
 .saveError {
@@ -53,11 +55,11 @@
   border: 1px dashed var(--border);
   color: var(--text-muted);
   border-radius: var(--radius);
-  padding: 14px;
+  padding: 10px 14px;
   font-size: 14px;
   font-weight: 600;
-  width: 100%;
   box-shadow: var(--card-shadow);
+  white-space: nowrap;
 }
 
 .openButton:hover {

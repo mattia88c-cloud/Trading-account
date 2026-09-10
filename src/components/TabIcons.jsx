@@ -13,6 +13,14 @@ const common = {
 }
 
 export const TAB_ICONS = {
+  journal: (
+    <svg {...common}>
+      <path d="M6 3.5h10a1.5 1.5 0 0 1 1.5 1.5v15.5H7.5A1.5 1.5 0 0 1 6 19V3.5z" />
+      <path d="M6 3.5A1.5 1.5 0 0 0 4.5 5v14A1.5 1.5 0 0 0 6 20.5" />
+      <line x1="9" y1="8" x2="14.5" y2="8" />
+      <line x1="9" y1="12" x2="14.5" y2="12" />
+    </svg>
+  ),
   dashboard: (
     <svg {...common}>
       <path d="M3 10.5 12 4l9 6.5" />
@@ -73,6 +81,12 @@ export const TAB_ICONS = {
       <line x1="14.5" y1="9.5" x2="14.5" y2="18" />
       <line x1="18.5" y1="9.5" x2="18.5" y2="18" />
       <line x1="3.5" y1="20" x2="20.5" y2="20" />
+    </svg>
+  ),
+  roiprop: (
+    <svg {...common}>
+      <path d="M3 17 9 10 13 14 21 5" />
+      <path d="M15 5h6v6" />
     </svg>
   ),
   friends: (

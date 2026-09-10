@@ -1,10 +1,17 @@
 .stack {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
 }
 
+@media (max-width: 700px) {
+  .stack {
+    grid-template-columns: 1fr;
+  }
+}
+
 .card {
+  min-width: 0;
   background: var(--bg-card);
   backdrop-filter: blur(var(--card-blur));
   -webkit-backdrop-filter: blur(var(--card-blur));

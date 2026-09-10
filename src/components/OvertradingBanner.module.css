@@ -1,5 +1,25 @@
 .card { border-left: 3px solid var(--red); }
 .title { display: flex; align-items: center; font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 4px; }
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+}
+.dismissBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  border-radius: 5px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.dismissBtn:hover { background: var(--bg-elevated); color: var(--red); }
 .subtitle { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
 .list { display: flex; flex-direction: column; gap: 6px; }
 .row {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTradingData } from './useTradingData'
 import { useAuth } from './useAuth'
 import { useLeaderboard } from './useLeaderboard'
@@ -9,13 +9,13 @@ import AccountsOverview from './components/AccountsOverview.jsx'
 import QuickEntryForm from './components/QuickEntryForm.jsx'
 import DayEntryForm from './components/DayEntryForm.jsx'
 import EquityCharts from './components/EquityCharts.jsx'
-import CalendarView from './components/CalendarView.jsx'
+import CalendarPage from './components/CalendarPage.jsx'
 import HistoryView from './components/HistoryView.jsx'
 import AnalyticsView from './components/AnalyticsView.jsx'
 import DataBackup from './components/DataBackup.jsx'
 import CalculatorTab from './components/CalculatorTab.jsx'
-import PropFirmFinder from './components/PropFirmFinder.jsx'
-import WeeklyReview from './components/WeeklyReview.jsx'
+import PropFirmRoiPage from './components/PropFirmRoiPage.jsx'
+import { usePropRoi } from './usePropRoi'
 import PayoutForm from './components/PayoutForm.jsx'
 import CsvImportForm from './components/CsvImportForm.jsx'
 import OvertradingForm from './components/OvertradingForm.jsx'
@@ -26,24 +26,36 @@ import AdminPanel from './components/AdminPanel.jsx'
 import SettingsMenu from './components/SettingsMenu.jsx'
 import FriendsView from './components/FriendsView.jsx'
 import ThemeToggle from './components/ThemeToggle.jsx'
+import HintsToggle from './components/HintsToggle.jsx'
+import { useHints } from './useHints.jsx'
 import { TAB_ICONS } from './components/TabIcons.jsx'
 import { isSfxMuted, setSfxMuted, playNav, playSave, playDelete, playClick } from './sounds'
 import { isMotionDisabled, setMotionDisabled } from './motion'
 import styles from './App.module.css'
 
 const TABS = [
-  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'journal', label: 'Journal' },
+  { id: 'dashboard', label: 'Conti' },
   { id: 'analytics', label: 'Analytics' },
   { id: 'calendar', label: 'Calendario' },
   { id: 'history', label: 'Cronologia' },
-  { id: 'weekly', label: 'Weekly Review' },
   { id: 'behavior', label: 'Progress' },
   { id: 'friends', label: 'Friends' },
   { id: 'calculator', label: 'Calculator' },
-  { id: 'propfirms', label: 'Prop Firm' },
+  { id: 'roiprop', label: 'ROI prop' },
 ]
 
 const THEME_KEY = 'trading-accounts:theme'
+
+// Saluto in cima alla pagina Journal, secondo l'ora del giorno invece di un fisso "Buongiorno"
+// sempre uguale anche di sera.
+function greeting() {
+  const h = new Date().getHours()
+  if (h < 6) return 'Buonanotte'
+  if (h < 13) return 'Buongiorno'
+  if (h < 18) return 'Buon pomeriggio'
+  return 'Buonasera'
+}
 
 // Gate di autenticazione: mostra login, poi (se necessario) il cambio password obbligatorio
 // al primo accesso, poi l'app vera e propria (AppShell) — invariata rispetto a prima.
@@ -106,15 +118,33 @@ export default function App() {
 
 function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthenticate }) {
   const isAdmin = profile?.role === 'admin'
-  const [tab, setTab] = useState('dashboard')
+  const headerRef = useRef(null)
+  const [tab, setTab] = useState('journal')
   const [selectedAccountId, setSelectedAccountId] = useState(null)
   const [showInactiveDashboard, setShowInactiveDashboard] = useState(false)
   const [showInactiveAnalytics, setShowInactiveAnalytics] = useState(false)
   const [showInactiveCalendar, setShowInactiveCalendar] = useState(false)
   const [showInactiveHistory, setShowInactiveHistory] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem(THEME_KEY) || 'dark')
+  const { hintsEnabled, toggleHints } = useHints()
   const [sfxMuted, setSfxMutedState] = useState(() => isSfxMuted())
   const [motionDisabled, setMotionDisabledState] = useState(() => isMotionDisabled())
+
+  // L'header è position:fixed (vedi App.module.css), quindi non occupa più spazio nel flusso:
+  // questo effetto misura la sua altezza reale (che varia con dimensione schermo/font) e la
+  // scrive in una CSS var, usata da .headerSpacer per lasciare lo spazio corretto sotto di lui
+  // invece di un valore fisso che sfaserebbe su schermi diversi.
+  useEffect(() => {
+    const el = headerRef.current
+    if (!el) return
+    const setHeight = () => {
+      document.documentElement.style.setProperty('--header-height', `${el.offsetHeight}px`)
+    }
+    setHeight()
+    const observer = new ResizeObserver(setHeight)
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme
@@ -212,6 +242,13 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
     rows: leaderboardRows, loading: leaderboardLoading, publish: publishLeaderboard, remove: removeLeaderboardRow,
   } = useLeaderboard()
 
+  const {
+    purchases: propPurchases, payouts: propPayouts,
+    addPurchase: addPropPurchase, deletePurchase: deletePropPurchase,
+    addPayout: addPropPayout, deletePayout: deletePropPayout,
+    getStatsByFirm: getPropStatsByFirm,
+  } = usePropRoi()
+
   // Reset completo su richiesta dell'utente da Impostazioni: cancella conti (+ entries/payout a
   // cascata) e la propria riga nella classifica condivisa. NON tocca login/profilo: l'account
   // resta valido, riparte solo con il journal vuoto.
@@ -263,7 +300,7 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
         <span className={styles.glowC} />
       </div>
 
-      <header className={styles.header}>
+      <header className={styles.header} ref={headerRef}>
         <h1 className={styles.title}>
           <img src="/favicon.svg" alt="" className={styles.logo} />
           Stratton Account Manager
@@ -282,36 +319,52 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
         </nav>
         <div className={styles.userBadge}>
           <span className={styles.userName}>{profile?.username}</span>
+          <ThemeToggle theme={theme} onChange={setTheme} />
+          <HintsToggle enabled={hintsEnabled} onToggle={toggleHints} />
+          <SettingsMenu
+            profile={profile}
+            isAdmin={isAdmin}
+            onUpdatePassword={updatePassword}
+            onUpdateUsername={updateUsername}
+            onReauthenticate={reauthenticate}
+            onOpenAdmin={() => setTab('admin')}
+            onDeleteAllData={handleDeleteAllData}
+            onSignOut={onSignOut}
+            sfxMuted={sfxMuted}
+            onToggleSfx={handleSfxToggle}
+            motionDisabled={motionDisabled}
+            onToggleMotion={handleMotionToggle}
+          />
         </div>
-        <ThemeToggle theme={theme} onChange={setTheme} />
-        <SettingsMenu
-          profile={profile}
-          isAdmin={isAdmin}
-          onUpdatePassword={updatePassword}
-          onUpdateUsername={updateUsername}
-          onReauthenticate={reauthenticate}
-          onOpenAdmin={() => setTab('admin')}
-          onDeleteAllData={handleDeleteAllData}
-          onSignOut={onSignOut}
-          sfxMuted={sfxMuted}
-          onToggleSfx={handleSfxToggle}
-          motionDisabled={motionDisabled}
-          onToggleMotion={handleMotionToggle}
-        />
       </header>
+      <div className={styles.headerFade} aria-hidden="true" />
+      <div className={styles.headerSpacer} aria-hidden="true" />
 
       <main className={styles.main}>
         <div key={tab} className={styles.tabContent}>
+        {tab === 'journal' && (
+          <div className={styles.journalGrid}>
+            <div className={styles.landingWrap}>
+              <div className={styles.spotlight} aria-hidden="true" />
+              <div className={styles.landingContent}>
+                <h2 className={styles.greeting}>{greeting()}{profile?.username ? `, ${profile.username}` : ''}</h2>
+                <div className={styles.triggerRow}>
+                  <OvertradingForm accounts={accounts.filter((a) => a.active)} onSave={saveOvertradingDay} />
+                  <QuickEntryForm accounts={accounts.filter((a) => a.active)} onSave={saveDayEntry} />
+                </div>
+                <div className={styles.triggerRowBottom}>
+                  <DayEntryForm accounts={accounts.filter((a) => a.active)} onSave={saveDayEntry} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {tab === 'dashboard' && (
           <div className={styles.dashboardGrid}>
-            <div className={styles.side}>
-              <AccountForm onCreate={addAccount} />
-              <OvertradingForm accounts={accounts.filter((a) => a.active)} onSave={saveOvertradingDay} />
-              <QuickEntryForm accounts={accounts.filter((a) => a.active)} onSave={saveDayEntry} />
-              <DayEntryForm accounts={accounts.filter((a) => a.active)} onSave={saveDayEntry} />
-            </div>
             <div className={styles.content}>
               <div className={styles.toolbar}>
+                <AccountForm onCreate={addAccount} />
                 <DataBackup exportData={exportData} importData={importData} />
                 <PayoutForm accounts={accounts.filter((a) => a.active && a.type !== 'paper')} onSave={recordPayout} />
                 <CsvImportForm accounts={accounts.filter((a) => a.type !== 'paper')} onImport={importCsvEntries} />
@@ -381,17 +434,15 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
         )}
 
         {tab === 'calendar' && (
-          <>
-            <label className={styles.inactiveToggle}>
-              <input
-                type="checkbox"
-                checked={showInactiveCalendar}
-                onChange={(e) => setShowInactiveCalendar(e.target.checked)}
-              />
-              Mostra conti disattivati
-            </label>
-            <CalendarView accounts={calendarAccounts} entries={entries} />
-          </>
+          <CalendarPage
+            calendarAccounts={calendarAccounts}
+            entries={entries}
+            showInactiveCalendar={showInactiveCalendar}
+            onToggleShowInactive={setShowInactiveCalendar}
+            analyticsAccounts={analyticsAccounts}
+            getWeeklyAnalytics={getWeeklyAnalytics}
+            inactiveToggleClassName={styles.inactiveToggle}
+          />
         )}
 
         {tab === 'history' && (
@@ -414,8 +465,6 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
           </>
         )}
 
-        {tab === 'weekly' && <WeeklyReview accounts={analyticsAccounts} getWeeklyAnalytics={getWeeklyAnalytics} />}
-
         {tab === 'behavior' && (
           // A differenza delle altre sezioni, Progress mostra sempre lo storico di TUTTI i conti,
           // anche disattivati: lo score disciplina e gli altri dati comportamentali hanno senso
@@ -429,7 +478,18 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
 
         {tab === 'calculator' && <CalculatorTab />}
 
-        {tab === 'propfirms' && <PropFirmFinder />}
+        {tab === 'roiprop' && (
+          <PropFirmRoiPage
+            purchases={propPurchases}
+            payouts={propPayouts}
+            addPurchase={addPropPurchase}
+            deletePurchase={deletePropPurchase}
+            addPayout={addPropPayout}
+            deletePayout={deletePropPayout}
+            getStatsByFirm={getPropStatsByFirm}
+            theme={theme}
+          />
+        )}
 
         {tab === 'admin' && isAdmin && (
           <div className={styles.adminWrap}>

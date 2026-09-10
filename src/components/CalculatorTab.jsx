@@ -1,4 +1,5 @@
 import MarketCalculator from './MarketCalculator.jsx'
+import ConsistencyCalculator from './ConsistencyCalculator.jsx'
 import nas100Logo from '../assets/markets/nas100.jpg'
 import xauusdLogo from '../assets/markets/xauusd.jpg'
 import styles from './CalculatorTab.module.css'
@@ -39,21 +40,27 @@ const NAS100_MODES = [
 
 export default function CalculatorTab() {
   return (
-    <div className={styles.layout}>
-      <div className={styles.marketGroup}>
-        <MarketCalculator market="NAS100" logo={nas100Logo} unitModes={NAS100_MODES} />
+    <div>
+      <div className={styles.layout}>
+        <div className={styles.marketGroup}>
+          <MarketCalculator market="NAS100" logo={nas100Logo} unitModes={NAS100_MODES} />
+        </div>
+
+        <div className={styles.marketGroup}>
+          <MarketCalculator
+            market="XAUUSD"
+            logo={xauusdLogo}
+            defaultPpp={10}
+            pppHint="MGC (Micro Gold) = $10/punto"
+            tableTitle="Tabella di riferimento — MGC ($10/punto)"
+            tickInfo="1 punto = 10 tick (tick = 0,10 punti = $1,00)"
+            presets={XAUUSD_PRESETS}
+          />
+        </div>
       </div>
 
-      <div className={styles.marketGroup}>
-        <MarketCalculator
-          market="XAUUSD"
-          logo={xauusdLogo}
-          defaultPpp={10}
-          pppHint="MGC (Micro Gold) = $10/punto"
-          tableTitle="Tabella di riferimento — MGC ($10/punto)"
-          tickInfo="1 punto = 10 tick (tick = 0,10 punti = $1,00)"
-          presets={XAUUSD_PRESETS}
-        />
+      <div className={styles.consistencyWrap}>
+        <ConsistencyCalculator />
       </div>
     </div>
   )
