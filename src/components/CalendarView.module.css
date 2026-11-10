@@ -470,3 +470,104 @@
     display: none;
   }
 }
+
+/* ===== SOLO TELEFONO (≤768px): 7 colonne sempre uguali e celle compatte (giorno, pallini
+   conti, P&L, ⚠ overtrading); i dettagli (voto, TP/SL, trade) restano nella versione PC. ===== */
+@media (max-width: 768px) {
+  .wrap {
+    padding: 12px 10px;
+  }
+  .controls {
+    gap: 8px;
+  }
+  .monthLabel {
+    min-width: 0;
+    flex: 1 0 auto;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .select {
+    order: 5;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .totalPositive,
+  .totalNegative {
+    order: 6;
+    white-space: nowrap;
+  }
+  .weekHeader,
+  .grid {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+  }
+  .weekday {
+    font-size: 10px;
+  }
+  .emptyCell {
+    min-height: 0;
+  }
+  .cell {
+    min-height: 54px;
+    min-width: 0;
+    overflow: hidden;
+    padding: 4px;
+    gap: 2px;
+    border-radius: 6px;
+    font-size: 10px;
+  }
+  .cellTop {
+    gap: 2px;
+  }
+  .dots {
+    gap: 2px;
+    min-width: 0;
+    overflow: hidden;
+  }
+  .dot {
+    width: 5px;
+    height: 5px;
+  }
+  .dayPnl {
+    font-size: 11px;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: clip;
+  }
+  .overtradingBadge {
+    font-size: 0;
+    padding: 0 2px;
+    line-height: 1;
+  }
+  .overtradingBadge::before {
+    content: '⚠';
+    font-size: 9px;
+  }
+  .metaRow,
+  .wlRow,
+  .dayTrades {
+    display: none;
+  }
+  .legend {
+    gap: 10px 18px;
+  }
+  .yearGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .monthCell {
+    padding: 8px;
+  }
+  .monthPnl {
+    font-size: 13px;
+  }
+  .statGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+  .annualTotalPositive,
+  .annualTotalNegative {
+    font-size: 24px;
+  }
+}

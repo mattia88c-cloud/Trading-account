@@ -137,3 +137,11 @@
   font-size: 12px;
   margin-bottom: 4px;
 }
+
+/* ===== SOLO TELEFONO (≤768px): campi uno sotto l'altro a tutta larghezza, simboli ÷ = centrati. ===== */
+@media (max-width: 768px) {
+  .fields { flex-direction: column; align-items: stretch; gap: 4px; }
+  .field { min-width: 0; }
+  .fieldInput { font-size: 20px; padding: 12px 14px; }
+  .fieldSep { padding-bottom: 0; text-align: center; font-size: 20px; line-height: 1; }
+}

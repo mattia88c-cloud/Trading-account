@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useCollapsed } from '../useCollapsed.js'
 import { getHighImpactNewsByDate } from '../newsEvents.js'
 import CollapseToggle from './CollapseToggle.jsx'
@@ -75,6 +75,22 @@ export default function YearHeatmap({ year, statsByDay, storageKey }) {
     return { maxWin: mWin, maxLoss: mLoss, tradingDays: days, totalTrades: trades }
   }, [weeks, statsByDay, year])
 
+  // Solo telefono: la griglia è più larga dello schermo, quindi all'apertura la porta sulla
+  // settimana corrente invece di lasciarla su gennaio. Su PC non fa nulla.
+  const scrollRef = useRef(null)
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el || !window.matchMedia('(max-width: 768px)').matches) return
+    if (el.scrollWidth <= el.clientWidth) return
+    const today = new Date()
+    const weekIdx = today.getFullYear() === year
+      ? weeks.findIndex((w) => w.some((d) => toLocalDateStr(d) === toLocalDateStr(today)))
+      : today.getFullYear() > year ? weeks.length - 1 : 0
+    if (weekIdx < 0) return
+    const colWidth = el.scrollWidth / weeks.length
+    el.scrollLeft = Math.max(0, colWidth * (weekIdx + 1) - el.clientWidth * 0.75)
+  }, [open, year, weeks])
+
   const monthLabels = weeks.map((week) => {
     const firstOfMonth = week.find((d) => d.getFullYear() === year && d.getDate() === 1)
     return firstOfMonth ? MONTH_SHORT[firstOfMonth.getMonth()] : null
@@ -87,7 +103,7 @@ export default function YearHeatmap({ year, statsByDay, storageKey }) {
         <CollapseToggle open={open} onToggle={toggle} />
       </div>
       {open && (
-        <div className={styles.scrollArea}>
+        <div className={styles.scrollArea} ref={scrollRef}>
           <div className={styles.grid} style={{ gridTemplateColumns: `repeat(${weeks.length}, 1fr)` }}>
             {monthLabels.map((label, i) => (
               <div key={`m${i}`} className={styles.monthLabel} style={{ gridColumn: i + 1, gridRow: 1 }}>

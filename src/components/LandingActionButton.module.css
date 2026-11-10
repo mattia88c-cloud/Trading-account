@@ -57,3 +57,29 @@
 
 .success .iconWrap { background: rgba(79, 174, 116, 0.15); color: var(--green); }
 .success:hover { border-color: rgba(79, 174, 116, 0.45); }
+
+/* ===== SOLO TELEFONO (≤768px): card compatte orizzontali (icona a sinistra, testo a destra). ===== */
+@media (max-width: 768px) {
+  .card {
+    flex: none;
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+    column-gap: 14px;
+    row-gap: 2px;
+    align-items: center;
+    text-align: left;
+    padding: 16px;
+    border-radius: 16px;
+  }
+  .card:hover { transform: none; }
+  .iconWrap {
+    grid-row: 1 / span 2;
+    width: 44px;
+    height: 44px;
+  }
+  .title { align-self: end; }
+  .subtitle { align-self: start; }
+}

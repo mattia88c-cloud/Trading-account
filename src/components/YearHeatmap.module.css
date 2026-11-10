@@ -125,3 +125,34 @@
   width: 13px;
   height: 13px;
 }
+
+/* ===== SOLO TELEFONO (≤768px): griglia scorrevole con celle leggibili, legenda a capo e
+   ferma a sinistra mentre si scorre (vedi anche l'auto-scroll alla settimana corrente nel JSX). ===== */
+@media (max-width: 768px) {
+  .header {
+    font-size: 14px;
+    gap: 8px;
+  }
+  .grid {
+    min-width: 900px;
+    gap: 3px;
+  }
+  .monthLabel {
+    font-size: 11px;
+    min-width: 0;
+  }
+  .cell {
+    border-radius: 3px;
+  }
+  .legend {
+    position: sticky;
+    left: 0;
+    flex-wrap: wrap;
+    row-gap: 8px;
+    font-size: 11px;
+  }
+  .newsLegend {
+    margin-left: 0;
+    flex-basis: 100%;
+  }
+}

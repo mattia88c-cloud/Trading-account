@@ -134,3 +134,19 @@
   padding: 0 2px;
 }
 .clearBtn:hover { color: var(--red); }
+
+/* ===== SOLO TELEFONO (≤768px): tabella scorrevole con la prima colonna bloccata a sinistra. ===== */
+@media (max-width: 768px) {
+  .tableWrap { -webkit-overflow-scrolling: touch; }
+  .table th, .table td { padding: 8px 9px; }
+  .table th:first-child,
+  .table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: var(--bg-elevated);
+    box-shadow: 1px 0 0 var(--border);
+    white-space: normal;
+    max-width: 140px;
+  }
+}

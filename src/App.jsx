@@ -146,6 +146,16 @@ function AppShell({ profile, onSignOut, updatePassword, updateUsername, reauthen
     return () => observer.disconnect()
   }, [])
 
+  // Solo telefono: le schede scorrono in orizzontale, quindi porta sempre in vista quella attiva
+  // (es. "ROI prop" in fondo alla fila). Su PC non fa nulla.
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 768px)').matches) return
+    const btn = headerRef.current?.querySelector(`.${styles.tabActive}`)
+    const nav = btn?.parentElement
+    if (!btn || !nav) return
+    nav.scrollLeft = btn.offsetLeft - nav.offsetLeft - (nav.clientWidth - btn.offsetWidth) / 2
+  }, [tab])
+
   useEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem(THEME_KEY, theme)

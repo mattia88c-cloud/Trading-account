@@ -215,3 +215,63 @@
   width: 100%;
   max-width: 480px;
 }
+
+/* ===== SOLO TELEFONO (≤768px): la tabella diventa una lista di schede, niente scroll laterale.
+   Ordine figli di .row: 1 data · 2 conto · 3 mercato · 4 sessione · 5 voto · 6 tag · 7 link · 8 P/L · 9 azioni ===== */
+@media (max-width: 768px) {
+  .wrap {
+    padding: 12px 10px;
+  }
+  .select,
+  .input {
+    flex: 1 1 130px;
+    min-width: 0;
+  }
+  .rangeSep {
+    display: none;
+  }
+  .searchInput {
+    flex-basis: 100%;
+    min-width: 0;
+  }
+  .count {
+    margin-left: 0;
+  }
+  .list {
+    overflow-x: visible;
+    gap: 8px;
+  }
+  .rowHeader {
+    display: none;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 10px;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-elevated);
+    font-size: 12px;
+  }
+  .row > :nth-child(2) { order: 1; flex: 1 1 60%; min-width: 0; font-weight: 600; font-size: 14px; }
+  .row > :nth-child(8) { order: 2; font-size: 15px; }
+  .row > :nth-child(1) { order: 3; color: var(--text-muted); }
+  .row > :nth-child(3) { order: 4; }
+  .row > :nth-child(4) { order: 5; color: var(--text-muted); }
+  .row > :nth-child(5) { order: 6; color: var(--text-muted); }
+  .row > :nth-child(5)::before { content: 'Voto '; }
+  .row > :nth-child(6) { order: 7; min-width: 0; max-width: 55%; }
+  .row > :nth-child(7) { order: 8; margin-left: auto; color: var(--text-muted); }
+  .row > :nth-child(9) { order: 9; }
+  .editBtn,
+  .deleteBtn,
+  .confirmBtn,
+  .cancelBtn,
+  .chartLink {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}
